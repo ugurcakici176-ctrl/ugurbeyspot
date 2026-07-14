@@ -3478,7 +3478,6 @@ export default function SettingsAdminClient() {
                       />
                     </article>
                   </div>
-
                   <div className="control-divider">
                     SEO VARSAYILANLARI
                   </div>
@@ -3492,7 +3491,8 @@ export default function SettingsAdminClient() {
                       value={
                         settings
                           .seo
-                          .defaultTitle
+                          .defaultSeo
+                          .title
                       }
                       onChange={(event) =>
                         setSettings(
@@ -3502,8 +3502,16 @@ export default function SettingsAdminClient() {
                             seo: {
                               ...current.seo,
 
-                              defaultTitle:
-                                event.target.value,
+                              defaultSeo: {
+                                ...current
+                                  .seo
+                                  .defaultSeo,
+
+                                title:
+                                  event
+                                    .target
+                                    .value,
+                              },
                             },
                           }),
                         )
@@ -3521,7 +3529,8 @@ export default function SettingsAdminClient() {
                       value={
                         settings
                           .seo
-                          .defaultDescription
+                          .defaultSeo
+                          .description
                       }
                       onChange={(event) =>
                         setSettings(
@@ -3531,8 +3540,16 @@ export default function SettingsAdminClient() {
                             seo: {
                               ...current.seo,
 
-                              defaultDescription:
-                                event.target.value,
+                              defaultSeo: {
+                                ...current
+                                  .seo
+                                  .defaultSeo,
+
+                                description:
+                                  event
+                                    .target
+                                    .value,
+                              },
                             },
                           }),
                         )
@@ -3551,6 +3568,7 @@ export default function SettingsAdminClient() {
                       value={
                         settings
                           .seo
+                          .defaultSeo
                           .keywords
                           .join(", ")
                       }
@@ -3562,20 +3580,139 @@ export default function SettingsAdminClient() {
                             seo: {
                               ...current.seo,
 
-                              keywords:
-                                event.target.value
-                                  .split(",")
-                                  .map(
-                                    (item) =>
-                                      item.trim(),
-                                  )
-                                  .filter(Boolean),
+                              defaultSeo: {
+                                ...current
+                                  .seo
+                                  .defaultSeo,
+
+                                keywords:
+                                  event
+                                    .target
+                                    .value
+                                    .split(",")
+                                    .map(
+                                      (item) =>
+                                        item.trim(),
+                                    )
+                                    .filter(Boolean),
+                              },
                             },
                           }),
                         )
                       }
                     />
                   </label>
+
+                  <label className="admin-field">
+                    <span>
+                      Canonical URL
+                    </span>
+
+                    <input
+                      type="url"
+                      placeholder="https://ugurbeyspot.com"
+                      value={
+                        settings
+                          .seo
+                          .defaultSeo
+                          .canonicalUrl ||
+                        ""
+                      }
+                      onChange={(event) =>
+                        setSettings(
+                          (current) => ({
+                            ...current,
+
+                            seo: {
+                              ...current.seo,
+
+                              defaultSeo: {
+                                ...current
+                                  .seo
+                                  .defaultSeo,
+
+                                canonicalUrl:
+                                  event
+                                    .target
+                                    .value,
+                              },
+                            },
+                          }),
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label className="admin-field">
+                    <span>
+                      Varsayılan OG Görsel URL
+                    </span>
+
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      value={
+                        settings
+                          .seo
+                          .defaultSeo
+                          .ogImageUrl ||
+                        ""
+                      }
+                      onChange={(event) =>
+                        setSettings(
+                          (current) => ({
+                            ...current,
+
+                            seo: {
+                              ...current.seo,
+
+                              defaultSeo: {
+                                ...current
+                                  .seo
+                                  .defaultSeo,
+
+                                ogImageUrl:
+                                  event
+                                    .target
+                                    .value,
+                              },
+                            },
+                          }),
+                        )
+                      }
+                    />
+                  </label>
+
+                  <Switch
+                    checked={
+                      settings
+                        .seo
+                        .defaultSeo
+                        .noIndex === true
+                    }
+                    label="Siteyi arama motorlarından gizle"
+                    description="Aktif edildiğinde varsayılan SEO ayarında noIndex kullanılır."
+                    onChange={(checked) =>
+                      setSettings(
+                        (current) => ({
+                          ...current,
+
+                          seo: {
+                            ...current.seo,
+
+                            defaultSeo: {
+                              ...current
+                                .seo
+                                .defaultSeo,
+
+                              noIndex:
+                                checked,
+                            },
+                          },
+                        }),
+                      )
+                    }
+                  />
                 </div>
               </section>
             )}
