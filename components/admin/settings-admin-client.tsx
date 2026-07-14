@@ -1,9 +1,3 @@
-Kanka aynen, senin mevcut SettingsAdminClient fazla basic kalmış. Mevcut SiteSettings tipinde marka, iletişim, SEO, duyuru ve footer alanları var.  Ayrıca iletişim yapında sosyal linkler ve çalışma saatleri de zaten tanımlı.
-
-Şimdi components/admin/settings-admin-client.tsx dosyasını komple sil ve aşağıdakini birebir yapıştır.
-
-Bu final; mevcut SiteSettings + bizim oluşturduğumuz GlobalSiteSettings kontrol merkezini tek sekmeli ultra gelişmiş admin sayfasında birleştiriyor.
-
 "use client";
 import {
   type ChangeEvent,
