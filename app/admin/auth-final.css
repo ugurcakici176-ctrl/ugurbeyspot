@@ -1,0 +1,212 @@
+.admin-auth-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 4px;
+}
+
+.admin-auth-links a,
+.admin-auth-links button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--admin-muted);
+  font-size: .69rem;
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-color: rgba(23, 23, 20, .2);
+  text-underline-offset: 4px;
+}
+
+.admin-auth-links a:hover,
+.admin-auth-links button:hover {
+  color: var(--admin-text);
+}
+
+.admin-auth-security {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 26px;
+  padding: 15px;
+  border: 1px solid var(--admin-border);
+  border-radius: 13px;
+  background: var(--admin-bg);
+  color: var(--admin-muted);
+}
+
+.admin-auth-security svg {
+  flex: 0 0 auto;
+  color: var(--admin-success);
+}
+
+.admin-auth-security p {
+  margin: 0;
+  font-size: .65rem;
+  line-height: 1.6;
+}
+
+.admin-notice--success {
+  background: #edf8f2;
+  color: var(--admin-success);
+}
+
+.admin-auth-closed {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background:
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(240, 106, 36, .16),
+      transparent 30%
+    ),
+    var(--admin-bg);
+}
+
+.admin-auth-closed__card,
+.admin-registration-success {
+  width: min(100%, 680px);
+  padding: 48px;
+  border: 1px solid var(--admin-border);
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 30px 90px rgba(23, 23, 20, .09);
+}
+
+.admin-auth-closed__mark {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 40px;
+  border-radius: 19px;
+  background: var(--admin-dark);
+  color: #fff;
+  font-weight: 900;
+}
+
+.admin-auth-eyebrow {
+  color: var(--admin-accent);
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .16em;
+}
+
+.admin-auth-closed h1,
+.admin-registration-success h1 {
+  margin: 10px 0 15px;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  letter-spacing: -.07em;
+  line-height: .92;
+}
+
+.admin-auth-closed p,
+.admin-registration-success > p {
+  margin: 0 0 28px;
+  color: var(--admin-muted);
+  line-height: 1.75;
+}
+
+.admin-registration-success__icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 34px;
+  border-radius: 19px;
+  background: #edf8f2;
+  color: var(--admin-success);
+}
+
+.admin-registration-uid {
+  display: grid;
+  gap: 8px;
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid var(--admin-border);
+  border-radius: 15px;
+  background: var(--admin-bg);
+}
+
+.admin-registration-uid > span {
+  color: var(--admin-muted);
+  font-size: .6rem;
+  font-weight: 850;
+  letter-spacing: .14em;
+}
+
+.admin-registration-uid code {
+  overflow-wrap: anywhere;
+  font-size: .84rem;
+  font-weight: 800;
+}
+
+.admin-registration-uid button {
+  width: fit-content;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: #fff;
+  font-size: .65rem;
+  font-weight: 750;
+}
+
+.admin-registration-instructions {
+  margin-bottom: 22px;
+  padding: 20px;
+  border-radius: 16px;
+  background: #181817;
+  color: #fff;
+}
+
+.admin-registration-instructions > strong {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.admin-registration-instructions p {
+  margin: 5px 0;
+  color: rgba(255, 255, 255, .62);
+  font-size: .7rem;
+}
+
+.admin-registration-instructions code {
+  color: #ff9c66;
+}
+
+.admin-registration-instructions pre {
+  overflow-x: auto;
+  margin: 18px 0 0;
+  padding: 15px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .07);
+  color: #fff;
+  font-size: .68rem;
+  line-height: 1.7;
+}
+
+.admin-logout:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
+@media (max-width: 680px) {
+  .admin-auth-links {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-auth-closed {
+    padding: 16px;
+  }
+
+  .admin-auth-closed__card,
+  .admin-registration-success {
+    padding: 30px 22px;
+    border-radius: 22px;
+  }
+}

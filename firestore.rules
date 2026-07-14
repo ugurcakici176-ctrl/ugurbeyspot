@@ -1,0 +1,88 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function adminPath() {
+      return /databases/$(database)/documents/admins/$(request.auth.uid);
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(adminPath())
+        && get(adminPath()).data.status == "active";
+    }
+
+    function validContactMessage() {
+      let data = request.resource.data;
+
+      return data.fullName is string
+        && data.fullName.size() > 0
+        && data.fullName.size() <= 100
+        && data.phone is string
+        && data.phone.size() > 0
+        && data.phone.size() <= 30
+        && data.subject is string
+        && data.subject.size() > 0
+        && data.subject.size() <= 150
+        && data.message is string
+        && data.message.size() > 0
+        && data.message.size() <= 3000
+        && data.status == "new";
+    }
+
+    match /products/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /categories/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /site_settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /homepage/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /about/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /banners/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /contact_messages/{id} {
+      allow create: if validContactMessage();
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow get: if isSignedIn()
+        && (request.auth.uid == adminId || isAdmin());
+
+      allow list: if isAdmin();
+
+      allow update: if isSignedIn()
+        && request.auth.uid == adminId
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(["lastLoginAt", "updatedAt"]);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
