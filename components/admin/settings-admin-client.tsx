@@ -3616,4 +3616,3 @@ export default function SettingsAdminClient() {
       </form>
     </>
   );
-}
