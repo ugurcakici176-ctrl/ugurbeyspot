@@ -17,6 +17,7 @@ export const COLLECTIONS = {
   homepage: "homepage",
   about: "about",
   contactMessages: "contact_messages",
+  quoteRequests: "quote_requests",
   productReviews: "product_reviews",
   banners: "banners",
   gallery: "gallery",
@@ -45,6 +46,7 @@ export const ROUTES = {
   adminHomepage: "/admin/anasayfa",
   adminAbout: "/admin/hakkimizda",
   adminMessages: "/admin/mesajlar",
+  adminQuoteRequests: "/admin/hizli-teklifler",
   adminReviews: "/admin/yorumlar",
   adminSettings: "/admin/ayarlar",
   adminSeo: "/admin/seo",
@@ -93,6 +95,13 @@ export const CONTACT_LIMITS = {
   emailMaxLength: 160,
   subjectMaxLength: 150,
   messageMaxLength: 3000,
+} as const;
+
+export const QUICK_QUOTE_LIMITS = {
+  additionalNotesMaxLength: 2500,
+  selectedProductsMaxCount: 8,
+  adminNoteMaxLength: 1200,
+  offeredPriceMaxDigits: 12,
 } as const;
 
 export const PRODUCT_REVIEW_LIMITS = {
@@ -185,6 +194,7 @@ export const STOCK_STATUS_LABELS = {
 export const MESSAGE_STATUS_LABELS = {
   new: "Yeni",
   read: "Okundu",
+  answered: "Cevaplandı",
   replied: "Cevaplandı",
 } as const;
 

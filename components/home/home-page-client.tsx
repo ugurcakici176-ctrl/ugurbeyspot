@@ -13,6 +13,7 @@ import SiteChrome from "@/components/site/site-chrome";
 import EmptyState from "@/components/ui/empty-state";
 import Icon from "@/components/ui/icon";
 import LoadingScreen from "@/components/ui/loading-screen";
+import QuickQuoteModal from "@/components/site/quick-quote-modal";
 
 import {
   getBanners,
@@ -63,7 +64,10 @@ export default function HomePageClient() {
     pageReady,
     setPageReady,
   ] = useState(false);
-
+const [
+  quoteOpen,
+  setQuoteOpen,
+] = useState(false);
   useEffect(() => {
     let active = true;
 
@@ -532,8 +536,12 @@ export default function HomePageClient() {
 
               <div className="hero-pill">
                 <span className="hero-pill__dot" />
-
-                Mağaza ile doğrudan iletişim
+                <span className="hero-pill__label">
+                  Canli Destek
+                </span>
+                <strong>
+                  Magaza ile aninda iletisim
+                </strong>
               </div>
             </div>
           </div>
@@ -782,7 +790,157 @@ export default function HomePageClient() {
             )}
           </div>
         </section>
+        <section className="section quick-quote-home">
+          <div className="site-container">
+            <div
+              className="quick-quote-home__card"
+              data-reveal
+            >
+              <div className="quick-quote-home__glow quick-quote-home__glow--one" />
+              <div className="quick-quote-home__glow quick-quote-home__glow--two" />
 
+              <div className="quick-quote-home__content">
+                <span className="eyebrow eyebrow--light">
+                  HIZLI TEKLİF
+                </span>
+
+                <h2>
+                  Aradığın ürünü seç,
+                  <span>
+                    tahmini fiyatını hemen öğren.
+                  </span>
+                </h2>
+
+                <p>
+                  Ürün tercihlerini ve ihtiyaçlarını birkaç adımda belirt.
+                  Sistem sana saniyeler içinde ortalama bir fiyat aralığı
+                  oluştursun. Kesin teklif için ekibimiz talebini ayrıca
+                  inceleyip seninle iletişime geçsin.
+                </p>
+
+                <div className="quick-quote-home__features">
+                  <div>
+                    <Icon
+                      name="sparkles"
+                      size={20}
+                    />
+
+                    <span>
+                      Akıllı fiyat tahmini
+                    </span>
+                  </div>
+
+                  <div>
+                    <Icon
+                      name="clock"
+                      size={20}
+                    />
+
+                    <span>
+                      1 dakikada tamamla
+                    </span>
+                  </div>
+
+                  <div>
+                    <Icon
+                      name="shield-check"
+                      size={20}
+                    />
+
+                    <span>
+                      Ücretsiz ve bağlayıcı değil
+                    </span>
+                  </div>
+                </div>
+
+                <div className="quick-quote-home__actions">
+                  <button
+                    type="button"
+                    className="button button--light button--premium"
+                    onClick={() =>
+                      setQuoteOpen(true)
+                    }
+                  >
+                    Hızlı Teklif Al
+
+                    <span className="button__icon">
+                      <Icon
+                        name="arrow-right"
+                        size={19}
+                      />
+                    </span>
+                  </button>
+
+                  <Link
+                    href="/urunler"
+                    className="button button--outline-light"
+                  >
+                    Önce Ürünleri İncele
+                  </Link>
+                </div>
+              </div>
+
+              <div className="quick-quote-home__visual">
+                <div className="quick-quote-home__price-card">
+                  <span>
+                    TAHMİNİ FİYAT ARALIĞI
+                  </span>
+
+                  <strong>
+                    ₺12.500
+                    <small>
+                      – ₺18.900
+                    </small>
+                  </strong>
+
+                  <p>
+                    Seçtiğin ürün, kondisyon ve teslimat tercihine göre
+                    hesaplanır.
+                  </p>
+
+                  <div>
+                    <span>
+                      Ürün seçimi
+                    </span>
+
+                    <strong>
+                      ✓
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      İhtiyaç analizi
+                    </span>
+
+                    <strong>
+                      ✓
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>
+                      Ortalama teklif
+                    </span>
+
+                    <strong>
+                      ✓
+                    </strong>
+                  </div>
+                </div>
+
+                <span className="quick-quote-home__badge">
+                  <Icon
+                    name="sparkles"
+                    size={16}
+                  />
+
+                  Anında hesaplama
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
         {activeBanner && (
           <section className="section section--flush-top">
             <div className="site-container">
@@ -1189,6 +1347,15 @@ export default function HomePageClient() {
           </section>
         )}
       </div>
+          <QuickQuoteModal
+
+  open={quoteOpen}
+
+  onClose={() => setQuoteOpen(false)}
+
+  sourcePage="/"
+
+/>
     </SiteChrome>
   );
 }

@@ -27,7 +27,7 @@ import { ROUTES } from "@/lib/constants";
 import type {
   SiteSettings,
 } from "@/lib/types";
-
+import QuickQuoteModal from "@/components/site/quick-quote-modal";
 const NAVIGATION = [
   {
     key: "home",
@@ -106,7 +106,13 @@ export default function SiteHeader({
     authenticated,
     isAdmin,
   } = usePublicSession();
+const [
 
+  quoteOpen,
+
+  setQuoteOpen,
+
+] = useState(false);
   const [
     mobileOpen,
     setMobileOpen,
@@ -160,6 +166,7 @@ export default function SiteHeader({
       ) {
         setMobileOpen(false);
         setAccountOpen(false);
+        setQuoteOpen(false);
       }
     }
 
@@ -395,24 +402,36 @@ export default function SiteHeader({
             </Link>
 
             {hasPrimaryCta && (
-              <Link
-                href={
-                  settings.header
-                    .primaryCtaHref
-                }
-                className="button button--accent button--compact desktop-only"
-              >
-                {
-                  settings.header
-                    .primaryCtaLabel
-                }
 
-                <Icon
-                  name="arrow-right"
-                  size={16}
-                />
-              </Link>
-            )}
+  <button
+
+    type="button"
+
+    className="button button--accent button--compact desktop-only"
+
+    onClick={() => setQuoteOpen(true)}
+
+  >
+
+    {
+
+      settings.header
+
+        .primaryCtaLabel
+
+    }
+
+    <Icon
+
+      name="arrow-right"
+
+      size={16}
+
+    />
+
+  </button>
+
+)}
 
             {!loading &&
               settings.header
@@ -664,7 +683,43 @@ export default function SiteHeader({
                 <strong>{totalCount}</strong>
               )}
             </Link>
+{hasPrimaryCta && (
 
+  <button
+
+    type="button"
+
+    className="button button--accent"
+
+    onClick={() => {
+
+      setMobileOpen(false);
+
+      setQuoteOpen(true);
+
+    }}
+
+  >
+
+    {
+
+      settings.header
+
+        .primaryCtaLabel
+
+    }
+
+    <Icon
+
+      name="arrow-right"
+
+      size={17}
+
+    />
+
+  </button>
+
+)}
             {loading ? (
               <div className="mobile-auth-loading">
                 Oturum kontrol ediliyor...
@@ -752,11 +807,23 @@ export default function SiteHeader({
                       : "Çıkış Yap"}
                   </button>
                 </div>
+              
               </>
             )}
           </div>
         </div>
       </div>
+        <QuickQuoteModal
+
+  open={quoteOpen}
+
+  onClose={() => setQuoteOpen(false)}
+
+  settings={settings}
+
+  sourcePage={pathname}
+
+/>
     </>
   );
 }

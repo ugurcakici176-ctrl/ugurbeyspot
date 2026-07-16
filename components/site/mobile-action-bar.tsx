@@ -9,15 +9,17 @@ export default function MobileActionBar({
 }: {
   settings: SiteSettings;
 }) {
+  const whatsappUrl = buildWhatsappUrl(settings.contact.whatsapp);
+
   const actions = [
     settings.contact.phone
       ? { label: "Ara", icon: "phone", href: buildTelUrl(settings.contact.phone) }
       : null,
-    settings.contact.whatsapp
+    whatsappUrl
       ? {
           label: "WhatsApp",
           icon: "message-circle",
-          href: buildWhatsappUrl(settings.contact.whatsapp),
+          href: whatsappUrl,
         }
       : null,
     settings.contact.googleMapsUrl

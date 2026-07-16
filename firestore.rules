@@ -114,6 +114,13 @@ service cloud.firestore {
         "subject",
         "message",
         "status",
+        "customerUid",
+        "customerOnline",
+        "lastCustomerSeenAt",
+        "adminNotified",
+        "lastMessage",
+        "lastMessageAt",
+        "lastSender",
         "sourcePage",
         "userAgent",
         "createdAt",
@@ -144,7 +151,55 @@ service cloud.firestore {
       && data.message.size() > 0
       && data.message.size() <= 3000
 
-      && data.status == "new"
+      && data.status in ["new", "read", "answered", "replied"]
+
+      && (
+        !("customerUid" in data)
+        || (
+          data.customerUid is string
+          && isSignedIn()
+          && data.customerUid == request.auth.uid
+        )
+      )
+
+      && (
+        !("customerOnline" in data)
+        || data.customerOnline is bool
+      )
+
+      && (
+        !("lastCustomerSeenAt" in data)
+        || (
+          data.lastCustomerSeenAt is string
+          || data.lastCustomerSeenAt is timestamp
+        )
+      )
+
+      && (
+        !("adminNotified" in data)
+        || data.adminNotified is bool
+      )
+
+      && (
+        !("lastMessage" in data)
+        || (
+          data.lastMessage is string
+          && data.lastMessage.size() <= 3000
+        )
+      )
+
+      && (
+        !("lastMessageAt" in data)
+        || (
+          data.lastMessageAt is string
+          || data.lastMessageAt is timestamp
+        )
+      )
+
+      && (
+        !("lastSender" in data)
+        || data.lastSender in ["customer", "admin"]
+      )
 
       && (
         !("sourcePage" in data)
@@ -162,22 +217,45 @@ service cloud.firestore {
         )
       )
 
-      && data.createdAt is string
-      && data.createdAt.size() <= 40
+      && (
+        data.createdAt is string
+        || data.createdAt is timestamp
+      )
 
-      && data.updatedAt is string
-      && data.updatedAt.size() <= 40
+      && (
+        !(data.createdAt is string)
+        || data.createdAt.size() <= 40
+      )
 
-      && data.createdAt == data.updatedAt;
+      && (
+        data.updatedAt is string
+        || data.updatedAt is timestamp
+      )
+
+      && (
+        !(data.updatedAt is string)
+        || data.updatedAt.size() <= 40
+      );
     }
 
     function validContactMessageAdminUpdate() {
       return request.resource.data
         .diff(resource.data)
         .affectedKeys()
-        .hasOnly(["status", "updatedAt", "adminReply", "repliedAt"])
+        .hasOnly([
+          "status",
+          "updatedAt",
+          "adminReply",
+          "repliedAt",
+          "lastMessage",
+          "lastMessageAt",
+          "lastSender",
+          "customerOnline",
+          "lastCustomerSeenAt",
+          "adminNotified"
+        ])
 
-      && request.resource.data.status in ["new", "read", "replied"]
+      && request.resource.data.status in ["new", "read", "answered", "replied"]
 
       && (
         !("adminReply" in request.resource.data)
@@ -191,22 +269,194 @@ service cloud.firestore {
         !("repliedAt" in request.resource.data)
         || (
           request.resource.data.repliedAt is string
-          && request.resource.data.repliedAt.size() <= 40
+          || request.resource.data.repliedAt is timestamp
         )
       )
 
       && (
-        request.resource.data.status != "replied"
+        !("repliedAt" in request.resource.data)
+        || !(request.resource.data.repliedAt is string)
+        || request.resource.data.repliedAt.size() <= 40
+      )
+
+      && (
+        !("lastMessage" in request.resource.data)
         || (
-          request.resource.data.adminReply is string
-          && request.resource.data.adminReply.size() > 0
-          && request.resource.data.repliedAt is string
-          && request.resource.data.repliedAt.size() <= 40
+          request.resource.data.lastMessage is string
+          && request.resource.data.lastMessage.size() <= 3000
         )
       )
 
-      && request.resource.data.updatedAt is string
-      && request.resource.data.updatedAt.size() <= 40;
+      && (
+        !("lastMessageAt" in request.resource.data)
+        || (
+          request.resource.data.lastMessageAt is string
+          || request.resource.data.lastMessageAt is timestamp
+        )
+      )
+
+      && (
+        !("lastSender" in request.resource.data)
+        || request.resource.data.lastSender in ["customer", "admin"]
+      )
+
+      && (
+        !("customerOnline" in request.resource.data)
+        || request.resource.data.customerOnline is bool
+      )
+
+      && (
+        !("lastCustomerSeenAt" in request.resource.data)
+        || (
+          request.resource.data.lastCustomerSeenAt is string
+          || request.resource.data.lastCustomerSeenAt is timestamp
+        )
+      )
+
+      && (
+        !("adminNotified" in request.resource.data)
+        || request.resource.data.adminNotified is bool
+      )
+
+      && (
+        request.resource.data.status != "replied"
+        && request.resource.data.status != "answered"
+        || (
+          request.resource.data.adminReply is string
+          && request.resource.data.adminReply.size() > 0
+          && (
+            request.resource.data.repliedAt is string
+            || request.resource.data.repliedAt is timestamp
+          )
+        )
+      )
+
+      && (
+        request.resource.data.updatedAt is string
+        || request.resource.data.updatedAt is timestamp
+      )
+
+      && (
+        !(request.resource.data.updatedAt is string)
+        || request.resource.data.updatedAt.size() <= 40
+      );
+    }
+
+    function validContactMessageCustomerUpdate() {
+      return isSignedIn()
+      && resource.data.customerUid is string
+      && resource.data.customerUid == request.auth.uid
+      && request.resource.data
+        .diff(resource.data)
+        .affectedKeys()
+        .hasOnly([
+          "customerOnline",
+          "lastCustomerSeenAt",
+          "lastMessage",
+          "lastMessageAt",
+          "lastSender",
+          "status",
+          "updatedAt",
+          "adminNotified",
+          "fullName",
+          "phone",
+          "email"
+        ])
+
+      && request.resource.data.status in ["new", "read", "answered", "replied"]
+
+      && (
+        !("customerOnline" in request.resource.data)
+        || request.resource.data.customerOnline is bool
+      )
+
+      && (
+        !("lastCustomerSeenAt" in request.resource.data)
+        || (
+          request.resource.data.lastCustomerSeenAt is string
+          || request.resource.data.lastCustomerSeenAt is timestamp
+        )
+      )
+
+      && (
+        !("lastMessage" in request.resource.data)
+        || (
+          request.resource.data.lastMessage is string
+          && request.resource.data.lastMessage.size() <= 3000
+        )
+      )
+
+      && (
+        !("lastMessageAt" in request.resource.data)
+        || (
+          request.resource.data.lastMessageAt is string
+          || request.resource.data.lastMessageAt is timestamp
+        )
+      )
+
+      && (
+        !("lastSender" in request.resource.data)
+        || request.resource.data.lastSender == "customer"
+      )
+
+      && (
+        !("updatedAt" in request.resource.data)
+        || (
+          request.resource.data.updatedAt is string
+          || request.resource.data.updatedAt is timestamp
+        )
+      )
+
+      && (
+        !("adminNotified" in request.resource.data)
+        || request.resource.data.adminNotified is bool
+      );
+    }
+
+    function validContactChatMessageCreate(messageId) {
+      let parent = getAfter(/databases/$(database)/documents/contact_messages/$(messageId)).data;
+
+      return request.resource.data.keys().hasAll([
+        "text",
+        "sender",
+        "createdAt",
+        "read"
+      ])
+
+      && request.resource.data.keys().hasOnly([
+        "text",
+        "sender",
+        "createdAt",
+        "read"
+      ])
+
+      && request.resource.data.text is string
+      && request.resource.data.text.size() > 0
+      && request.resource.data.text.size() <= 3000
+
+      && request.resource.data.sender in ["customer", "admin"]
+
+      && (
+        request.resource.data.createdAt is string
+        || request.resource.data.createdAt is timestamp
+      )
+
+      && request.resource.data.read is bool
+
+      && (
+        (isActiveAdmin() && request.resource.data.sender == "admin")
+        || (
+          isSignedIn()
+          && parent.customerUid is string
+          && parent.customerUid == request.auth.uid
+          && request.resource.data.sender == "customer"
+        )
+        || (
+          !isSignedIn()
+          && !("customerUid" in parent)
+          && request.resource.data.sender == "customer"
+        )
+      );
     }
 
     function validProductReviewCreate() {
@@ -341,9 +591,41 @@ service cloud.firestore {
 
     match /contact_messages/{messageId} {
       allow create: if validContactMessageCreate();
-      allow get, list: if isActiveAdmin();
-      allow update: if isActiveAdmin() && validContactMessageAdminUpdate();
+      allow get, list: if isActiveAdmin() || (
+        isSignedIn()
+        && resource.data.customerUid is string
+        && resource.data.customerUid == request.auth.uid
+      );
+      allow update: if (
+        isActiveAdmin() && validContactMessageAdminUpdate()
+      ) || validContactMessageCustomerUpdate();
       allow delete: if isManagerAdmin();
+
+      match /messages/{chatMessageId} {
+        allow create: if validContactChatMessageCreate(messageId);
+
+        allow get, list: if isActiveAdmin() || (
+          isSignedIn()
+          && get(/databases/$(database)/documents/contact_messages/$(messageId)).data.customerUid is string
+          && get(/databases/$(database)/documents/contact_messages/$(messageId)).data.customerUid == request.auth.uid
+        );
+
+        allow update: if (
+          isActiveAdmin()
+          || (
+            isSignedIn()
+            && get(/databases/$(database)/documents/contact_messages/$(messageId)).data.customerUid is string
+            && get(/databases/$(database)/documents/contact_messages/$(messageId)).data.customerUid == request.auth.uid
+          )
+        )
+        && request.resource.data
+          .diff(resource.data)
+          .affectedKeys()
+          .hasOnly(["read"])
+        && request.resource.data.read is bool;
+
+        allow delete: if isManagerAdmin();
+      }
     }
 
     match /product_reviews/{reviewId} {
@@ -379,7 +661,53 @@ service cloud.firestore {
     }
 
     match /mail/{mailId} {
-      allow read, write: if false;
+      allow create: if (
+        isActiveAdmin()
+        || (
+          isSignedIn()
+          && request.resource.data.source == "customer_chat_first_message"
+          && ("chatId" in request.resource.data)
+          && request.resource.data.chatId is string
+          && get(/databases/$(database)/documents/contact_messages/$(request.resource.data.chatId)).data.customerUid is string
+          && get(/databases/$(database)/documents/contact_messages/$(request.resource.data.chatId)).data.customerUid == request.auth.uid
+        )
+      )
+      && request.resource.data.keys().hasAll(["to", "message"])
+      && request.resource.data.keys().hasOnly([
+        "to",
+        "message",
+        "createdAt",
+        "source",
+        "chatId",
+        "metadata"
+      ])
+      && request.resource.data.to is list
+      && request.resource.data.to.size() > 0
+      && request.resource.data.to.size() <= 5
+      && request.resource.data.message is map
+      && request.resource.data.message.subject is string
+      && request.resource.data.message.subject.size() > 0
+      && request.resource.data.message.subject.size() <= 180
+      && request.resource.data.message.html is string
+      && request.resource.data.message.html.size() > 0
+      && request.resource.data.message.html.size() <= 20000
+      && (
+        !("createdAt" in request.resource.data)
+        || (
+          request.resource.data.createdAt is string
+          || request.resource.data.createdAt is timestamp
+        )
+      )
+      && (
+        !("chatId" in request.resource.data)
+        || request.resource.data.chatId is string
+      )
+      && (
+        !("source" in request.resource.data)
+        || request.resource.data.source is string
+      );
+
+      allow read, update, delete: if false;
     }
 
     match /email_verifications/{verificationId} {

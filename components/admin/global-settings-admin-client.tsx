@@ -1764,6 +1764,7 @@ function BusinessTab({
         <label className="admin-field">
           <span>WhatsApp</span>
           <input
+            placeholder="905xxxxxxxxx veya wa.me/905xxxxxxxxx"
             value={
               settings.business.whatsapp
             }

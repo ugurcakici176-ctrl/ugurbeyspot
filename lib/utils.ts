@@ -150,11 +150,60 @@ export function normalizeTurkeyPhone(phone: string): string {
   return digits;
 }
 
+function normalizeWhatsappTarget(value: string): string {
+  const input = value.trim();
+
+  if (!input) {
+    return "";
+  }
+
+  // Accept direct wa.me links and api.whatsapp.com URLs from admin input.
+  if (/^https?:\/\//i.test(input) || input.includes("wa.me")) {
+    try {
+      const parsed = new URL(input.startsWith("http") ? input : `https://${input}`);
+      const hostname = parsed.hostname.toLowerCase();
+
+      if (hostname.includes("wa.me")) {
+        const pathPhone = normalizeTurkeyPhone(parsed.pathname.replaceAll("/", ""));
+
+        if (pathPhone.length >= 10 && pathPhone.length <= 15) {
+          return pathPhone;
+        }
+      }
+
+      if (hostname.includes("whatsapp.com")) {
+        const queryPhone = normalizeTurkeyPhone(parsed.searchParams.get("phone") || "");
+
+        if (queryPhone.length >= 10 && queryPhone.length <= 15) {
+          return queryPhone;
+        }
+      }
+    } catch {
+      return "";
+    }
+
+    return "";
+  }
+
+  const normalized = normalizeTurkeyPhone(input);
+
+  if (normalized.length < 10 || normalized.length > 15) {
+    return "";
+  }
+
+  return normalized;
+}
+
 export function buildWhatsappUrl(
   phone: string,
   message = DEFAULT_WHATSAPP_MESSAGE,
 ): string {
-  const normalizedPhone = normalizeTurkeyPhone(phone);
+  const normalizedPhone = normalizeWhatsappTarget(phone);
+
+  if (!normalizedPhone) {
+    return "";
+  }
+
   const query = new URLSearchParams({ text: message });
 
   return `https://wa.me/${normalizedPhone}?${query.toString()}`;

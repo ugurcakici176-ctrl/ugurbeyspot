@@ -158,6 +158,7 @@ export const DEFAULT_ABOUT_CONTENT: AboutContent = {
     description:
       "Uğur Bey Spot olarak ürün çeşitliliğini, ulaşılabilir iletişimi ve mağaza güvenini tek noktada sunuyoruz.",
   },
+
   story: {
     eyebrow: "BİZİM HİKÂYEMİZ",
     title: "Alışverişi Daha Kolay ve Daha Ulaşılabilir Hale Getirmek İçin",
@@ -166,11 +167,13 @@ export const DEFAULT_ABOUT_CONTENT: AboutContent = {
       "Mağazamızda ürün çeşitliliği kadar hızlı iletişim, şeffaf bilgi ve ulaşılabilir hizmet anlayışını da merkezde tutuyoruz.",
     ],
   },
+
   values: {
     eyebrow: "DEĞERLERİMİZ",
     title: "Her Temasta Aynı Yaklaşım",
     description:
       "İşimizi günlük satışın ötesinde, uzun vadeli güven ilişkisi olarak görüyoruz.",
+
     items: [
       {
         id: "guven",
@@ -202,17 +205,50 @@ export const DEFAULT_ABOUT_CONTENT: AboutContent = {
       },
     ],
   },
-  statistics: {
-    eyebrow: "RAKAMLARLA BİZ",
-    title: "Gerçek Verilerle Büyüyen Bir Mağaza",
-    items: [],
-  },
+
+statistics: {
+  eyebrow: "RAKAMLARLA BİZ",
+  title: "Gerçek Verilerle Büyüyen Bir Mağaza",
+  items: [
+    {
+      id: "yillik-deneyim",
+      value: 10,
+      suffix: "+",
+      label: "Yıllık Deneyim",
+      sortOrder: 1,
+    },
+    {
+      id: "urun-secenegi",
+      value: 500,
+      suffix: "+",
+      label: "Ürün Seçeneği",
+      sortOrder: 2,
+    },
+    {
+      id: "mutlu-musteri",
+      value: 2500,
+      suffix: "+",
+      label: "Mutlu Müşteri",
+      sortOrder: 3,
+    },
+    {
+      id: "urun-kategorisi",
+      value: 20,
+      suffix: "+",
+      label: "Ürün Kategorisi",
+      sortOrder: 4,
+    },
+  ],
+},
+
   gallery: {
     eyebrow: "MAĞAZAMIZ",
     title: "Bizi Yakından Tanıyın",
-    description: "Mağazamızdan kareleri ve ürün alanlarımızı keşfedin.",
+    description:
+      "Mağazamızdan kareleri ve ürün alanlarımızı keşfedin.",
     images: [],
   },
+
   seo: DEFAULT_PAGE_SEO.about,
   updatedAt: EMPTY_UPDATED_AT,
 };

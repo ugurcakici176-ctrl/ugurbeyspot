@@ -4,14 +4,22 @@ import { usePathname } from "next/navigation";
 import {
   type FormEvent,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 
 import Icon from "@/components/ui/icon";
 import { usePublicSession } from "@/hooks/use-public-session";
-import { submitContactMessage } from "@/lib/messages";
-import type { SiteSettings, WorkingHour } from "@/lib/types";
+import {
+  findLatestCustomerChat,
+  observeContactChatMessages,
+  sendCustomerChatMessage,
+  setCustomerChatPresence,
+  submitContactMessage,
+} from "@/lib/messages";
+import type {
+  ContactChatMessage,
+  SiteSettings,
+} from "@/lib/types";
 import { buildWhatsappUrl } from "@/lib/utils";
 
 interface SupportChatWidgetProps {
@@ -32,6 +40,7 @@ const INITIAL_FORM: ChatForm = {
 
 const FALLBACK_PROFILE_NAME = "Kayitli kullanici";
 const FALLBACK_PROFILE_PHONE = "Hesaptan iletildi";
+const PRESENCE_HEARTBEAT_MS = 30_000;
 
 function normalizeProfileName(value?: string | null): string {
   const normalized = (value || "").trim();
@@ -53,131 +62,130 @@ function normalizeProfilePhone(value?: string | null): string {
   return normalized;
 }
 
-function normalizeDayLabel(value: string): string {
-  return value
-    .trim()
-    .toLocaleLowerCase("tr-TR")
-    .replaceAll("ı", "i")
-    .replaceAll("ğ", "g")
-    .replaceAll("ü", "u")
-    .replaceAll("ş", "s")
-    .replaceAll("ö", "o")
-    .replaceAll("ç", "c");
-}
-
-function parseTimeToMinutes(value?: string): number | null {
-  if (!value) {
-    return null;
-  }
-
-  const [hourText, minuteText] = value.split(":");
-  const hour = Number(hourText);
-  const minute = Number(minuteText);
-
-  if (
-    !Number.isInteger(hour) ||
-    !Number.isInteger(minute) ||
-    hour < 0 ||
-    hour > 23 ||
-    minute < 0 ||
-    minute > 59
-  ) {
-    return null;
-  }
-
-  return hour * 60 + minute;
-}
-
-function getCurrentDayLabel(date: Date): string {
-  return new Intl.DateTimeFormat("tr-TR", { weekday: "long" }).format(date);
-}
-
-function resolveTodaySchedule(workingHours: WorkingHour[], now: Date): WorkingHour | null {
-  if (workingHours.length === 0) {
-    return null;
-  }
-
-  const dayLabel = normalizeDayLabel(getCurrentDayLabel(now));
-  const byLabel = workingHours.find((item) => normalizeDayLabel(item.dayLabel) === dayLabel);
-
-  if (byLabel) {
-    return byLabel;
-  }
-
-  const jsDay = now.getDay();
-  const mondayFirstIndex = jsDay === 0 ? 7 : jsDay;
-  const bySortOrder = workingHours.find((item) => item.sortOrder === mondayFirstIndex);
-
-  return bySortOrder || null;
-}
-
-function isBusinessHours(workingHours: WorkingHour[], now: Date): boolean {
-  if (workingHours.length === 0) {
-    return true;
-  }
-
-  const schedule = resolveTodaySchedule(workingHours, now);
-
-  if (!schedule || schedule.isClosed) {
-    return false;
-  }
-
-  const openingMinutes = parseTimeToMinutes(schedule.openingTime);
-  const closingMinutes = parseTimeToMinutes(schedule.closingTime);
-
-  if (openingMinutes === null || closingMinutes === null) {
-    return true;
-  }
-
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-  return currentMinutes >= openingMinutes && currentMinutes <= closingMinutes;
-}
-
 export default function SupportChatWidget({ settings }: SupportChatWidgetProps) {
   const { session, authenticated } = usePublicSession();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [timeTick, setTimeTick] = useState(0);
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<ChatForm>(INITIAL_FORM);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<ContactChatMessage[]>([]);
 
-  const whatsappUrl = useMemo(() => {
-    if (!settings.contact.whatsapp) {
-      return null;
-    }
+  const whatsappUrl = settings.contact.whatsapp
+    ? buildWhatsappUrl(settings.contact.whatsapp, "Merhaba, bilgi almak istiyorum.")
+    : null;
 
-    return buildWhatsappUrl(settings.contact.whatsapp, "Merhaba, bilgi almak istiyorum.");
-  }, [settings.contact.whatsapp]);
-
-  useEffect(() => {
-    const initTimeoutId = window.setTimeout(() => {
-      setTimeTick(Date.now());
-    }, 0);
-
-    const intervalId = window.setInterval(() => {
-      setTimeTick(Date.now());
-    }, 60_000);
-
-    return () => {
-      window.clearTimeout(initTimeoutId);
-      window.clearInterval(intervalId);
-    };
-  }, []);
-
-  const workingHours = settings.contact.workingHours;
-  const availableInOfficeHours = useMemo(
-    () => isBusinessHours(workingHours, new Date(timeTick)),
-    [workingHours, timeTick],
-  );
   const profileName = normalizeProfileName(session?.user.displayName || session?.user.email);
   const profilePhone = normalizeProfilePhone(session?.user.phoneNumber);
   const directMode = authenticated;
 
+  useEffect(() => {
+    if (!directMode || !session?.user.uid) {
+      const timeoutId = window.setTimeout(() => {
+        setChatId(null);
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+      };
+    }
+
+    let active = true;
+
+    void findLatestCustomerChat(session.user.uid)
+      .then((chat) => {
+        if (!active) {
+          return;
+        }
+
+        setChatId(chat?.id || null);
+      })
+      .catch(() => {
+        if (active) {
+          setChatId(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [directMode, session?.user.uid]);
+
+  useEffect(() => {
+    if (!chatId) {
+      const timeoutId = window.setTimeout(() => {
+        setChatMessages([]);
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+      };
+    }
+
+    const unsubscribe = observeContactChatMessages(
+      chatId,
+      (items) => {
+        setChatMessages(items);
+      },
+      () => {
+        setChatMessages([]);
+      },
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [chatId]);
+
+  useEffect(() => {
+    if (!open || !directMode || !chatId) {
+      return;
+    }
+
+    const setOnline = () => {
+      void setCustomerChatPresence(chatId, true);
+    };
+
+    const setOffline = () => {
+      void setCustomerChatPresence(chatId, false);
+    };
+
+    setOnline();
+
+    const intervalId = window.setInterval(setOnline, PRESENCE_HEARTBEAT_MS);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        setOffline();
+      } else {
+        setOnline();
+      }
+    };
+
+    window.addEventListener("beforeunload", setOffline);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("beforeunload", setOffline);
+      setOffline();
+    };
+  }, [chatId, directMode, open]);
+
   function handleToggle(): void {
-    setOpen((current) => !current);
+    setOpen((current) => {
+      const next = !current;
+
+      if (!next && directMode && chatId) {
+        void setCustomerChatPresence(chatId, false);
+      }
+
+      return next;
+    });
+
     setError(null);
     setSuccess(false);
   }
@@ -190,14 +198,29 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
     setSuccess(false);
 
     try {
-      await submitContactMessage({
-        fullName: directMode ? profileName : form.fullName,
-        phone: directMode ? profilePhone : form.phone,
-        email: session?.user.email || undefined,
-        subject: directMode ? "Direkt kullanici konusmasi" : "Web chat paneli",
-        message: form.message,
-        sourcePage: pathname || "/",
-      });
+      if (directMode && session?.user.uid && session.user.email) {
+        const result = await sendCustomerChatMessage({
+          chatId: chatId || undefined,
+          customerUid: session.user.uid,
+          customerName: profileName,
+          customerEmail: session.user.email,
+          customerPhone: profilePhone,
+          message: form.message,
+          sourcePage: pathname || "/",
+          adminNotificationEmail: settings.contact.email,
+        });
+
+        setChatId(result.chatId);
+      } else {
+        await submitContactMessage({
+          fullName: form.fullName,
+          phone: form.phone,
+          email: undefined,
+          subject: "Web chat paneli",
+          message: form.message,
+          sourcePage: pathname || "/",
+        });
+      }
 
       setForm(INITIAL_FORM);
       setSuccess(true);
@@ -220,10 +243,10 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
           <header className="support-chat-panel__header">
             <div className="support-chat-panel__title-wrap">
               <span className="support-chat-panel__badge">
-                <Icon name={availableInOfficeHours ? "sparkles" : "clock"} size={14} />
+                <Icon name="sparkles" size={14} />
               </span>
-              <small>{availableInOfficeHours ? "CANLI DESTEK" : "MESAI DISI"}</small>
-              <h2>{availableInOfficeHours ? "Aninda Sohbet" : "Hizli Ulasim"}</h2>
+              <small>CANLI SOHBET</small>
+              <h2>Aninda Sohbet</h2>
             </div>
 
             <button
@@ -237,13 +260,7 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
           </header>
 
           <form className="support-chat-form" onSubmit={handleSubmit}>
-            <p>{directMode ? "Kayitli profilinle direkt konusma baslat. Mesajin aninda panele duser." : "Mesajiniz yonetim paneline aninda duser. Mesai saatlerinde en kisa surede donus yapilir."}</p>
-
-            {!availableInOfficeHours && (
-              <div className="support-chat-offline-note" role="note">
-                Su an mesai disindayiz. Mesajinizi birakabilirsiniz; ilk mesai saatinde donus yapacagiz.
-              </div>
-            )}
+            <p>{directMode ? "Kayitli profilinle direkt konusma baslat. Mesajlar anlik olarak sohbete duser." : "Mesajiniz yonetim paneline aninda duser."}</p>
 
             {directMode ? (
               <div className="support-chat-profile-pill" role="status">
@@ -287,6 +304,20 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
               </>
             )}
 
+            {directMode && chatMessages.length > 0 && (
+              <div className="support-chat-thread">
+                {chatMessages.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`support-chat-thread__item support-chat-thread__item--${item.sender}`}
+                  >
+                    <small>{item.sender === "admin" ? "Admin" : "Siz"}</small>
+                    <p>{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
               <label>
                 <span>Mesaj</span>
                 <textarea
@@ -306,7 +337,7 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
               {error && <div className="support-chat-alert support-chat-alert--error">{error}</div>}
               {success && (
                 <div className="support-chat-alert support-chat-alert--success">
-                  Mesajiniz alindi. En kisa surede donus yapacagiz.
+                  Mesajiniz sohbete gonderildi.
                 </div>
               )}
 
@@ -333,12 +364,11 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
         onClick={handleToggle}
         aria-expanded={open}
         aria-controls="support-chat-panel"
+        aria-label="Destek sohbetini ac"
       >
         <span className="support-chat-trigger__icon">
-          <Icon name={availableInOfficeHours ? "mail" : "message-circle"} size={20} />
+          <Icon name="message-circle" size={20} />
         </span>
-        <strong>{directMode ? "Direkt Konus" : "Mesaj Birak"}</strong>
-        <em className="support-chat-trigger__dot" aria-hidden="true" />
       </button>
     </div>
   );

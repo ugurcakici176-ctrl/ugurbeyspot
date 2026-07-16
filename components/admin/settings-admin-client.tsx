@@ -1701,6 +1701,7 @@ export default function SettingsAdminClient() {
                         WhatsApp
                       </span>
                       <input
+                        placeholder="905xxxxxxxxx veya wa.me/905xxxxxxxxx"
                         value={
                           settings
                             .contact

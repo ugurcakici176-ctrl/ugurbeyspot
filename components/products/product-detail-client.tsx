@@ -133,12 +133,16 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
       ? reviews.reduce((total, item) => total + item.rating, 0) / reviews.length
       : 0;
 
-  const whatsappHref = settings.contact.whatsapp
-    ? buildWhatsappUrl(
-        settings.contact.whatsapp,
-        `Merhaba, ${product.title} ürünü hakkında bilgi almak istiyorum.`,
-      )
-    : ROUTES.contact;
+  const productWhatsappMessage = [
+    `Merhaba, ${product.title} urunu hakkinda bilgi almak istiyorum.`,
+    `Urun linki: ${ROUTES.product(product.slug)}`,
+    `Fiyat: ${formatCurrency(product.price)}`,
+  ].join("\n");
+
+  const whatsappHref = buildWhatsappUrl(
+    settings.contact.whatsapp,
+    productWhatsappMessage,
+  );
 
   async function handleReviewSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -304,15 +308,27 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
                     : "Sepete Ekle"}
                 </button>
 
-                <a
-                  className="button button--accent button--block"
-                  href={whatsappHref}
-                  target={settings.contact.whatsapp ? "_blank" : undefined}
-                  rel={settings.contact.whatsapp ? "noreferrer" : undefined}
-                >
-                  <Icon name="message-circle" size={20} />
-                  WhatsApp&apos;tan Bilgi Al
-                </a>
+                {whatsappHref ? (
+                  <a
+                    className="button button--accent button--block"
+                    href={whatsappHref}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Icon name="message-circle" size={20} />
+                    WhatsApp&apos;tan Bilgi Al
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    className="button button--ghost button--block"
+                    disabled
+                    title="Admin panelinden WhatsApp numarasi ekleyin"
+                  >
+                    <Icon name="message-circle" size={20} />
+                    WhatsApp numarasi bekleniyor
+                  </button>
+                )}
 
                 {settings.contact.phone && (
                   <a

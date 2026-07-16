@@ -8,12 +8,18 @@ export type ProductStatus = "active" | "passive" | "sold_out";
 
 export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
-export type MessageStatus = "new" | "read" | "replied";
+export type MessageStatus = "new" | "read" | "answered" | "replied";
 
 export type ProductReviewStatus =
   | "pending"
   | "approved"
   | "rejected";
+
+export type QuoteRequestStatus =
+  | "new"
+  | "reviewing"
+  | "offered"
+  | "closed";
 
 export type AdminRole = "super_admin" | "admin" | "editor";
 
@@ -309,8 +315,24 @@ export interface ContactMessage extends FirestoreEntity {
   adminReply?: string;
   repliedAt?: ISODateString;
 
+  customerUid?: string;
+  customerOnline?: boolean;
+  lastCustomerSeenAt?: ISODateString;
+  adminNotified?: boolean;
+  lastMessage?: string;
+  lastMessageAt?: ISODateString;
+  lastSender?: "customer" | "admin";
+
   sourcePage?: string;
   userAgent?: string;
+}
+
+export interface ContactChatMessage {
+  id: DocumentId;
+  text: string;
+  sender: "customer" | "admin";
+  createdAt: ISODateString;
+  read: boolean;
 }
 
 export interface ProductReview extends FirestoreEntity {
@@ -323,6 +345,44 @@ export interface ProductReview extends FirestoreEntity {
   status: ProductReviewStatus;
   sourcePage?: string;
   adminNote?: string;
+}
+
+export interface QuoteRequestProductItem {
+  productId: DocumentId;
+  title: string;
+  slug: string;
+  price: number;
+}
+
+export interface QuoteRequestAnswers {
+  need: string;
+  budgetRange: string;
+  urgency: string;
+  additionalNotes?: string;
+  purchaseType?: "single" | "bundle" | "unsure";
+  condition?: "new" | "used" | "mixed";
+  delivery?: "store" | "delivery" | "installation";
+}
+
+export interface QuoteRequestEstimate {
+  min: number;
+  max: number;
+  currency: "TRY";
+  calculatedAt: ISODateString;
+}
+
+export interface QuoteRequest extends FirestoreEntity {
+  fullName: string;
+  phone: string;
+  email?: string;
+  status: QuoteRequestStatus;
+  selectedProducts: QuoteRequestProductItem[];
+  answers: QuoteRequestAnswers;
+  estimate?: QuoteRequestEstimate;
+  sourcePage?: string;
+  adminNote?: string;
+  offeredPrice?: number;
+  offeredAt?: ISODateString;
 }
 
 export interface SiteBranding {
