@@ -3,7 +3,9 @@ import type {
   Viewport,
 } from "next";
 
+import ControlGate from "@/components/dromocob-control/control-gate";
 import GlobalSiteRuntime from "@/components/site/global-site-runtime";
+
 import {
   DEFAULT_SEO,
   SITE,
@@ -12,6 +14,9 @@ import {
 import "./globals.css";
 import "./legal.css";
 import "./control-center-runtime.css";
+
+export const dynamic =
+  "force-dynamic";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
@@ -108,8 +113,7 @@ export const viewport: Viewport = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children:
-    React.ReactNode;
+  children: React.ReactNode;
 }>) {
   return (
     <html
@@ -118,9 +122,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body>
-        <GlobalSiteRuntime>
-          {children}
-        </GlobalSiteRuntime>
+        <ControlGate>
+          <GlobalSiteRuntime>
+            {children}
+          </GlobalSiteRuntime>
+        </ControlGate>
       </body>
     </html>
   );
