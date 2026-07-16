@@ -11,7 +11,7 @@ import {
   COLLECTIONS,
   CONTACT_LIMITS,
 } from "@/lib/constants";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import type {
   ContactMessage,
   MessageStatus,
@@ -152,6 +152,59 @@ export async function updateMessageStatus(
       updatedAt: new Date().toISOString(),
     },
   );
+}
+
+export async function replyToContactMessage(
+  id: string,
+  reply: string,
+): Promise<{ queued: boolean; mailId?: string }> {
+  const normalizedReply = reply.trim();
+
+  if (!normalizedReply) {
+    throw new Error("Yanıt metni boş olamaz.");
+  }
+
+  if (normalizedReply.length > 2000) {
+    throw new Error("Yanıt metni en fazla 2000 karakter olabilir.");
+  }
+
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("Oturum bulunamadi. Lutfen tekrar giris yapin.");
+  }
+
+  const idToken = await user.getIdToken();
+
+  const response = await fetch("/api/contact/reply", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify({
+      messageId: id,
+      reply: normalizedReply,
+    }),
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | {
+        ok?: boolean;
+        error?: string;
+        queued?: boolean;
+        mailId?: string;
+      }
+    | null;
+
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error || "Yanit gonderilemedi.");
+  }
+
+  return {
+    queued: Boolean(payload.queued),
+    mailId: typeof payload.mailId === "string" ? payload.mailId : undefined,
+  };
 }
 
 export async function deleteContactMessage(

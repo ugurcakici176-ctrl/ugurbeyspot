@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import Icon from "@/components/ui/icon";
+import { usePublicSession } from "@/hooks/use-public-session";
 import { submitContactMessage } from "@/lib/messages";
 import type { SiteSettings, WorkingHour } from "@/lib/types";
 import { buildWhatsappUrl } from "@/lib/utils";
@@ -28,6 +29,29 @@ const INITIAL_FORM: ChatForm = {
   phone: "",
   message: "",
 };
+
+const FALLBACK_PROFILE_NAME = "Kayitli kullanici";
+const FALLBACK_PROFILE_PHONE = "Hesaptan iletildi";
+
+function normalizeProfileName(value?: string | null): string {
+  const normalized = (value || "").trim();
+
+  if (!normalized) {
+    return FALLBACK_PROFILE_NAME;
+  }
+
+  return normalized.slice(0, 100);
+}
+
+function normalizeProfilePhone(value?: string | null): string {
+  const normalized = (value || "").trim();
+
+  if (!normalized || normalized.length < 7 || normalized.length > 30) {
+    return FALLBACK_PROFILE_PHONE;
+  }
+
+  return normalized;
+}
 
 function normalizeDayLabel(value: string): string {
   return value
@@ -111,6 +135,7 @@ function isBusinessHours(workingHours: WorkingHour[], now: Date): boolean {
 }
 
 export default function SupportChatWidget({ settings }: SupportChatWidgetProps) {
+  const { session, authenticated } = usePublicSession();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [timeTick, setTimeTick] = useState(0);
@@ -147,14 +172,11 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
     () => isBusinessHours(workingHours, new Date(timeTick)),
     [workingHours, timeTick],
   );
-  const shouldRedirectWhatsapp = !availableInOfficeHours && Boolean(whatsappUrl);
+  const profileName = normalizeProfileName(session?.user.displayName || session?.user.email);
+  const profilePhone = normalizeProfilePhone(session?.user.phoneNumber);
+  const directMode = authenticated;
 
   function handleToggle(): void {
-    if (shouldRedirectWhatsapp && whatsappUrl) {
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-
     setOpen((current) => !current);
     setError(null);
     setSuccess(false);
@@ -169,9 +191,10 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
 
     try {
       await submitContactMessage({
-        fullName: form.fullName,
-        phone: form.phone,
-        subject: "Web chat paneli",
+        fullName: directMode ? profileName : form.fullName,
+        phone: directMode ? profilePhone : form.phone,
+        email: session?.user.email || undefined,
+        subject: directMode ? "Direkt kullanici konusmasi" : "Web chat paneli",
         message: form.message,
         sourcePage: pathname || "/",
       });
@@ -195,9 +218,12 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
           aria-label="Destek paneli"
         >
           <header className="support-chat-panel__header">
-            <div>
+            <div className="support-chat-panel__title-wrap">
+              <span className="support-chat-panel__badge">
+                <Icon name={availableInOfficeHours ? "sparkles" : "clock"} size={14} />
+              </span>
               <small>{availableInOfficeHours ? "CANLI DESTEK" : "MESAI DISI"}</small>
-              <h2>{availableInOfficeHours ? "Uzman Ekibimiz Burada" : "Hizli Ulasim"}</h2>
+              <h2>{availableInOfficeHours ? "Aninda Sohbet" : "Hizli Ulasim"}</h2>
             </div>
 
             <button
@@ -210,41 +236,56 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
             </button>
           </header>
 
-          {availableInOfficeHours ? (
-            <form className="support-chat-form" onSubmit={handleSubmit}>
-              <p>
-                Mesajiniz yonetim paneline aninda duser. Mesai saatlerinde en kisa surede donus yapilir.
-              </p>
+          <form className="support-chat-form" onSubmit={handleSubmit}>
+            <p>{directMode ? "Kayitli profilinle direkt konusma baslat. Mesajin aninda panele duser." : "Mesajiniz yonetim paneline aninda duser. Mesai saatlerinde en kisa surede donus yapilir."}</p>
 
-              <label>
-                <span>Ad Soyad</span>
-                <input
-                  required
-                  value={form.fullName}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      fullName: event.target.value,
-                    }))
-                  }
-                  placeholder="Adiniz soyadiniz"
-                />
-              </label>
+            {!availableInOfficeHours && (
+              <div className="support-chat-offline-note" role="note">
+                Su an mesai disindayiz. Mesajinizi birakabilirsiniz; ilk mesai saatinde donus yapacagiz.
+              </div>
+            )}
 
-              <label>
-                <span>Telefon</span>
-                <input
-                  required
-                  value={form.phone}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      phone: event.target.value,
-                    }))
-                  }
-                  placeholder="05xx xxx xx xx"
-                />
-              </label>
+            {directMode ? (
+              <div className="support-chat-profile-pill" role="status">
+                <span>
+                  <Icon name="sparkles" size={14} />
+                </span>
+                <strong>{profileName}</strong>
+                <small>Direkt mod aktif</small>
+              </div>
+            ) : (
+              <>
+                <label>
+                  <span>Ad Soyad</span>
+                  <input
+                    required
+                    value={form.fullName}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        fullName: event.target.value,
+                      }))
+                    }
+                    placeholder="Adiniz soyadiniz"
+                  />
+                </label>
+
+                <label>
+                  <span>Telefon</span>
+                  <input
+                    required
+                    value={form.phone}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        phone: event.target.value,
+                      }))
+                    }
+                    placeholder="05xx xxx xx xx"
+                  />
+                </label>
+              </>
+            )}
 
               <label>
                 <span>Mesaj</span>
@@ -269,23 +310,11 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
                 </div>
               )}
 
-              <div className="support-chat-actions">
-                <button type="submit" className="button button--dark button--compact" disabled={sending}>
-                  {sending ? "Gonderiliyor..." : "Mesaj Gonder"}
-                  <Icon name="arrow-right" size={17} />
-                </button>
-
-                {whatsappUrl && (
-                  <a href={whatsappUrl} target="_blank" rel="noreferrer" className="button button--ghost button--compact">
-                    WhatsApp
-                    <Icon name="external-link" size={16} />
-                  </a>
-                )}
-              </div>
-            </form>
-          ) : (
-            <div className="support-chat-offline">
-              <p>Su an mesai disindayiz. Hemen cevap alabilmek icin WhatsApp hattimiza yazabilirsiniz.</p>
+            <div className="support-chat-actions">
+              <button type="submit" className="button button--dark button--compact" disabled={sending}>
+                {sending ? "Gonderiliyor..." : directMode ? "Sohbeti Baslat" : "Mesaj Gonder"}
+                <Icon name="arrow-right" size={17} />
+              </button>
 
               {whatsappUrl && (
                 <a href={whatsappUrl} target="_blank" rel="noreferrer" className="button button--accent button--compact">
@@ -294,7 +323,7 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
                 </a>
               )}
             </div>
-          )}
+          </form>
         </section>
       )}
 
@@ -305,10 +334,11 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
         aria-expanded={open}
         aria-controls="support-chat-panel"
       >
-        <span>
-          <Icon name={shouldRedirectWhatsapp ? "message-circle" : "mail"} size={20} />
+        <span className="support-chat-trigger__icon">
+          <Icon name={availableInOfficeHours ? "mail" : "message-circle"} size={20} />
         </span>
-        <strong>{shouldRedirectWhatsapp ? "WhatsApp Destek" : "Mesaj Birak"}</strong>
+        <strong>{directMode ? "Direkt Konus" : "Mesaj Birak"}</strong>
+        <em className="support-chat-trigger__dot" aria-hidden="true" />
       </button>
     </div>
   );

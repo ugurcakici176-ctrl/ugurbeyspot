@@ -306,6 +306,8 @@ export interface ContactMessage extends FirestoreEntity {
   message: string;
 
   status: MessageStatus;
+  adminReply?: string;
+  repliedAt?: ISODateString;
 
   sourcePage?: string;
   userAgent?: string;

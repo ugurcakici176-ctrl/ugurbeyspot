@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "ugurbeyspot-51329"
+  },
+  "targets": {},
+  "etags": {
+    "ugurbeyspot-51329": {
+      "extensionInstances": {
+        "firestore-send-email": "4f719f282303e81439971d817e31d32043fe44e4a474d696778b4b520dc4e496"
+      }
+    }
+  }
+}

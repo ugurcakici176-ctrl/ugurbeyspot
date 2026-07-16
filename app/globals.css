@@ -1164,37 +1164,64 @@ button { cursor: pointer; }
   min-height: 56px;
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 20px 8px 8px;
-  border: 1px solid rgba(24,24,23,.13);
+  gap: 10px;
+  padding: 8px 18px 8px 8px;
+  border: 1px solid rgba(24,24,23,.1);
   border-radius: 999px;
-  background: linear-gradient(135deg, #ffffff, #f7f5f0);
-  box-shadow: 0 18px 46px rgba(23,23,20,.17);
+  background: linear-gradient(142deg, #ffffff, #f8f6f1 56%, #f2efe7);
+  box-shadow: 0 14px 34px rgba(23,23,20,.14);
+  transition: transform .24s ease, box-shadow .24s ease;
+  animation: supportFloat 3.6s ease-in-out infinite;
 }
-.support-chat-trigger span {
+.support-chat-trigger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(23,23,20,.2);
+}
+.support-chat-trigger__icon {
   width: 40px;
   height: 40px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--dark);
+  background: radial-gradient(circle at 28% 26%, #2f2f2d, #151513 72%);
   color: #fff;
+  position: relative;
+}
+.support-chat-trigger__icon::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1px solid rgba(24,24,23,.14);
+  border-radius: 50%;
+  opacity: .6;
+  transform: scale(.9);
+  animation: supportPulse 2.3s ease-out infinite;
 }
 .support-chat-trigger strong {
   font-size: .8rem;
   font-weight: 820;
   letter-spacing: .01em;
 }
+.support-chat-trigger__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c79a1c;
+  box-shadow: 0 0 0 7px rgba(199,154,28,.17);
+}
 .support-chat-trigger.is-open {
+  animation: none;
   box-shadow: 0 14px 30px rgba(23,23,20,.1);
 }
 .support-chat-panel {
   width: min(380px, calc(100vw - 24px));
-  border: 1px solid rgba(24,24,23,.12);
+  border: 1px solid rgba(24,24,23,.08);
   border-radius: 24px;
-  background: #fff;
-  box-shadow: 0 28px 70px rgba(23,23,20,.24);
+  background: linear-gradient(180deg, #fff, #fcfaf6);
+  box-shadow: 0 24px 64px rgba(23,23,20,.2);
   overflow: hidden;
+  transform-origin: bottom right;
+  animation: supportPanelIn .24s ease-out;
 }
 .support-chat-panel__header {
   display: flex;
@@ -1217,6 +1244,19 @@ button { cursor: pointer; }
   font-size: 1.16rem;
   font-weight: 770;
   letter-spacing: -.02em;
+}
+.support-chat-panel__title-wrap {
+  display: grid;
+  gap: 4px;
+}
+.support-chat-panel__badge {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,.16);
+  color: rgba(255,255,255,.88);
 }
 .support-chat-panel__close {
   width: 34px;
@@ -1241,9 +1281,47 @@ button { cursor: pointer; }
   font-size: .8rem;
   line-height: 1.55;
 }
+.support-chat-offline-note {
+  padding: 10px 12px;
+  border: 1px solid rgba(199,154,28,.35);
+  border-radius: 12px;
+  background: rgba(199,154,28,.08);
+  color: #725414;
+  font-size: .74rem;
+  line-height: 1.5;
+}
 .support-chat-form label {
   display: grid;
   gap: 7px;
+}
+.support-chat-profile-pill {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  align-items: center;
+  padding: 11px 12px;
+  border: 1px solid rgba(23,23,20,.1);
+  border-radius: 14px;
+  background: linear-gradient(134deg, #fffef9, #f5f1e7);
+}
+.support-chat-profile-pill span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(23,23,20,.08);
+}
+.support-chat-profile-pill strong {
+  font-size: .78rem;
+  font-weight: 760;
+}
+.support-chat-profile-pill small {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: .66rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
 }
 .support-chat-form label span {
   font-size: .68rem;
@@ -1284,6 +1362,25 @@ button { cursor: pointer; }
 .support-chat-alert--success {
   background: rgba(35,132,86,.1);
   color: #1f6b46;
+}
+@keyframes supportFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes supportPulse {
+  0% { opacity: .5; transform: scale(.9); }
+  70% { opacity: 0; transform: scale(1.24); }
+  100% { opacity: 0; transform: scale(1.24); }
+}
+@keyframes supportPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .mobile-action-bar { display: none; }
 

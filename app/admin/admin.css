@@ -263,6 +263,9 @@
   border: 0; border-bottom: 1px solid var(--admin-border);
   background: #fff; text-align: left;
 }
+.admin-message-list__items > button:disabled {
+  opacity: .62;
+}
 .admin-message-list__items > button.is-active { background: #fffcea; box-shadow: inset 3px 0 0 var(--admin-accent); }
 .admin-message-list__items > button > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .admin-message-list__items p { margin: 0; overflow: hidden; color: var(--admin-muted); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
@@ -280,7 +283,63 @@
   border: 1px solid var(--admin-border); border-radius: 14px;
   color: #45463f; font-size: .82rem; line-height: 1.8; white-space: pre-wrap;
 }
+.admin-message-reply {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.admin-message-reply > span {
+  color: var(--admin-muted);
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.admin-message-reply textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 110px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+  font-size: .78rem;
+  line-height: 1.5;
+}
+.admin-message-reply textarea:focus {
+  outline: 0;
+  border-color: rgba(226,177,0,.55);
+  box-shadow: 0 0 0 4px rgba(226,177,0,.12);
+}
+.admin-message-reply-meta {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--admin-muted);
+  font-size: .66rem;
+}
 .admin-message-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+.admin-message-actions button:disabled,
+.admin-icon-danger:disabled,
+.admin-message-reply textarea:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+.admin-form-error,
+.admin-form-success {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: .7rem;
+  font-weight: 650;
+}
+.admin-form-error {
+  background: rgba(201,71,63,.12);
+  color: #8d2a24;
+}
+.admin-form-success {
+  background: rgba(35,132,86,.12);
+  color: #1f6b46;
+}
 .admin-settings-grid, .admin-seo-grid { gap: 18px; }
 .admin-sticky-save {
   position: sticky; z-index: 5; bottom: 18px;

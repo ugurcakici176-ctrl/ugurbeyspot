@@ -175,9 +175,35 @@ service cloud.firestore {
       return request.resource.data
         .diff(resource.data)
         .affectedKeys()
-        .hasOnly(["status", "updatedAt"])
+        .hasOnly(["status", "updatedAt", "adminReply", "repliedAt"])
 
       && request.resource.data.status in ["new", "read", "replied"]
+
+      && (
+        !("adminReply" in request.resource.data)
+        || (
+          request.resource.data.adminReply is string
+          && request.resource.data.adminReply.size() <= 2000
+        )
+      )
+
+      && (
+        !("repliedAt" in request.resource.data)
+        || (
+          request.resource.data.repliedAt is string
+          && request.resource.data.repliedAt.size() <= 40
+        )
+      )
+
+      && (
+        request.resource.data.status != "replied"
+        || (
+          request.resource.data.adminReply is string
+          && request.resource.data.adminReply.size() > 0
+          && request.resource.data.repliedAt is string
+          && request.resource.data.repliedAt.size() <= 40
+        )
+      )
 
       && request.resource.data.updatedAt is string
       && request.resource.data.updatedAt.size() <= 40;
