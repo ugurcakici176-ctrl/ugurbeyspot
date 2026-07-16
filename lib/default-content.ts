@@ -223,6 +223,17 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     shortName: "Uğur Bey Spot",
     slogan: "Doğru ürün. Doğru fiyat.",
   },
+  header: {
+    navLabels: {
+      home: "Ana Sayfa",
+      about: "Hakkımızda",
+      products: "Ürünler",
+      contact: "İletişim",
+    },
+    primaryCtaLabel: "Hızlı Teklif",
+    primaryCtaHref: "/iletisim",
+    showAuthButtons: true,
+  },
   contact: {
     phone: "",
     whatsapp: "",
@@ -247,9 +258,30 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     status: "passive",
   },
   footer: {
+    quickLinksTitle: "Sayfalar",
+    contactTitle: "İletişim",
+    storeTitle: "Mağaza",
     description:
       "Elektronikten ev yaşam ürünlerine, farklı ihtiyaçlara yönelik ürün seçenekleri.",
     copyrightText: "Uğur Bey Spot. Tüm hakları saklıdır.",
+    bottomNote: "Uğur Bey Spot dijital mağaza deneyimi.",
+    legalLinks: [
+      {
+        id: "kvkk",
+        label: "KVKK",
+        href: "/kvkk-aydinlatma-metni",
+      },
+      {
+        id: "gizlilik",
+        label: "Gizlilik",
+        href: "/gizlilik-politikasi",
+      },
+      {
+        id: "kullanim-kosullari",
+        label: "Kullanım Koşulları",
+        href: "/kullanim-kosullari",
+      },
+    ],
   },
   updatedAt: EMPTY_UPDATED_AT,
 };

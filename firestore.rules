@@ -6,79 +6,358 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function adminPath() {
+    function adminRef() {
       return /databases/$(database)/documents/admins/$(request.auth.uid);
     }
 
-    function isAdmin() {
-      return isSignedIn()
-        && exists(adminPath())
-        && get(adminPath()).data.status == "active";
+    function hasAdminDocument() {
+      return isSignedIn() && exists(adminRef());
     }
 
-    function validContactMessage() {
+    function adminData() {
+      return get(adminRef()).data;
+    }
+
+    function isActiveAdmin() {
+      return hasAdminDocument()
+        && adminData().status == "active"
+        && adminData().role in ["super_admin", "admin", "editor"];
+    }
+
+    function isManagerAdmin() {
+      return hasAdminDocument()
+        && adminData().status == "active"
+        && adminData().role in ["super_admin", "admin"];
+    }
+
+    function isSuperAdmin() {
+      return hasAdminDocument()
+        && adminData().status == "active"
+        && adminData().role == "super_admin";
+    }
+
+    function validAdminDocument(adminId) {
+      return request.resource.data.keys().hasAll([
+        "uid",
+        "email",
+        "displayName",
+        "role",
+        "status"
+      ])
+      && request.resource.data.keys().hasOnly([
+        "uid",
+        "email",
+        "displayName",
+        "role",
+        "status",
+        "createdAt",
+        "updatedAt",
+        "lastLoginAt"
+      ])
+
+      && request.resource.data.uid is string
+      && request.resource.data.uid == adminId
+
+      && request.resource.data.email is string
+      && request.resource.data.email.size() > 3
+      && request.resource.data.email.size() <= 254
+
+      && request.resource.data.displayName is string
+      && request.resource.data.displayName.size() > 0
+      && request.resource.data.displayName.size() <= 100
+
+      && request.resource.data.role in ["super_admin", "admin", "editor"]
+      && request.resource.data.status in ["active", "passive"]
+
+      && (
+        !("createdAt" in request.resource.data)
+        || (
+          request.resource.data.createdAt is string
+          && request.resource.data.createdAt.size() <= 40
+        )
+      )
+
+      && (
+        !("updatedAt" in request.resource.data)
+        || (
+          request.resource.data.updatedAt is string
+          && request.resource.data.updatedAt.size() <= 40
+        )
+      )
+
+      && (
+        !("lastLoginAt" in request.resource.data)
+        || (
+          request.resource.data.lastLoginAt is string
+          && request.resource.data.lastLoginAt.size() <= 40
+        )
+      );
+    }
+
+    function validContactMessageCreate() {
       let data = request.resource.data;
 
-      return data.fullName is string
-        && data.fullName.size() > 0
-        && data.fullName.size() <= 100
-        && data.phone is string
-        && data.phone.size() > 0
-        && data.phone.size() <= 30
-        && data.subject is string
-        && data.subject.size() > 0
-        && data.subject.size() <= 150
-        && data.message is string
-        && data.message.size() > 0
-        && data.message.size() <= 3000
-        && data.status == "new";
+      return data.keys().hasAll([
+        "fullName",
+        "phone",
+        "subject",
+        "message",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ])
+
+      && data.keys().hasOnly([
+        "fullName",
+        "phone",
+        "email",
+        "subject",
+        "message",
+        "status",
+        "sourcePage",
+        "userAgent",
+        "createdAt",
+        "updatedAt"
+      ])
+
+      && data.fullName is string
+      && data.fullName.size() >= 2
+      && data.fullName.size() <= 100
+
+      && data.phone is string
+      && data.phone.size() >= 7
+      && data.phone.size() <= 30
+
+      && (
+        !("email" in data)
+        || (
+          data.email is string
+          && data.email.size() <= 160
+        )
+      )
+
+      && data.subject is string
+      && data.subject.size() > 0
+      && data.subject.size() <= 150
+
+      && data.message is string
+      && data.message.size() > 0
+      && data.message.size() <= 3000
+
+      && data.status == "new"
+
+      && (
+        !("sourcePage" in data)
+        || (
+          data.sourcePage is string
+          && data.sourcePage.size() <= 200
+        )
+      )
+
+      && (
+        !("userAgent" in data)
+        || (
+          data.userAgent is string
+          && data.userAgent.size() <= 500
+        )
+      )
+
+      && data.createdAt is string
+      && data.createdAt.size() <= 40
+
+      && data.updatedAt is string
+      && data.updatedAt.size() <= 40
+
+      && data.createdAt == data.updatedAt;
     }
 
-    match /products/{id} {
+    function validContactMessageAdminUpdate() {
+      return request.resource.data
+        .diff(resource.data)
+        .affectedKeys()
+        .hasOnly(["status", "updatedAt"])
+
+      && request.resource.data.status in ["new", "read", "replied"]
+
+      && request.resource.data.updatedAt is string
+      && request.resource.data.updatedAt.size() <= 40;
+    }
+
+    function validProductReviewCreate() {
+      let data = request.resource.data;
+
+      return data.keys().hasAll([
+        "productId",
+        "productSlug",
+        "productTitle",
+        "fullName",
+        "rating",
+        "comment",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ])
+
+      && data.keys().hasOnly([
+        "productId",
+        "productSlug",
+        "productTitle",
+        "fullName",
+        "rating",
+        "comment",
+        "status",
+        "sourcePage",
+        "createdAt",
+        "updatedAt"
+      ])
+
+      && data.productId is string
+      && data.productId.size() > 0
+
+      && data.productSlug is string
+      && data.productSlug.size() > 0
+
+      && data.productTitle is string
+      && data.productTitle.size() > 0
+
+      && data.fullName is string
+      && data.fullName.size() >= 2
+      && data.fullName.size() <= 100
+
+      && data.rating is int
+      && data.rating >= 1
+      && data.rating <= 5
+
+      && data.comment is string
+      && data.comment.size() > 0
+      && data.comment.size() <= 1200
+
+      && data.status == "pending"
+
+      && (
+        !("sourcePage" in data)
+        || (
+          data.sourcePage is string
+          && data.sourcePage.size() <= 200
+        )
+      )
+
+      && data.createdAt is string
+      && data.createdAt.size() <= 40
+
+      && data.updatedAt is string
+      && data.updatedAt.size() <= 40
+
+      && data.createdAt == data.updatedAt;
+    }
+
+    function validProductReviewAdminUpdate() {
+      return request.resource.data
+        .diff(resource.data)
+        .affectedKeys()
+        .hasOnly(["status", "adminNote", "updatedAt"])
+
+      && request.resource.data.status in ["pending", "approved", "rejected"]
+
+      && (
+        !("adminNote" in request.resource.data)
+        || (
+          request.resource.data.adminNote is string
+          && request.resource.data.adminNote.size() <= 1000
+        )
+      )
+
+      && request.resource.data.updatedAt is string
+      && request.resource.data.updatedAt.size() <= 40;
+    }
+
+    match /products/{productId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isActiveAdmin();
+      allow delete: if isManagerAdmin();
     }
 
-    match /categories/{id} {
+    match /categories/{categoryId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isActiveAdmin();
+      allow delete: if isManagerAdmin();
     }
 
-    match /site_settings/{id} {
+    match /banners/{bannerId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isActiveAdmin();
+      allow delete: if isManagerAdmin();
     }
 
-    match /homepage/{id} {
+    match /homepage/{documentId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isActiveAdmin();
+      allow delete: if isSuperAdmin();
     }
 
-    match /about/{id} {
+    match /about/{documentId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isActiveAdmin();
+      allow delete: if isSuperAdmin();
     }
 
-    match /banners/{id} {
+    match /site_settings/{documentId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isActiveAdmin();
+      allow delete: if isSuperAdmin();
     }
 
-    match /contact_messages/{id} {
-      allow create: if validContactMessage();
-      allow read, update, delete: if isAdmin();
+    match /legal_pages/{documentId} {
+      allow read: if true;
+      allow create, update: if isActiveAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /contact_messages/{messageId} {
+      allow create: if validContactMessageCreate();
+      allow get, list: if isActiveAdmin();
+      allow update: if isActiveAdmin() && validContactMessageAdminUpdate();
+      allow delete: if isManagerAdmin();
+    }
+
+    match /product_reviews/{reviewId} {
+      allow create: if validProductReviewCreate();
+      allow get, list: if isActiveAdmin() || resource.data.status == "approved";
+      allow update: if isActiveAdmin() && validProductReviewAdminUpdate();
+      allow delete: if isManagerAdmin();
     }
 
     match /admins/{adminId} {
-      allow get: if isSignedIn()
-        && (request.auth.uid == adminId || isAdmin());
+      allow get: if isSignedIn() && (
+        request.auth.uid == adminId || isSuperAdmin()
+      );
 
-      allow list: if isAdmin();
+      allow list: if isSuperAdmin();
 
-      allow update: if isSignedIn()
+      allow create: if isSuperAdmin() && validAdminDocument(adminId);
+
+      allow update: if (
+        isSuperAdmin() && validAdminDocument(adminId)
+      ) || (
+        isSignedIn()
         && request.auth.uid == adminId
-        && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(["lastLoginAt", "updatedAt"]);
+        && resource.data.status == "active"
+        && request.resource.data
+          .diff(resource.data)
+          .affectedKeys()
+          .hasOnly(["lastLoginAt", "updatedAt"])
+        && validAdminDocument(adminId)
+      );
+
+      allow delete: if isSuperAdmin() && request.auth.uid != adminId;
+    }
+
+    match /mail/{mailId} {
+      allow read, write: if false;
+    }
+
+    match /email_verifications/{verificationId} {
+      allow read, write: if false;
     }
 
     match /{document=**} {

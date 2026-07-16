@@ -7,6 +7,9 @@ import { buildTelUrl, buildWhatsappUrl } from "@/lib/utils";
 
 export default function SiteFooter({ settings }: { settings: SiteSettings }) {
   const year = new Date().getFullYear();
+  const legalLinks = settings.footer.legalLinks.filter(
+    (item) => item.label.trim() && item.href.trim(),
+  );
 
   return (
     <footer className="site-footer">
@@ -19,7 +22,7 @@ export default function SiteFooter({ settings }: { settings: SiteSettings }) {
           </div>
 
           <div className="site-footer__column">
-            <span className="footer-label">Sayfalar</span>
+            <span className="footer-label">{settings.footer.quickLinksTitle}</span>
             <Link href={ROUTES.home}>Ana Sayfa</Link>
             <Link href={ROUTES.about}>Hakkımızda</Link>
             <Link href={ROUTES.products}>Ürünler</Link>
@@ -27,7 +30,7 @@ export default function SiteFooter({ settings }: { settings: SiteSettings }) {
           </div>
 
           <div className="site-footer__column">
-            <span className="footer-label">İletişim</span>
+            <span className="footer-label">{settings.footer.contactTitle}</span>
             {settings.contact.phone && (
               <a href={buildTelUrl(settings.contact.phone)}>
                 {settings.contact.phone}
@@ -50,7 +53,7 @@ export default function SiteFooter({ settings }: { settings: SiteSettings }) {
           </div>
 
           <div className="site-footer__column">
-            <span className="footer-label">Mağaza</span>
+            <span className="footer-label">{settings.footer.storeTitle}</span>
             <p>
               {[settings.contact.district, settings.contact.city]
                 .filter(Boolean)
@@ -72,7 +75,25 @@ export default function SiteFooter({ settings }: { settings: SiteSettings }) {
 
         <div className="site-footer__bottom">
           <p>© {year} {settings.footer.copyrightText}</p>
-          <span>Uğur Bey Spot dijital mağaza deneyimi.</span>
+          <span>{settings.footer.bottomNote}</span>
+          {legalLinks.length > 0 && (
+            <div className="site-footer__legal-links">
+              {legalLinks.map((item) => {
+                const external = item.href.startsWith("http");
+
+                return (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    target={external ? "_blank" : undefined}
+                    rel={external ? "noreferrer" : undefined}
+                  >
+                    {item.label}
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </footer>

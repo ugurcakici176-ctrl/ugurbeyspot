@@ -13,6 +13,7 @@ import {
 } from "next/navigation";
 
 import Icon from "@/components/ui/icon";
+import { useCart } from "@/hooks/use-cart";
 import {
   useGlobalSiteSettings,
 } from "@/hooks/use-global-site-settings";
@@ -22,28 +23,36 @@ import {
 import {
   logoutPublicUser,
 } from "@/lib/public-auth";
+import { ROUTES } from "@/lib/constants";
 import type {
   SiteSettings,
 } from "@/lib/types";
 
 const NAVIGATION = [
   {
+    key: "home",
     href: "/",
-    label: "Ana Sayfa",
   },
   {
+    key: "about",
     href: "/hakkimizda",
-    label: "Hakkımızda",
   },
   {
+    key: "products",
     href: "/urunler",
-    label: "Ürünler",
   },
   {
+    key: "contact",
     href: "/iletisim",
-    label: "İletişim",
   },
 ] as const;
+
+const DEFAULT_NAV_LABELS = {
+  home: "Ana Sayfa",
+  about: "Hakkımızda",
+  products: "Ürünler",
+  contact: "İletişim",
+} as const;
 
 function isActiveRoute(
   pathname: string,
@@ -80,6 +89,7 @@ export default function SiteHeader({
 }: {
   settings: SiteSettings;
 }) {
+  const { totalCount } = useCart();
   const pathname =
     usePathname();
 
@@ -118,8 +128,14 @@ export default function SiteHeader({
     );
 
   useEffect(() => {
-    setMobileOpen(false);
-    setAccountOpen(false);
+    const timeoutId = window.setTimeout(() => {
+      setMobileOpen(false);
+      setAccountOpen(false);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -232,6 +248,23 @@ export default function SiteHeader({
         .accentColor,
   } as CSSProperties;
 
+  const navigation = NAVIGATION.map(
+    (item) => ({
+      ...item,
+      label:
+        settings.header.navLabels[
+          item.key
+        ] ||
+        DEFAULT_NAV_LABELS[
+          item.key
+        ],
+    }),
+  );
+
+  const hasPrimaryCta =
+    settings.header.primaryCtaLabel.trim() &&
+    settings.header.primaryCtaHref.trim();
+
   return (
     <>
       {globalSettings.technical
@@ -315,7 +348,7 @@ export default function SiteHeader({
             className="site-nav"
             aria-label="Ana menü"
           >
-            {NAVIGATION.map(
+            {navigation.map(
               (item) => {
                 const active =
                   isActiveRoute(
@@ -346,7 +379,44 @@ export default function SiteHeader({
           </nav>
 
           <div className="site-header__actions">
+            <Link
+              href={ROUTES.cart}
+              className="header-cart-button"
+              aria-label="Sepet"
+            >
+              <Icon
+                name="shopping-bag"
+                size={18}
+              />
+              <span>Sepet</span>
+              {totalCount > 0 && (
+                <strong>{totalCount}</strong>
+              )}
+            </Link>
+
+            {hasPrimaryCta && (
+              <Link
+                href={
+                  settings.header
+                    .primaryCtaHref
+                }
+                className="button button--accent button--compact desktop-only"
+              >
+                {
+                  settings.header
+                    .primaryCtaLabel
+                }
+
+                <Icon
+                  name="arrow-right"
+                  size={16}
+                />
+              </Link>
+            )}
+
             {!loading &&
+              settings.header
+                .showAuthButtons &&
               !authenticated && (
                 <>
                   <Link
@@ -554,7 +624,7 @@ export default function SiteHeader({
       >
         <div className="site-container mobile-menu__inner">
           <nav aria-label="Mobil menü">
-            {NAVIGATION.map(
+            {navigation.map(
               (item, index) => (
                 <Link
                   href={item.href}
@@ -581,6 +651,20 @@ export default function SiteHeader({
           </nav>
 
           <div className="mobile-auth-panel">
+            <Link
+              href={ROUTES.cart}
+              className="button button--ghost"
+            >
+              <Icon
+                name="shopping-bag"
+                size={18}
+              />
+              Sepet
+              {totalCount > 0 && (
+                <strong>{totalCount}</strong>
+              )}
+            </Link>
+
             {loading ? (
               <div className="mobile-auth-loading">
                 Oturum kontrol ediliyor...

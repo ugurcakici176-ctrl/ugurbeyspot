@@ -629,7 +629,7 @@ export default function GlobalSettingsAdminClient() {
             </span>
 
             <strong>
-              Site ayarlarını Firestore'a kaydet
+              Site ayarlarını Firestore&apos;a kaydet
             </strong>
           </div>
 

@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
@@ -17,18 +22,24 @@ export default function MessagesAdminClient() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | MessageStatus>("all");
 
-  async function loadMessages() {
+  const loadMessages = useCallback(async () => {
     const data = await getContactMessages();
     setMessages(data);
 
-    if (!selectedId && data.length > 0) {
-      setSelectedId(data[0].id);
-    }
-  }
+    setSelectedId((current) =>
+      current ?? data[0]?.id ?? null,
+    );
+  }, []);
 
   useEffect(() => {
-    void loadMessages();
-  }, []);
+    const timeoutId = window.setTimeout(() => {
+      void loadMessages();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [loadMessages]);
 
   const visibleMessages = useMemo(
     () =>

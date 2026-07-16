@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
@@ -35,13 +35,19 @@ export default function CategoriesAdminClient() {
   const [form, setForm] = useState<CategoryFormValues>(EMPTY_FORM);
   const [message, setMessage] = useState<string | null>(null);
 
-  async function loadCategories() {
+  const loadCategories = useCallback(async () => {
     setCategories(await getCategories({ includePassive: true }));
-  }
+  }, []);
 
   useEffect(() => {
-    void loadCategories();
-  }, []);
+    const timeoutId = window.setTimeout(() => {
+      void loadCategories();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [loadCategories]);
 
   function resetForm() {
     setEditingId(null);

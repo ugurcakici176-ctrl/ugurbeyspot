@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
 
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
@@ -43,7 +43,7 @@ export default function BannersAdminClient() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  async function loadBanners(): Promise<void> {
+  const loadBanners = useCallback(async (): Promise<void> => {
     setLoading(true);
 
     try {
@@ -55,11 +55,17 @@ export default function BannersAdminClient() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    void loadBanners();
-  }, []);
+    const timeoutId = window.setTimeout(() => {
+      void loadBanners();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [loadBanners]);
 
   function reset(): void {
     setEditing(null);

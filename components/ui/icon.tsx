@@ -26,6 +26,8 @@ function icon(name: string): ReactNode {
       return <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>;
     case "package":
       return <><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" /><path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12v9" /></>;
+    case "shopping-bag":
+      return <><path d="M6 7h12l1 13H5L6 7Z" /><path d="M9 7V6a3 3 0 0 1 6 0v1" /></>;
     case "badge-percent":
       return <><path d="m12 3 2 2 3-.4.9 2.9 2.7 1.4-.9 2.9 1.8 2.2-1.8 2.2.9 2.9-2.7 1.4-.9 2.9-3-.4-2 2-2-2-3 .4-.9-2.9-2.7-1.4.9-2.9L3.5 14l1.8-2.2-.9-2.9 2.7-1.4.9-2.9 3 .4 2-2Z" /><path d="m9 15 6-6M9.5 9h.01M14.5 15h.01" /></>;
     case "shield-check":

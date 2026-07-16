@@ -63,12 +63,16 @@
   display: grid;
   place-items: center;
   border-radius: 18px;
-  background: #fff2eb;
-  color: #c94d0d;
+  background: #fff8d9;
+  color: #9a7700;
 }
 
 .cookie-consent__eyebrow {
-  color: #c94d0d;
+  color: transparent;
+  background: linear-gradient(120deg, #fff3a8 0%, #f4d84c 35%, #e2b100 65%, #9a7700 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-size: .64rem;
   font-weight: 850;
   letter-spacing: .15em;
@@ -174,7 +178,7 @@
   background:
     radial-gradient(
       circle at 90% 10%,
-      rgba(240, 106, 36, .14),
+      rgba(226, 177, 0, .14),
       transparent 30%
     ),
     #f6f6f2;
@@ -278,7 +282,7 @@
   background:
     radial-gradient(
       circle at 85% 20%,
-      rgba(240, 106, 36, .25),
+      rgba(226, 177, 0, .25),
       transparent 30%
     ),
     #f7f7f3;
@@ -291,7 +295,7 @@
   width: 650px;
   height: 650px;
   border-radius: 50%;
-  background: rgba(240, 106, 36, .12);
+  background: rgba(226, 177, 0, .12);
   filter: blur(20px);
 }
 
@@ -304,7 +308,11 @@
 .error-page__code {
   display: block;
   margin-bottom: 30px;
-  color: #f06a24;
+  color: transparent;
+  background: linear-gradient(120deg, #fff3a8 0%, #f4d84c 35%, #e2b100 65%, #9a7700 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-size: clamp(6rem, 14vw, 13rem);
   font-weight: 850;
   letter-spacing: -.1em;

@@ -84,9 +84,12 @@ export default function IntegrationManager({
     useRef(pathname);
 
   useEffect(() => {
-    setConsent(
-      readCookieConsent(),
-    );
+    const initializeTimeout =
+      window.setTimeout(() => {
+        setConsent(
+          readCookieConsent(),
+        );
+      }, 0);
 
     function handleConsentChange(
       event: Event,
@@ -106,6 +109,10 @@ export default function IntegrationManager({
     );
 
     return () => {
+      window.clearTimeout(
+        initializeTimeout,
+      );
+
       window.removeEventListener(
         COOKIE_CONSENT_EVENT,
         handleConsentChange,

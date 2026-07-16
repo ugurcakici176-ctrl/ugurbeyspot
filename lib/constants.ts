@@ -17,6 +17,7 @@ export const COLLECTIONS = {
   homepage: "homepage",
   about: "about",
   contactMessages: "contact_messages",
+  productReviews: "product_reviews",
   banners: "banners",
   gallery: "gallery",
   admins: "admins",
@@ -33,6 +34,7 @@ export const ROUTES = {
   about: "/hakkimizda",
   products: "/urunler",
   contact: "/iletisim",
+  cart: "/sepet",
 
   admin: "/admin",
   adminLogin: "/admin/giris",
@@ -43,6 +45,7 @@ export const ROUTES = {
   adminHomepage: "/admin/anasayfa",
   adminAbout: "/admin/hakkimizda",
   adminMessages: "/admin/mesajlar",
+  adminReviews: "/admin/yorumlar",
   adminSettings: "/admin/ayarlar",
   adminSeo: "/admin/seo",
 
@@ -90,6 +93,12 @@ export const CONTACT_LIMITS = {
   emailMaxLength: 160,
   subjectMaxLength: 150,
   messageMaxLength: 3000,
+} as const;
+
+export const PRODUCT_REVIEW_LIMITS = {
+  fullNameMaxLength: 100,
+  commentMaxLength: 1200,
+  listPerProduct: 20,
 } as const;
 
 export const UPLOAD_LIMITS = {

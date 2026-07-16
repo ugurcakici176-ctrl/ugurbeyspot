@@ -93,7 +93,7 @@ export const DEFAULT_GLOBAL_SITE_SETTINGS: GlobalSiteSettings = {
     monogram: "UB",
     siteName: "Uğur Bey Spot",
     slogan: "Spot Ürünler · Güncel Seçkiler",
-    accentColor: "#f06a24",
+    accentColor: "#e2b100",
   },
 
   integrations: {
@@ -173,7 +173,7 @@ function mergeSettings(
     DEFAULT_GLOBAL_SITE_SETTINGS,
   );
 
-  return {
+  const merged: GlobalSiteSettings = {
     ...fallback,
     ...data,
 
@@ -222,6 +222,18 @@ function mergeSettings(
       ...data.technical,
     },
   };
+
+  if (
+    merged.branding.accentColor
+      .trim()
+      .toLowerCase() ===
+    "#f06a24"
+  ) {
+    merged.branding.accentColor =
+      fallback.branding.accentColor;
+  }
+
+  return merged;
 }
 
 async function fetchGlobalSiteSettings():

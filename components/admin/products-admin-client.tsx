@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
@@ -15,18 +20,24 @@ export default function ProductsAdminClient() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
       setProducts(await getProducts({ includePassive: true }));
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    void loadProducts();
-  }, []);
+    const timeoutId = window.setTimeout(() => {
+      void loadProducts();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [loadProducts]);
 
   const visibleProducts = useMemo(() => {
     const value = search.trim().toLocaleLowerCase("tr-TR");

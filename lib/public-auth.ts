@@ -225,17 +225,6 @@ export async function registerPublicUser(
       },
     );
 
-    try {
-      await sendEmailVerification(
-        credential.user,
-      );
-    } catch (error) {
-      console.warn(
-        "Verification email could not be sent:",
-        error,
-      );
-    }
-
     await credential.user.reload();
 
     return credential.user;

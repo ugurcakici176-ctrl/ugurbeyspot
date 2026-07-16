@@ -1,11 +1,16 @@
+"use client";
+
 import Link from "next/link";
 
 import Icon from "@/components/ui/icon";
+import { useCart } from "@/hooks/use-cart";
 import { ROUTES } from "@/lib/constants";
 import type { Product } from "@/lib/types";
 import { formatCurrency, getDiscountPercent } from "@/lib/utils";
 
 export default function ProductCard({ product }: { product: Product }) {
+  const { addItem } = useCart();
+
   const image = [...product.images].sort(
     (a, b) => a.sortOrder - b.sortOrder,
   )[0];
@@ -14,6 +19,10 @@ export default function ProductCard({ product }: { product: Product }) {
     product.price,
     product.compareAtPrice,
   );
+
+  const soldOut =
+    product.status === "sold_out" ||
+    product.stockStatus === "out_of_stock";
 
   return (
     <article className="product-card">
@@ -65,6 +74,24 @@ export default function ProductCard({ product }: { product: Product }) {
                 <del>{formatCurrency(product.compareAtPrice)}</del>
               )}
           </div>
+
+          <button
+            type="button"
+            className="product-card__add"
+            disabled={soldOut}
+            onClick={() => {
+              addItem({
+                productId: product.id,
+                slug: product.slug,
+                title: product.title,
+                price: product.price,
+                imageUrl: image?.url,
+              });
+            }}
+          >
+            <Icon name="shopping-bag" size={16} />
+            {soldOut ? "Stokta Yok" : "Sepete Ekle"}
+          </button>
 
           <Link
             className="product-card__arrow"

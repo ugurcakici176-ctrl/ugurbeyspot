@@ -83,8 +83,8 @@ const TABS: readonly TabItem[] = [
   },
   {
     key: "announcement",
-    label: "Duyuru & Footer",
-    description: "Site genel alanları",
+    label: "Header & Footer",
+    description: "Üst-alt alanlar",
     icon: "sparkles",
   },
   {
@@ -633,6 +633,76 @@ export default function SettingsAdminClient() {
       }),
     );
   }
+  function addFooterLegalLink(): void {
+    setSettings(
+      (current) => ({
+        ...current,
+        footer: {
+          ...current.footer,
+          legalLinks: [
+            ...current.footer
+              .legalLinks,
+            {
+              id:
+                createId(
+                  "legal",
+                ),
+              label: "",
+              href: "",
+            },
+          ],
+        },
+      }),
+    );
+  }
+  function updateFooterLegalLink(
+    id: string,
+    field:
+      | "label"
+      | "href",
+    value: string,
+  ): void {
+    setSettings(
+      (current) => ({
+        ...current,
+        footer: {
+          ...current.footer,
+          legalLinks:
+            current.footer
+              .legalLinks
+              .map(
+                (item) =>
+                  item.id === id
+                    ? {
+                        ...item,
+                        [field]:
+                          value,
+                      }
+                    : item,
+              ),
+        },
+      }),
+    );
+  }
+  function deleteFooterLegalLink(
+    id: string,
+  ): void {
+    setSettings(
+      (current) => ({
+        ...current,
+        footer: {
+          ...current.footer,
+          legalLinks:
+            current.footer
+              .legalLinks
+              .filter(
+                (item) =>
+                  item.id !== id,
+              ),
+        },
+      }),
+    );
+  }
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ): Promise<void> {
@@ -662,6 +732,37 @@ export default function SettingsAdminClient() {
           slogan:
             settings.branding
               .slogan
+              .trim(),
+        },
+        header: {
+          ...settings.header,
+          navLabels: {
+            home:
+              settings.header
+                .navLabels.home
+                .trim(),
+            about:
+              settings.header
+                .navLabels.about
+                .trim(),
+            products:
+              settings.header
+                .navLabels
+                .products
+                .trim(),
+            contact:
+              settings.header
+                .navLabels
+                .contact
+                .trim(),
+          },
+          primaryCtaLabel:
+            settings.header
+              .primaryCtaLabel
+              .trim(),
+          primaryCtaHref:
+            settings.header
+              .primaryCtaHref
               .trim(),
         },
         contact: {
@@ -719,6 +820,50 @@ export default function SettingsAdminClient() {
                   sortOrder:
                     index,
                 }),
+              ),
+        },
+        footer: {
+          ...settings.footer,
+          quickLinksTitle:
+            settings.footer
+              .quickLinksTitle
+              .trim(),
+          contactTitle:
+            settings.footer
+              .contactTitle
+              .trim(),
+          storeTitle:
+            settings.footer
+              .storeTitle
+              .trim(),
+          description:
+            settings.footer
+              .description
+              .trim(),
+          copyrightText:
+            settings.footer
+              .copyrightText
+              .trim(),
+          bottomNote:
+            settings.footer
+              .bottomNote
+              .trim(),
+          legalLinks:
+            settings.footer
+              .legalLinks
+              .map(
+                (item) => ({
+                  ...item,
+                  label:
+                    item.label.trim(),
+                  href:
+                    item.href.trim(),
+                }),
+              )
+              .filter(
+                (item) =>
+                  item.label &&
+                  item.href,
               ),
         },
       };
@@ -876,7 +1021,7 @@ export default function SettingsAdminClient() {
       <AdminPageHeading
         eyebrow="SITE CONTROL CENTER"
         title="Site Ayarları"
-        description="Marka kimliği, iletişim, duyuru, footer, GA4, Tag Manager, Google Ads, Meta Pixel, bakım modu ve teknik site davranışlarını tek merkezden yönetin."
+        description="Marka kimliği, header-footer alanları, iletişim, duyuru, GA4, Tag Manager, Google Ads, Meta Pixel, bakım modu ve teknik site davranışlarını tek merkezden yönetin."
       />
       <form
         className="control-center"
@@ -2031,11 +2176,272 @@ export default function SettingsAdminClient() {
               "announcement" && (
               <section className="control-panel">
                 <PanelHeading
-                  eyebrow="GLOBAL CONTENT"
-                  title="Duyuru ve Footer"
-                  description="Sitenin üst duyuru bandını ve tüm sayfalarda kullanılan footer metinlerini yönetin."
+                  eyebrow="HEADER & FOOTER"
+                  title="Üst ve Alt Alan Yönetimi"
+                  description="Header navigasyonu, hızlı aksiyon butonu, duyuru bandı ve footer içeriklerini gelişmiş biçimde yönetin."
                 />
                 <div className="control-fields">
+                  <div className="control-divider">
+                    HEADER
+                  </div>
+                  <Switch
+                    checked={
+                      settings
+                        .header
+                        .showAuthButtons
+                    }
+                    label="Üye giriş / kayıt butonlarını göster"
+                    description="Header sağ alandaki giriş ve kayıt butonlarını yönetir."
+                    onChange={(
+                      checked,
+                    ) =>
+                      setSettings(
+                        (
+                          current,
+                        ) => ({
+                          ...current,
+                          header: {
+                            ...current
+                              .header,
+                            showAuthButtons:
+                              checked,
+                          },
+                        }),
+                      )
+                    }
+                  />
+                  <label className="admin-field">
+                    <span>
+                      Header Aksiyon Butonu Metni
+                    </span>
+                    <input
+                      placeholder="Hızlı Teklif"
+                      value={
+                        settings
+                          .header
+                          .primaryCtaLabel
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setSettings(
+                          (
+                            current,
+                          ) => ({
+                            ...current,
+                            header: {
+                              ...current
+                                .header,
+                              primaryCtaLabel:
+                                event
+                                  .target
+                                  .value,
+                            },
+                          }),
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="admin-field">
+                    <span>
+                      Header Aksiyon Butonu Linki
+                    </span>
+                    <input
+                      placeholder="/iletisim veya https://..."
+                      value={
+                        settings
+                          .header
+                          .primaryCtaHref
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setSettings(
+                          (
+                            current,
+                          ) => ({
+                            ...current,
+                            header: {
+                              ...current
+                                .header,
+                              primaryCtaHref:
+                                event
+                                  .target
+                                  .value,
+                            },
+                          }),
+                        )
+                      }
+                    />
+                  </label>
+                  <div className="settings-hours">
+                    <article className="settings-hours__row">
+                      <span>
+                        01
+                      </span>
+                      <input
+                        value={
+                          settings
+                            .header
+                            .navLabels.home
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          setSettings(
+                            (
+                              current,
+                            ) => ({
+                              ...current,
+                              header: {
+                                ...current
+                                  .header,
+                                navLabels: {
+                                  ...current
+                                    .header
+                                    .navLabels,
+                                  home: event
+                                    .target
+                                    .value,
+                                },
+                              },
+                            }),
+                          )
+                        }
+                      />
+                      <input
+                        value="/"
+                        disabled
+                      />
+                    </article>
+                    <article className="settings-hours__row">
+                      <span>
+                        02
+                      </span>
+                      <input
+                        value={
+                          settings
+                            .header
+                            .navLabels
+                            .about
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          setSettings(
+                            (
+                              current,
+                            ) => ({
+                              ...current,
+                              header: {
+                                ...current
+                                  .header,
+                                navLabels: {
+                                  ...current
+                                    .header
+                                    .navLabels,
+                                  about:
+                                    event
+                                      .target
+                                      .value,
+                                },
+                              },
+                            }),
+                          )
+                        }
+                      />
+                      <input
+                        value="/hakkimizda"
+                        disabled
+                      />
+                    </article>
+                    <article className="settings-hours__row">
+                      <span>
+                        03
+                      </span>
+                      <input
+                        value={
+                          settings
+                            .header
+                            .navLabels
+                            .products
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          setSettings(
+                            (
+                              current,
+                            ) => ({
+                              ...current,
+                              header: {
+                                ...current
+                                  .header,
+                                navLabels: {
+                                  ...current
+                                    .header
+                                    .navLabels,
+                                  products:
+                                    event
+                                      .target
+                                      .value,
+                                },
+                              },
+                            }),
+                          )
+                        }
+                      />
+                      <input
+                        value="/urunler"
+                        disabled
+                      />
+                    </article>
+                    <article className="settings-hours__row">
+                      <span>
+                        04
+                      </span>
+                      <input
+                        value={
+                          settings
+                            .header
+                            .navLabels
+                            .contact
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          setSettings(
+                            (
+                              current,
+                            ) => ({
+                              ...current,
+                              header: {
+                                ...current
+                                  .header,
+                                navLabels: {
+                                  ...current
+                                    .header
+                                    .navLabels,
+                                  contact:
+                                    event
+                                      .target
+                                      .value,
+                                },
+                              },
+                            }),
+                          )
+                        }
+                      />
+                      <input
+                        value="/iletisim"
+                        disabled
+                      />
+                    </article>
+                  </div>
+
+                  <div className="control-divider">
+                    DUYURU BANDI
+                  </div>
                   <Switch
                     checked={
                       settings
@@ -2134,6 +2540,99 @@ export default function SettingsAdminClient() {
                   </div>
                   <label className="admin-field">
                     <span>
+                      Hızlı Linkler Başlığı
+                    </span>
+                    <input
+                      value={
+                        settings
+                          .footer
+                          .quickLinksTitle
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setSettings(
+                          (
+                            current,
+                          ) => ({
+                            ...current,
+                            footer: {
+                              ...current
+                                .footer,
+                              quickLinksTitle:
+                                event
+                                  .target
+                                  .value,
+                            },
+                          }),
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="admin-field">
+                    <span>
+                      İletişim Başlığı
+                    </span>
+                    <input
+                      value={
+                        settings
+                          .footer
+                          .contactTitle
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setSettings(
+                          (
+                            current,
+                          ) => ({
+                            ...current,
+                            footer: {
+                              ...current
+                                .footer,
+                              contactTitle:
+                                event
+                                  .target
+                                  .value,
+                            },
+                          }),
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="admin-field">
+                    <span>
+                      Mağaza Başlığı
+                    </span>
+                    <input
+                      value={
+                        settings
+                          .footer
+                          .storeTitle
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setSettings(
+                          (
+                            current,
+                          ) => ({
+                            ...current,
+                            footer: {
+                              ...current
+                                .footer,
+                              storeTitle:
+                                event
+                                  .target
+                                  .value,
+                            },
+                          }),
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="admin-field">
+                    <span>
                       Footer Açıklaması
                     </span>
                     <textarea
@@ -2195,6 +2694,123 @@ export default function SettingsAdminClient() {
                       }
                     />
                   </label>
+                  <label className="admin-field">
+                    <span>
+                      Alt Not Metni
+                    </span>
+                    <input
+                      value={
+                        settings
+                          .footer
+                          .bottomNote
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setSettings(
+                          (
+                            current,
+                          ) => ({
+                            ...current,
+                            footer: {
+                              ...current
+                                .footer,
+                              bottomNote:
+                                event
+                                  .target
+                                  .value,
+                            },
+                          }),
+                        )
+                      }
+                    />
+                  </label>
+                  <div className="control-divider">
+                    YASAL LİNKLER
+                  </div>
+                  <div className="settings-hours">
+                    {settings.footer.legalLinks.map(
+                      (
+                        item,
+                        index,
+                      ) => (
+                        <article
+                          key={item.id}
+                          className="settings-hours__row"
+                        >
+                          <span>
+                            {String(
+                              index + 1,
+                            ).padStart(
+                              2,
+                              "0",
+                            )}
+                          </span>
+                          <input
+                            placeholder="Link başlığı"
+                            value={
+                              item.label
+                            }
+                            onChange={(
+                              event,
+                            ) =>
+                              updateFooterLegalLink(
+                                item.id,
+                                "label",
+                                event
+                                  .target
+                                  .value,
+                              )
+                            }
+                          />
+                          <input
+                            placeholder="/kvkk-aydinlatma-metni"
+                            value={
+                              item.href
+                            }
+                            onChange={(
+                              event,
+                            ) =>
+                              updateFooterLegalLink(
+                                item.id,
+                                "href",
+                                event
+                                  .target
+                                  .value,
+                              )
+                            }
+                          />
+                          <button
+                            type="button"
+                            aria-label="Yasal linki sil"
+                            onClick={() =>
+                              deleteFooterLegalLink(
+                                item.id,
+                              )
+                            }
+                          >
+                            <Icon
+                              name="trash"
+                              size={17}
+                            />
+                          </button>
+                        </article>
+                      ),
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-secondary-button"
+                    onClick={
+                      addFooterLegalLink
+                    }
+                  >
+                    <Icon
+                      name="plus"
+                      size={17}
+                    />
+                    Yasal Link Ekle
+                  </button>
                 </div>
               </section>
             )}
@@ -2605,7 +3221,7 @@ export default function SettingsAdminClient() {
                       </label>
                     </div>
                     <p className="integration-card__note integration-card__note--warning">
-                      Bu alan Google Ads ayarını Firestore'da saklar. Conversion event gönderimini IntegrationManager tarafında ayrıca bağlamalısın.
+                      Bu alan Google Ads ayarını Firestore&apos;da saklar. Conversion event gönderimini IntegrationManager tarafında ayrıca bağlamalısın.
                     </p>
                   </article>
                   <article className="integration-card">

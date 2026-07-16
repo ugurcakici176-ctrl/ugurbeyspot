@@ -62,6 +62,11 @@ const NAV_ITEMS: readonly AdminNavigationItem[] = [
     icon: "inbox",
   },
   {
+    href: ROUTES.adminReviews,
+    label: "Yorumlar",
+    icon: "message-circle",
+  },
+  {
     href: ROUTES.adminSettings,
     label: "Site Ayarları",
     icon: "settings",
@@ -110,7 +115,13 @@ export default function AdminShell({
     useState(false);
 
   useEffect(() => {
-    setMobileOpen(false);
+    const timeoutId = window.setTimeout(() => {
+      setMobileOpen(false);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [pathname]);
 
   useEffect(() => {

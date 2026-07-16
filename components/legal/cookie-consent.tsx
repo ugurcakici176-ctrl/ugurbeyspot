@@ -31,20 +31,23 @@ export default function CookieConsent() {
     useState(false);
 
   useEffect(() => {
-    const saved =
-      readCookieConsent();
+    const initializeTimeout =
+      window.setTimeout(() => {
+        const saved =
+          readCookieConsent();
 
-    if (saved) {
-      setAnalytics(
-        saved.analytics,
-      );
+        if (saved) {
+          setAnalytics(
+            saved.analytics,
+          );
 
-      setMarketing(
-        saved.marketing,
-      );
-    } else {
-      setVisible(true);
-    }
+          setMarketing(
+            saved.marketing,
+          );
+        } else {
+          setVisible(true);
+        }
+      }, 0);
 
     function handleOpen(): void {
       const current =
@@ -70,6 +73,10 @@ export default function CookieConsent() {
     );
 
     return () => {
+      window.clearTimeout(
+        initializeTimeout,
+      );
+
       window.removeEventListener(
         COOKIE_SETTINGS_EVENT,
         handleOpen,

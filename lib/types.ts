@@ -10,6 +10,11 @@ export type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
 export type MessageStatus = "new" | "read" | "replied";
 
+export type ProductReviewStatus =
+  | "pending"
+  | "approved"
+  | "rejected";
+
 export type AdminRole = "super_admin" | "admin" | "editor";
 
 export type ButtonTarget = "_self" | "_blank";
@@ -306,6 +311,18 @@ export interface ContactMessage extends FirestoreEntity {
   userAgent?: string;
 }
 
+export interface ProductReview extends FirestoreEntity {
+  productId: DocumentId;
+  productSlug: string;
+  productTitle: string;
+  fullName: string;
+  rating: number;
+  comment: string;
+  status: ProductReviewStatus;
+  sourcePage?: string;
+  adminNote?: string;
+}
+
 export interface SiteBranding {
   siteName: string;
   shortName: string;
@@ -329,6 +346,18 @@ export interface SiteSeoSettings {
 export interface SiteSettings {
   branding: SiteBranding;
 
+  header: {
+    navLabels: {
+      home: string;
+      about: string;
+      products: string;
+      contact: string;
+    };
+    primaryCtaLabel: string;
+    primaryCtaHref: string;
+    showAuthButtons: boolean;
+  };
+
   contact: ContactSettings;
 
   seo: SiteSeoSettings;
@@ -340,8 +369,17 @@ export interface SiteSettings {
   };
 
   footer: {
+    quickLinksTitle: string;
+    contactTitle: string;
+    storeTitle: string;
     description: string;
     copyrightText: string;
+    bottomNote: string;
+    legalLinks: Array<{
+      id: string;
+      label: string;
+      href: string;
+    }>;
   };
 
   updatedAt: ISODateString;

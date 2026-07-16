@@ -4,7 +4,7 @@
   --admin-text: #171714;
   --admin-muted: #707168;
   --admin-border: rgba(23,23,20,.1);
-  --admin-accent: #f06a24;
+  --admin-accent: #e2b100;
   --admin-dark: #181817;
   --admin-sidebar: #151514;
   --admin-success: #238456;
@@ -32,7 +32,7 @@
 .admin-user { display: flex; align-items: center; gap: 10px; }
 .admin-user__avatar {
   width: 39px; height: 39px; display: grid; place-items: center;
-  border-radius: 13px; background: rgba(240,106,36,.2); color: #ff9c66; font-weight: 800;
+  border-radius: 13px; background: rgba(226,177,0,.2); color: #f4d84c; font-weight: 800;
 }
 .admin-user strong { font-size: .75rem; }
 .admin-logout {
@@ -87,7 +87,7 @@
 }
 .admin-stat-card > span {
   width: 42px; height: 42px; display: grid; place-items: center;
-  margin-bottom: auto; border-radius: 13px; background: #fff2eb; color: var(--admin-accent);
+  margin-bottom: auto; border-radius: 13px; background: #fff8d9; color: var(--admin-accent);
 }
 .admin-stat-card strong { font-size: 2rem; }
 .admin-stat-card small { color: var(--admin-muted); font-size: .67rem; }
@@ -110,13 +110,15 @@
   background: #f1f1ef; color: var(--admin-muted); font-size: .61rem; font-weight: 800;
 }
 .admin-status--active, .admin-status--replied { background: #edf8f2; color: var(--admin-success); }
-.admin-status--new { background: #fff2eb; color: var(--admin-accent); }
+.admin-status--new, .admin-status--pending { background: #fff8d9; color: var(--admin-accent); }
+.admin-status--approved { background: #edf8f2; color: var(--admin-success); }
+.admin-status--rejected { background: #fff0ef; color: var(--admin-danger); }
 .admin-status--passive, .admin-status--sold_out { background: #fff0ef; color: var(--admin-danger); }
 
 .admin-login { min-height: 100svh; display: grid; grid-template-columns: 1fr minmax(480px,.72fr); background: #fff; }
 .admin-login__visual {
   min-height: 100svh; display: grid; place-items: center; padding: 72px;
-  background: radial-gradient(circle at 85% 15%,rgba(240,106,36,.45),transparent 30%), #171716;
+  background: radial-gradient(circle at 85% 15%,rgba(226,177,0,.45),transparent 30%), #171716;
   color: #fff;
 }
 .admin-login__visual-content { max-width: 700px; }
@@ -143,7 +145,7 @@
 .admin-form-section__heading > span {
   width: 35px; height: 35px; flex: 0 0 auto;
   display: grid; place-items: center;
-  border-radius: 11px; background: #fff2eb; color: var(--admin-accent); font-size: .62rem; font-weight: 850;
+  border-radius: 11px; background: #fff8d9; color: var(--admin-accent); font-size: .62rem; font-weight: 850;
 }
 .admin-form-section__heading > div { display: grid; }
 .admin-form-section__heading h2, .admin-form-section > h2 { margin: 0; font-size: 1.1rem; }
@@ -261,7 +263,7 @@
   border: 0; border-bottom: 1px solid var(--admin-border);
   background: #fff; text-align: left;
 }
-.admin-message-list__items > button.is-active { background: #fff8f4; box-shadow: inset 3px 0 0 var(--admin-accent); }
+.admin-message-list__items > button.is-active { background: #fffcea; box-shadow: inset 3px 0 0 var(--admin-accent); }
 .admin-message-list__items > button > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .admin-message-list__items p { margin: 0; overflow: hidden; color: var(--admin-muted); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
 .admin-message-list__items small { color: var(--admin-muted); font-size: .59rem; }
