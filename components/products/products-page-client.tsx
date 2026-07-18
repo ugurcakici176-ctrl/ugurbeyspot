@@ -1,26 +1,45 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import ProductCard from "@/components/products/product-card";
 import SiteChrome from "@/components/site/site-chrome";
 import EmptyState from "@/components/ui/empty-state";
 import Icon from "@/components/ui/icon";
-import LoadingScreen from "@/components/ui/loading-screen";
 import { getCategories } from "@/lib/categories";
 import { SORT_OPTION_LABELS, SORT_OPTIONS } from "@/lib/constants";
 import { getProducts, type ProductSort } from "@/lib/products";
 import type { Category, Product } from "@/lib/types";
 
-export default function ProductsPageClient() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [categoryId, setCategoryId] = useState("");
+export default function ProductsPageClient({
+  initialCategorySlug,
+  initialProducts,
+  initialCategories,
+  heroTitle = "Ürünlerimizi Keşfedin",
+  heroDescription = "Güncel ürün seçeneklerini inceleyin. Detaylı bilgi için bizimle doğrudan iletişime geçin.",
+}: {
+  initialCategorySlug?: string;
+  initialProducts?: Product[];
+  initialCategories?: Category[];
+  heroTitle?: string;
+  heroDescription?: string;
+}) {
+  const [products, setProducts] = useState<Product[]>(initialProducts || []);
+  const [categories, setCategories] = useState<Category[]>(initialCategories || []);
+  const [categoryId, setCategoryId] = useState(() =>
+    initialCategorySlug
+      ? initialCategories?.find((item) => item.slug === initialCategorySlug)?.id || ""
+      : "",
+  );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<ProductSort>(SORT_OPTIONS.newest);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (initialProducts && initialCategories) {
+      return;
+    }
+
     let active = true;
 
     void Promise.all([getProducts(), getCategories()])
@@ -31,7 +50,7 @@ export default function ProductsPageClient() {
         setCategories(categoryData);
 
         const params = new URLSearchParams(window.location.search);
-        const categorySlug = params.get("kategori");
+        const categorySlug = initialCategorySlug || params.get("kategori");
 
         if (categorySlug) {
           const matched = categoryData.find(
@@ -44,14 +63,12 @@ export default function ProductsPageClient() {
       .catch((reason: unknown) => {
         console.error("Products could not be loaded:", reason);
       })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+      .finally(() => undefined);
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialCategories, initialCategorySlug, initialProducts]);
 
   const visibleProducts = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase("tr-TR");
@@ -83,20 +100,13 @@ export default function ProductsPageClient() {
       });
   }, [products, categoryId, search, sort]);
 
-  if (loading) {
-    return <LoadingScreen label="Ürünler hazırlanıyor" />;
-  }
-
   return (
     <SiteChrome>
       <section className="page-hero page-hero--products">
         <div className="site-container">
           <span className="eyebrow">ÜRÜNLER</span>
-          <h1>Ürünlerimizi Keşfedin</h1>
-          <p>
-            Güncel ürün seçeneklerini inceleyin. Detaylı bilgi için bizimle
-            doğrudan iletişime geçin.
-          </p>
+          <h1>{heroTitle}</h1>
+          <p>{heroDescription}</p>
         </div>
       </section>
 
@@ -132,23 +142,29 @@ export default function ProductsPageClient() {
           </div>
 
           <div className="category-filter">
-            <button
-              type="button"
+            <Link
+              href="/urunler"
               className={categoryId === "" ? "is-active" : ""}
-              onClick={() => setCategoryId("")}
+              onClick={(event) => {
+                event.preventDefault();
+                setCategoryId("");
+              }}
             >
               Tümü
-            </button>
+            </Link>
 
             {categories.map((category) => (
-              <button
-                type="button"
+              <Link
+                href={`/kategori/${category.slug}`}
                 key={category.id}
                 className={categoryId === category.id ? "is-active" : ""}
-                onClick={() => setCategoryId(category.id)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  setCategoryId(category.id);
+                }}
               >
                 {category.name}
-              </button>
+              </Link>
             ))}
           </div>
 

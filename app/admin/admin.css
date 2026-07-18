@@ -1025,6 +1025,61 @@
   }
 }
 
+/* Mobile dashboard header and empty-state corrections */
+@media (max-width: 900px) {
+  .admin-topbar > .admin-topbar__left {
+    display: flex;
+  }
+
+  .admin-topbar > .admin-topbar__actions {
+    display: flex;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-stat-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+.admin-dashboard-empty {
+  min-height: 210px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 28px 20px;
+  color: var(--admin-muted);
+  text-align: center;
+}
+
+.admin-dashboard-empty > span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: rgba(230, 184, 0, .13);
+  color: #b08700;
+}
+
+.admin-dashboard-empty strong {
+  color: var(--admin-text);
+  font-size: .88rem;
+}
+
+.admin-dashboard-empty small {
+  max-width: 310px;
+  line-height: 1.55;
+}
+
+.admin-dashboard-empty a {
+  margin-top: 5px;
+  color: #9a7700;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
 /* VERY SMALL PHONES */
 
 @media (max-width: 420px) {

@@ -6,7 +6,6 @@ import type {
 } from "react";
 
 import Icon from "@/components/ui/icon";
-import LoadingScreen from "@/components/ui/loading-screen";
 import {
   usePublicSession,
 } from "@/hooks/use-public-session";
@@ -29,19 +28,22 @@ export default function MaintenanceGate({
     isAdmin,
   } = usePublicSession();
 
-  if (
-    settingsLoading ||
-    sessionLoading
-  ) {
-    return (
-      <LoadingScreen label="Mağaza hazırlanıyor" />
-    );
+  if (settingsLoading) {
+    return <>{children}</>;
   }
 
   const canBypass =
     settings.maintenance
       .allowAdminBypass &&
     isAdmin;
+
+  if (
+    settings.maintenance.enabled &&
+    settings.maintenance.allowAdminBypass &&
+    sessionLoading
+  ) {
+    return <>{children}</>;
+  }
 
   if (
     !settings.maintenance.enabled ||

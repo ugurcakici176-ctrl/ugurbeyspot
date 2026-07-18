@@ -106,6 +106,7 @@ export default function SiteHeader({
     loading,
     authenticated,
     isAdmin,
+    emailVerified,
   } = usePublicSession();
 const [
 
@@ -529,15 +530,13 @@ const [
                         <div className="header-account__verification">
                           <span
                             className={
-                              session?.user
-                                .emailVerified
+                              emailVerified
                                 ? "is-verified"
                                 : "is-pending"
                             }
                           />
 
-                          {session?.user
-                            .emailVerified
+                          {emailVerified
                             ? "E-posta doğrulandı"
                             : "E-posta doğrulanmadı"}
                         </div>

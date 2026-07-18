@@ -314,6 +314,11 @@ export default function AccountPage() {
       }
 
       setVerifiedByCode(true);
+      window.dispatchEvent(
+        new Event(
+          "public-email-verification-changed",
+        ),
+      );
       setVerificationModalOpen(false);
       setVerificationCode("");
       setMessage("Hesabiniz basariyla dogrulandi.");

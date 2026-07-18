@@ -20,6 +20,7 @@ import type {
 } from "@/lib/global-site-settings";
 import {
   GOOGLE_ANALYTICS_ID,
+  GOOGLE_TAG_MANAGER_ID,
 } from "@/lib/google-analytics";
 
 declare global {
@@ -81,7 +82,7 @@ export default function IntegrationManager({
     );
 
   const lastGaPath =
-    useRef(pathname);
+    useRef<string | null>(null);
 
   const lastMetaPath =
     useRef(pathname);
@@ -167,6 +168,9 @@ export default function IntegrationManager({
       .enabled &&
     gtmConsentAllowed &&
     isGtmId(gtmId);
+
+  const gtmLoadedInLayout =
+    gtmId === GOOGLE_TAG_MANAGER_ID;
 
   const loadMetaPixel =
     settings.integrations.metaPixel
@@ -277,14 +281,14 @@ export default function IntegrationManager({
               window.gtag = gtag;
               gtag('js', new Date());
               gtag('config', '${ga4Id}', {
-                send_page_view: true
+                send_page_view: false
               });
             `}
           </Script>
         </>
       )}
 
-      {loadGtm && (
+      {loadGtm && !gtmLoadedInLayout && (
         <Script
           id="ugurbey-gtm"
           strategy="afterInteractive"

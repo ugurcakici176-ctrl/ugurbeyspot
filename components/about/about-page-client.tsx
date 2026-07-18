@@ -5,8 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import SiteChrome from "@/components/site/site-chrome";
 import EmptyState from "@/components/ui/empty-state";
 import Icon from "@/components/ui/icon";
-import LoadingScreen from "@/components/ui/loading-screen";
 import { getAboutContent } from "@/lib/site-content";
+import { DEFAULT_ABOUT_CONTENT } from "@/lib/default-content";
 import type { AboutContent } from "@/lib/types";
 
 type LoadStatus = "loading" | "success" | "error";
@@ -26,13 +26,9 @@ function ImageWithFallback({
   loading = "lazy",
   fallback,
 }: ImageWithFallbackProps) {
-  const [hasError, setHasError] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
-  useEffect(() => {
-    setHasError(false);
-  }, [src]);
-
-  if (!src || hasError) {
+  if (!src || failedSrc === src) {
     return <>{fallback}</>;
   }
 
@@ -43,14 +39,14 @@ function ImageWithFallback({
       className={className}
       loading={loading}
       decoding="async"
-      onError={() => setHasError(true)}
+      onError={() => setFailedSrc(src)}
     />
   );
 }
 
 export default function AboutPageClient() {
-  const [content, setContent] = useState<AboutContent | null>(null);
-  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [content, setContent] = useState<AboutContent | null>(DEFAULT_ABOUT_CONTENT);
+  const [status, setStatus] = useState<LoadStatus>("success");
   const [error, setError] = useState<string | null>(null);
 
   const loadContent = useCallback(async () => {
@@ -125,10 +121,6 @@ export default function AboutPageClient() {
       (a, b) => a.sortOrder - b.sortOrder,
     );
   }, [content?.gallery.images]);
-
-  if (status === "loading") {
-    return <LoadingScreen label="Hikâyemiz hazırlanıyor" />;
-  }
 
   if (status === "error" || !content) {
     return (

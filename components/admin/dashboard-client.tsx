@@ -129,6 +129,14 @@ export default function DashboardClient() {
                 </span>
               </Link>
             ))}
+            {!loading && products.length === 0 && (
+              <div className="admin-dashboard-empty">
+                <span><Icon name="package" size={22} /></span>
+                <strong>Henüz ürün eklenmedi</strong>
+                <small>İlk ürününüzü ekleyerek mağaza vitrininizi hazırlayın.</small>
+                <Link href={ROUTES.adminNewProduct}>Yeni ürün ekle</Link>
+              </div>
+            )}
           </div>
         </section>
 
@@ -160,6 +168,13 @@ export default function DashboardClient() {
                 </span>
               </Link>
             ))}
+            {!loading && messages.length === 0 && (
+              <div className="admin-dashboard-empty">
+                <span><Icon name="inbox" size={22} /></span>
+                <strong>Henüz mesaj yok</strong>
+                <small>Yeni müşteri mesajları burada listelenecek.</small>
+              </div>
+            )}
           </div>
         </section>
       </div>

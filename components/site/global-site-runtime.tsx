@@ -9,6 +9,7 @@ import type {
 
 import IntegrationManager from "@/components/site/integration-manager";
 import MaintenanceGate from "@/components/site/maintenance-gate";
+import CookieConsent from "@/components/legal/cookie-consent";
 import {
   useGlobalSiteSettings,
 } from "@/hooks/use-global-site-settings";
@@ -36,15 +37,19 @@ export default function GlobalSiteRuntime({
   }
 
   return (
-    <MaintenanceGate
-      settings={settings}
-      settingsLoading={loading}
-    >
-      <IntegrationManager
+    <>
+      <MaintenanceGate
         settings={settings}
-      />
+        settingsLoading={loading}
+      >
+        <IntegrationManager
+          settings={settings}
+        />
 
-      {children}
-    </MaintenanceGate>
+        {children}
+      </MaintenanceGate>
+
+      <CookieConsent />
+    </>
   );
 }

@@ -12,7 +12,6 @@ import ProductCard from "@/components/products/product-card";
 import SiteChrome from "@/components/site/site-chrome";
 import EmptyState from "@/components/ui/empty-state";
 import Icon from "@/components/ui/icon";
-import LoadingScreen from "@/components/ui/loading-screen";
 import QuickQuoteModal from "@/components/site/quick-quote-modal";
 
 import {
@@ -28,6 +27,7 @@ import {
 } from "@/lib/products";
 import {
   DEFAULT_HERO_IMAGES,
+  DEFAULT_HOMEPAGE_CONTENT,
 } from "@/lib/default-content";
 
 import {
@@ -52,9 +52,12 @@ export default function HomePageClient() {
   const [
     data,
     setData,
-  ] = useState<HomeData | null>(
-    null,
-  );
+  ] = useState<HomeData | null>({
+    content: DEFAULT_HOMEPAGE_CONTENT,
+    categories: [],
+    products: [],
+    banners: [],
+  });
 
   const [
     error,
@@ -239,15 +242,6 @@ const [
         "--hero-y",
         "0px",
       );
-  }
-
-  if (
-    !data &&
-    !error
-  ) {
-    return (
-      <LoadingScreen label="Mağaza hazırlanıyor" />
-    );
   }
 
   if (!data) {
@@ -651,7 +645,7 @@ const [
                       index,
                     ) => (
                       <Link
-                        href={`/urunler?kategori=${category.slug}`}
+                        href={`/kategori/${category.slug}`}
                         className="category-card category-card--premium"
                         key={
                           category.id

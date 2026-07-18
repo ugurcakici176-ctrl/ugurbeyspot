@@ -52,7 +52,7 @@ export const ROUTES = {
   adminSeo: "/admin/seo",
 
   product: (slug: string) => `/urunler/${slug}`,
-  category: (slug: string) => `/urunler?kategori=${slug}`,
+  category: (slug: string) => `/kategori/${slug}`,
   editProduct: (id: string) => `/admin/urunler/${id}`,
 } as const;
 

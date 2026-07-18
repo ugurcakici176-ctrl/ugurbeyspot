@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
 import { getProducts } from "@/lib/products";
+import { getCategories } from "@/lib/categories";
 import { absoluteUrl, SITE_URL } from "@/lib/site-url";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   let productEntries: MetadataRoute.Sitemap = [];
+  let categoryEntries: MetadataRoute.Sitemap = [];
 
   try {
     const products = await getProducts();
@@ -19,6 +21,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
   } catch (error) {
     console.error("Products could not be added to sitemap:", error);
+  }
+
+  try {
+    const categories = await getCategories();
+    categoryEntries = categories.map((category) => ({
+      url: absoluteUrl(`/kategori/${category.slug}`),
+      lastModified: category.updatedAt || category.createdAt,
+      changeFrequency: "weekly",
+      priority: 0.85,
+      images: category.image?.url
+        ? [absoluteUrl(category.image.url)]
+        : undefined,
+    }));
+  } catch (error) {
+    console.error("Categories could not be added to sitemap:", error);
   }
 
   return [
@@ -70,6 +87,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "yearly",
       priority: 0.3,
     },
+    ...categoryEntries,
     ...productEntries,
   ];
 }
