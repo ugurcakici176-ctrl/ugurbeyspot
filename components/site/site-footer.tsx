@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import Icon from "@/components/ui/icon";
+import { BRAND_ASSETS } from "@/lib/branding";
 import { ROUTES } from "@/lib/constants";
 import type { SiteSettings } from "@/lib/types";
 import {
@@ -214,7 +215,11 @@ export default function SiteFooter({
               aria-label={`${siteName} ana sayfa`}
             >
               <span className="brand__mark brand__mark--light">
-               {"UB"}
+                <img
+                  src={BRAND_ASSETS.mark}
+                  alt=""
+                  aria-hidden="true"
+                />
               </span>
 
               <span className="site-footer__brand-copy">

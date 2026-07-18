@@ -5,6 +5,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
+import { BRAND_ASSETS } from "@/lib/branding";
 
 export type GtmConsentCategory =
   | "analytics"
@@ -86,8 +87,8 @@ export const GLOBAL_SITE_SETTINGS_EVENT =
 
 export const DEFAULT_GLOBAL_SITE_SETTINGS: GlobalSiteSettings = {
   branding: {
-    logoMode: "monogram",
-    logoUrl: "",
+    logoMode: "image",
+    logoUrl: BRAND_ASSETS.mark,
     logoStoragePath: "",
     logoAlt: "Uğur Bey Spot",
     monogram: "UB",

@@ -13,6 +13,7 @@ import {
 } from "next/navigation";
 
 import Icon from "@/components/ui/icon";
+import { BRAND_ASSETS } from "@/lib/branding";
 
 import {
   usePublicSession,
@@ -280,7 +281,9 @@ export default function LoginPage() {
         href="/"
         className="public-auth-brand"
       >
-        <span>UB</span>
+        <span>
+          <img src={BRAND_ASSETS.mark} alt="" aria-hidden="true" />
+        </span>
 
         <div>
           <strong>

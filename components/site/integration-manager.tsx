@@ -18,6 +18,9 @@ import {
 import type {
   GlobalSiteSettings,
 } from "@/lib/global-site-settings";
+import {
+  GOOGLE_ANALYTICS_ID,
+} from "@/lib/google-analytics";
 
 declare global {
   interface Window {
@@ -149,6 +152,9 @@ export default function IntegrationManager({
     analyticsAllowed &&
     isGa4Id(ga4Id);
 
+  const ga4LoadedInLayout =
+    ga4Id === GOOGLE_ANALYTICS_ID;
+
   const gtmConsentAllowed =
     settings.integrations.gtm
       .consentCategory ===
@@ -167,6 +173,38 @@ export default function IntegrationManager({
       .enabled &&
     marketingAllowed &&
     isPixelId(pixelId);
+
+  useEffect(() => {
+    if (!window.gtag) {
+      return;
+    }
+
+    window.gtag(
+      "consent",
+      "update",
+      {
+        analytics_storage:
+          analyticsAllowed
+            ? "granted"
+            : "denied",
+        ad_storage:
+          marketingAllowed
+            ? "granted"
+            : "denied",
+        ad_user_data:
+          marketingAllowed
+            ? "granted"
+            : "denied",
+        ad_personalization:
+          marketingAllowed
+            ? "granted"
+            : "denied",
+      },
+    );
+  }, [
+    analyticsAllowed,
+    marketingAllowed,
+  ]);
 
   useEffect(() => {
     if (
@@ -221,7 +259,7 @@ export default function IntegrationManager({
 
   return (
     <>
-      {loadGa4 && (
+      {loadGa4 && !ga4LoadedInLayout && (
         <>
           <Script
             id="ugurbey-ga4-library"

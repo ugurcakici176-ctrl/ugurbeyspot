@@ -124,16 +124,17 @@ export const UPLOAD_LIMITS = {
 export const IMAGE_ACCEPT = UPLOAD_LIMITS.allowedImageTypes.join(",");
 
 export const DEFAULT_SEO: SeoConfig = {
-  title: "Uğur Bey Spot | Avantajlı Fiyatlarla Geniş Ürün Yelpazesi",
+  title: "Konya Spotçu | İkinci El Eşya Alım Satım | Uğur Bey Spot",
   description:
-    "Elektronik, küçük ev aletleri, ev ve yaşam ürünlerini Uğur Bey Spot avantajlarıyla keşfedin. Ürünler hakkında hızlıca bilgi alın.",
+    "Konya'da ikinci el eşya alım satımı: mobilya, beyaz eşya, elektronik ve ev eşyaları. Güncel ürünleri inceleyin, Uğur Bey Spot'tan hızlı teklif alın.",
   keywords: [
     "Uğur Bey Spot",
-    "spot mağaza",
-    "elektronik ürünler",
-    "küçük ev aletleri",
-    "ev yaşam ürünleri",
-    "uygun fiyatlı ürünler",
+    "Konya spotçu",
+    "Konya ikinci el eşya",
+    "Konya spot eşya",
+    "ikinci el mobilya Konya",
+    "ikinci el beyaz eşya Konya",
+    "ikinci el eşya alanlar Konya",
   ],
   noIndex: false,
 };
@@ -142,9 +143,9 @@ export const DEFAULT_PAGE_SEO = {
   home: DEFAULT_SEO,
 
   about: {
-    title: "Hakkımızda | Uğur Bey Spot",
+    title: "Konya İkinci El Eşya Uzmanı | Hakkımızda",
     description:
-      "Uğur Bey Spot'u, mağaza anlayışımızı ve müşterilerimize sunduğumuz hizmet yaklaşımını yakından tanıyın.",
+      "Konya'da ikinci el eşya alım satımı yapan Uğur Bey Spot'un ürün seçimi, güvenilir hizmet ve hızlı teklif yaklaşımını yakından tanıyın.",
     keywords: [
       "Uğur Bey Spot hakkında",
       "Uğur Bey Spot mağaza",
@@ -154,9 +155,9 @@ export const DEFAULT_PAGE_SEO = {
   },
 
   products: {
-    title: "Ürünler | Uğur Bey Spot",
+    title: "Konya İkinci El Eşya ve Spot Ürünler",
     description:
-      "Elektronikten ev yaşam ürünlerine kadar Uğur Bey Spot ürünlerini keşfedin ve ürünler hakkında hızlıca bilgi alın.",
+      "Konya'da satışta olan ikinci el mobilya, beyaz eşya, elektronik ve spot ürünleri inceleyin. Güncel fiyat ve stok için Uğur Bey Spot'a ulaşın.",
     keywords: [
       "Uğur Bey Spot ürünler",
       "elektronik ürünler",
@@ -167,9 +168,9 @@ export const DEFAULT_PAGE_SEO = {
   },
 
   contact: {
-    title: "İletişim | Uğur Bey Spot",
+    title: "Konya Spotçu İletişim ve Yol Tarifi",
     description:
-      "Uğur Bey Spot iletişim bilgilerine ulaşın, WhatsApp üzerinden yazın veya mağazamız için yol tarifi alın.",
+      "Konya Uğur Bey Spot iletişim, WhatsApp ve yol tarifi bilgileri. İkinci el eşya satmak veya ürünlerimiz hakkında bilgi almak için bize ulaşın.",
     keywords: [
       "Uğur Bey Spot iletişim",
       "Uğur Bey Spot telefon",

@@ -7,13 +7,43 @@ import type {
 
 const EMPTY_UPDATED_AT = "1970-01-01T00:00:00.000Z";
 
+export const DEFAULT_HERO_IMAGES = [
+  {
+    id: "spot-magaza-vitrini",
+    url: "/images/spot/konya-ikinci-el-esya-magazasi.jpg",
+    storagePath: "",
+    alt: "Konya Uğur Bey Spot ikinci el mobilya ve beyaz eşya mağazası",
+    width: 1536,
+    height: 1024,
+    sortOrder: 1,
+  },
+  {
+    id: "ikinci-el-koltuk",
+    url: "/images/spot/ikinci-el-koltuk.jpg",
+    storagePath: "",
+    alt: "Konya'da satışa sunulan temiz ikinci el koltuk",
+    width: 1254,
+    height: 1254,
+    sortOrder: 2,
+  },
+  {
+    id: "ikinci-el-beyaz-esya",
+    url: "/images/spot/ikinci-el-beyaz-esya.jpg",
+    storagePath: "",
+    alt: "İkinci el buzdolabı çamaşır makinesi ve televizyon",
+    width: 1254,
+    height: 1254,
+    sortOrder: 3,
+  },
+];
+
 export const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
   hero: {
     eyebrow: "UĞUR BEY SPOT",
-    title: "Eviniz İçin Doğru Ürün.",
-    highlightedText: "Doğru Fiyat.",
+    title: "Konya'da İkinci El Eşya.",
+    highlightedText: "Doğru Ürün, Doğru Fiyat.",
     description:
-      "Elektronikten ev yaşam ürünlerine, ihtiyacınız olan ürünleri avantajlı seçeneklerle keşfedin.",
+      "İkinci el mobilya, beyaz eşya, elektronik ve ev eşyalarında güncel seçenekleri keşfedin; eşyanızı satmak için hızlı teklif alın.",
     primaryButton: {
       label: "Ürünleri Keşfet",
       href: "/urunler",
@@ -24,22 +54,22 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
       href: "/iletisim",
       target: "_self",
     },
-    images: [],
+    images: DEFAULT_HERO_IMAGES,
     status: "active",
   },
   trustItems: [
     {
       id: "genis-urun",
-      title: "Geniş Ürün Yelpazesi",
-      description: "Farklı ihtiyaçlara uygun ürün seçenekleri.",
+      title: "Seçilmiş İkinci El Ürünler",
+      description: "Mobilyadan beyaz eşyaya güncel ürün seçenekleri.",
       icon: "package",
       sortOrder: 1,
       status: "active",
     },
     {
       id: "avantajli-fiyat",
-      title: "Avantajlı Fiyatlar",
-      description: "Fiyat ve performans odaklı ürün alternatifleri.",
+      title: "Konya'da Avantajlı Fiyat",
+      description: "Bütçenize uygun ikinci el ve spot alternatifleri.",
       icon: "badge-percent",
       sortOrder: 2,
       status: "active",
@@ -47,7 +77,7 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
     {
       id: "guvenilir-alisveris",
       title: "Güvenilir Alışveriş",
-      description: "Gerçek mağaza, doğrudan iletişim ve şeffaf süreç.",
+      description: "Konya'da gerçek mağaza, doğrudan iletişim ve şeffaf süreç.",
       icon: "shield-check",
       sortOrder: 3,
       status: "active",
@@ -65,13 +95,13 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
     eyebrow: "KATEGORİLER",
     title: "İhtiyacınıza Göre Keşfedin",
     description:
-      "Aradığınız ürüne daha hızlı ulaşmak için kategorilerimizi inceleyin.",
+      "İkinci el mobilya, beyaz eşya, elektronik ve ev ürünlerine kategorilerden hızla ulaşın.",
   },
   featuredProductsSection: {
     eyebrow: "SEÇKİ",
     title: "Öne Çıkan Ürünler",
     description:
-      "Mağazamızda öne çıkan ürünleri ve güncel seçenekleri keşfedin.",
+      "Konya mağazamızda satışta olan öne çıkan ikinci el ve spot ürünleri keşfedin.",
   },
   campaignSection: {
     eyebrow: "FIRSATLAR",
@@ -81,7 +111,7 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
     eyebrow: "NEDEN BİZ?",
     title: "Alışverişte Daha Net, Daha Ulaşılabilir Bir Deneyim",
     description:
-      "Ürün çeşitliliğini hızlı iletişim ve mağaza güveniyle bir araya getiriyoruz.",
+      "İkinci el eşya alım satımında ürün çeşitliliğini hızlı iletişim ve Konya mağaza güveniyle bir araya getiriyoruz.",
     items: [
       {
         id: "urun-secimi",
@@ -111,11 +141,12 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
   },
   storeSection: {
     eyebrow: "MAĞAZAMIZ",
-    title: "Sadece Bir Web Sitesi Değil, Gerçek Bir Mağaza",
+    title: "Konya'da Ziyaret Edebileceğiniz Gerçek Bir Spot Mağaza",
     description:
-      "Ürünlerimizi inceleyin, detaylı bilgi alın ve mağazamıza gelerek seçenekleri yakından görün.",
+      "İkinci el ürünlerimizi inceleyin, güncel stok bilgisi alın ve Konya'daki mağazamıza gelerek seçenekleri yakından görün.",
     address: "",
     workingHoursText: "",
+    image: DEFAULT_HERO_IMAGES[0],
     directionsButton: {
       label: "Yol Tarifi Al",
       href: "/iletisim",
@@ -133,9 +164,9 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
   },
   finalCta: {
     eyebrow: "HIZLI İLETİŞİM",
-    title: "Aradığınız Ürün İçin Bize Yazın",
+    title: "İkinci El Eşya Almak veya Satmak İçin Bize Yazın",
     description:
-      "Ürün bilgisi ve güncel seçenekler için ekibimizle doğrudan iletişime geçin.",
+      "Konya'da ikinci el eşyanız için teklif almak veya güncel ürünleri sormak üzere bizimle doğrudan iletişime geçin.",
     primaryButton: {
       label: "WhatsApp'tan Sor",
       href: "/iletisim",
@@ -157,15 +188,33 @@ export const DEFAULT_ABOUT_CONTENT: AboutContent = {
     title: "İhtiyacınız Olan Ürünü, Doğru Seçenekle Buluşturuyoruz.",
     description:
       "Uğur Bey Spot olarak ürün çeşitliliğini, ulaşılabilir iletişimi ve mağaza güvenini tek noktada sunuyoruz.",
+    image: {
+      id: "ugurbey-spot-magaza-ic-gorunus",
+      url: "/images/store/ugurbey-spot-magaza-ic-gorunus.jpg",
+      storagePath: "",
+      alt: "Uğur Bey Spot ikinci el mobilya ve beyaz eşya mağazası iç görünüşü",
+      width: 1774,
+      height: 887,
+      sortOrder: 1,
+    },
   },
 
   story: {
     eyebrow: "BİZİM HİKÂYEMİZ",
-    title: "Alışverişi Daha Kolay ve Daha Ulaşılabilir Hale Getirmek İçin",
+    title: "Konya'da Güvenilir İkinci El Alışveriş İçin",
     paragraphs: [
-      "Müşterilerimizin farklı ihtiyaçlarına uygun ürünleri tek noktada bulabilmesini önemsiyoruz.",
-      "Mağazamızda ürün çeşitliliği kadar hızlı iletişim, şeffaf bilgi ve ulaşılabilir hizmet anlayışını da merkezde tutuyoruz.",
+      "Müşterilerimizin ikinci el mobilya, beyaz eşya ve elektronik ihtiyaçlarına uygun ürünleri tek noktada bulabilmesini önemsiyoruz.",
+      "Konya'daki mağazamızda ürün çeşitliliği kadar hızlı iletişim, şeffaf bilgi ve ulaşılabilir hizmet anlayışını da merkezde tutuyoruz.",
     ],
+    image: {
+      id: "ugurbey-konya-magaza-dis-gorunus",
+      url: "/images/store/ugurbey-spot-konya-magaza-dis-gorunus.jpg",
+      storagePath: "",
+      alt: "Konya Uğur Bey Spot mağazasının dış görünüşü",
+      width: 1448,
+      height: 1086,
+      sortOrder: 1,
+    },
   },
 
   values: {

@@ -1,5 +1,7 @@
 .brand__mark--runtime {
   overflow: hidden;
+  background: transparent;
+  border-radius: 0;
 }
 
 .brand__mark--runtime img {

@@ -13,7 +13,8 @@ import {
 } from "@/lib/categories";
 import { DEFAULT_SEO } from "@/lib/constants";
 import type { Category, CategoryFormValues } from "@/lib/types";
-import { slugify } from "@/lib/utils";
+import { uploadImage } from "@/lib/storage";
+import { createId, slugify } from "@/lib/utils";
 
 const EMPTY_FORM: CategoryFormValues = {
   name: "",
@@ -34,6 +35,7 @@ export default function CategoriesAdminClient() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CategoryFormValues>(EMPTY_FORM);
   const [message, setMessage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const loadCategories = useCallback(async () => {
     setCategories(await getCategories({ includePassive: true }));
@@ -83,11 +85,34 @@ export default function CategoriesAdminClient() {
       return;
     }
 
+    const normalizedForm: CategoryFormValues = {
+      ...form,
+      slug,
+      seo: {
+        ...form.seo,
+        title:
+          form.seo.title.trim() ||
+          `${form.name} | Konya İkinci El ve Spot Ürünler`,
+        description:
+          form.seo.description.trim() ||
+          form.description.trim(),
+        keywords:
+          form.seo.keywords.length > 0
+            ? form.seo.keywords
+            : [
+                `${form.name} Konya`,
+                `ikinci el ${form.name.toLocaleLowerCase("tr-TR")}`,
+                `spot ${form.name.toLocaleLowerCase("tr-TR")}`,
+                "Uğur Bey Spot",
+              ],
+      },
+    };
+
     if (editingId) {
-      await updateCategory(editingId, { ...form, slug });
+      await updateCategory(editingId, normalizedForm);
       setMessage("Kategori güncellendi.");
     } else {
-      await createCategory({ ...form, slug });
+      await createCategory(normalizedForm);
       resetForm();
       setMessage("Kategori oluşturuldu.");
     }
@@ -146,6 +171,69 @@ export default function CategoriesAdminClient() {
               }}
             />
           </label>
+
+          <div className="admin-field">
+            <span>Kategori Görseli</span>
+
+            {form.image?.url && (
+              <div className="admin-category-image-preview">
+                <img src={form.image.url} alt={form.image.alt || form.name} />
+              </div>
+            )}
+
+            <input
+              type="url"
+              placeholder="/images/categories/ornek.jpg veya https://..."
+              value={form.image?.url || ""}
+              onChange={(event) => {
+                const url = event.target.value.trim();
+                setForm((current) => ({
+                  ...current,
+                  image: url
+                    ? {
+                        id: current.image?.id || createId(),
+                        url,
+                        storagePath: current.image?.storagePath || "",
+                        alt: current.image?.alt || `${current.name} kategorisi`,
+                        sortOrder: 0,
+                      }
+                    : undefined,
+                }));
+              }}
+            />
+
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              disabled={uploading}
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+
+                setUploading(true);
+                setMessage("Kategori görseli yükleniyor...");
+
+                try {
+                  const image = await uploadImage(
+                    file,
+                    "categories",
+                    `${form.name || "Ürün"} kategorisi`,
+                  );
+                  setForm((current) => ({ ...current, image }));
+                  setMessage("Kategori görseli yüklendi.");
+                } catch (reason) {
+                  setMessage(
+                    reason instanceof Error
+                      ? reason.message
+                      : "Kategori görseli yüklenemedi.",
+                  );
+                } finally {
+                  setUploading(false);
+                  event.target.value = "";
+                }
+              }}
+            />
+          </div>
 
           <label className="admin-field">
             <span>Slug</span>
@@ -214,7 +302,7 @@ export default function CategoriesAdminClient() {
                 Vazgeç
               </button>
             )}
-            <button className="admin-primary-button" type="submit">
+            <button className="admin-primary-button" type="submit" disabled={uploading}>
               <Icon name="save" size={18} />
               Kaydet
             </button>
@@ -233,7 +321,11 @@ export default function CategoriesAdminClient() {
             {categories.map((category) => (
               <article key={category.id} className="admin-category-card">
                 <span className="admin-category-card__image">
-                  <Icon name="tag" size={21} />
+                  {category.image?.url ? (
+                    <img src={category.image.url} alt="" />
+                  ) : (
+                    <Icon name="tag" size={21} />
+                  )}
                 </span>
                 <div>
                   <strong>{category.name}</strong>

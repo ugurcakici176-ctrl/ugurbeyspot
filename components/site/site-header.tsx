@@ -23,6 +23,7 @@ import {
 import {
   logoutPublicUser,
 } from "@/lib/public-auth";
+import { BRAND_ASSETS } from "@/lib/branding";
 import { ROUTES } from "@/lib/constants";
 import type {
   SiteSettings,
@@ -320,24 +321,16 @@ const [
             aria-label={`${siteName} ana sayfa`}
           >
             <span className="brand__mark brand__mark--runtime">
-              {globalSettings.branding
-                .logoMode === "image" &&
-              globalSettings.branding
-                .logoUrl ? (
-                <img
-                  src={
-                    globalSettings.branding
-                      .logoUrl
-                  }
-                  alt={
-                    globalSettings.branding
-                      .logoAlt
-                  }
-                />
-              ) : (
-                globalSettings.branding
-                  .monogram || "UB"
-              )}
+              <img
+                src={
+                  globalSettings.branding.logoUrl ||
+                  BRAND_ASSETS.mark
+                }
+                alt={
+                  globalSettings.branding.logoAlt ||
+                  "Uğur Bey Spot logosu"
+                }
+              />
             </span>
 
             <span className="brand__text">

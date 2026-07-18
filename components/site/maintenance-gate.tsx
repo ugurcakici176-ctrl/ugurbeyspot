@@ -13,6 +13,7 @@ import {
 import type {
   GlobalSiteSettings,
 } from "@/lib/global-site-settings";
+import { BRAND_ASSETS } from "@/lib/branding";
 
 export default function MaintenanceGate({
   settings,
@@ -58,25 +59,10 @@ export default function MaintenanceGate({
 
       <header className="maintenance-page__header">
         <span className="maintenance-brand">
-          {settings.branding.logoMode ===
-            "image" &&
-          settings.branding.logoUrl ? (
-            <img
-              src={
-                settings.branding.logoUrl
-              }
-              alt={
-                settings.branding.logoAlt
-              }
-            />
-          ) : (
-            <span>
-              {
-                settings.branding.monogram ||
-                "UB"
-              }
-            </span>
-          )}
+          <img
+            src={settings.branding.logoUrl || BRAND_ASSETS.mark}
+            alt={settings.branding.logoAlt || "Uğur Bey Spot logosu"}
+          />
         </span>
 
         <div>

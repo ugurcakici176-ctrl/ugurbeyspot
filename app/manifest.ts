@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Uğur Bey Spot",
     short_name: "Uğur Bey Spot",
     description:
-      "Spot ürünler, güncel ürün seçenekleri ve mağaza iletişim bilgileri.",
+      "Konya'da ikinci el eşya alım satımı, spot ürünler ve güncel mağaza seçenekleri.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ProductDetailClient from "@/components/products/product-detail-client";
 import { SITE } from "@/lib/constants";
 import { getProductBySlug } from "@/lib/products";
+import { absoluteUrl, SITE_URL } from "@/lib/site-url";
 
 function toAbsoluteUrl(value?: string): string | undefined {
   if (!value) {
@@ -14,11 +15,7 @@ function toAbsoluteUrl(value?: string): string | undefined {
     return value;
   }
 
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    "https://ugurbeyspot---ugurbeyspot-51329.europe-west4.hosted.app";
-
-  return new URL(value, base).toString();
+  return new URL(value, `${SITE_URL}/`).toString();
 }
 
 export async function generateMetadata({
@@ -104,10 +101,6 @@ export default async function ProductDetailPage({
   }
 
   const firstImage = [...product.images].sort((a, b) => a.sortOrder - b.sortOrder)[0];
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    "https://ugurbeyspot---ugurbeyspot-51329.europe-west4.hosted.app";
-
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -122,19 +115,19 @@ export default async function ProductDetailPage({
     category: product.categoryName || "Urun",
     offers: {
       "@type": "Offer",
-      url: `${siteUrl}/urunler/${product.slug}`,
+      url: absoluteUrl(`/urunler/${product.slug}`),
       priceCurrency: SITE.currency,
       price: product.price,
       availability:
         product.stockStatus === "out_of_stock" || product.status === "sold_out"
           ? "https://schema.org/OutOfStock"
           : "https://schema.org/InStock",
-      itemCondition: "https://schema.org/NewCondition",
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: 5,
-      reviewCount: 1,
+      itemCondition: "https://schema.org/UsedCondition",
+      seller: {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#business`,
+        name: SITE.name,
+      },
     },
     additionalProperty: product.specifications.map((item) => ({
       "@type": "PropertyValue",
@@ -151,12 +144,43 @@ export default async function ProductDetailPage({
       : {}),
   };
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Ana Sayfa",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "İkinci El Ürünler",
+        item: absoluteUrl("/urunler"),
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.title,
+        item: absoluteUrl(`/urunler/${product.slug}`),
+      },
+    ],
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(productSchema),
+          __html: JSON.stringify(productSchema).replace(/</g, "\\u003c"),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c"),
         }}
       />
       <ProductDetailClient slug={slug} />

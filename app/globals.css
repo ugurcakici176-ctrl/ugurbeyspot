@@ -4147,6 +4147,13 @@ button { cursor: pointer; }
     0 12px 26px rgba(226, 185, 0, 0.13);
 }
 
+.brand__mark--light img,
+.public-auth-brand > span img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+
 .site-footer__brand-copy {
   min-width: 0;
   display: grid;

@@ -4,7 +4,7 @@ import ProductsPageClient from "@/components/products/products-page-client";
 import { DEFAULT_PAGE_SEO } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Ürünler",
+  title: DEFAULT_PAGE_SEO.products.title,
   description: DEFAULT_PAGE_SEO.products.description,
   keywords: DEFAULT_PAGE_SEO.products.keywords,
   alternates: {
@@ -24,12 +24,12 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "/urunler",
-    title: "Ürünler",
+    title: DEFAULT_PAGE_SEO.products.title,
     description: DEFAULT_PAGE_SEO.products.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ürünler",
+    title: DEFAULT_PAGE_SEO.products.title,
     description: DEFAULT_PAGE_SEO.products.description,
   },
 };

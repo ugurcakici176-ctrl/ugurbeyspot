@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Sepet",
   description:
     "Teklif sepetinizdeki urunleri inceleyin ve WhatsApp uzerinden hizlica siparis surecini baslatin.",
+  robots: { index: false, follow: false },
 };
 
 export default function CartPage() {

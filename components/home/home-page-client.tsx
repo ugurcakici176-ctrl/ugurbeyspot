@@ -26,6 +26,9 @@ import {
 import {
   getFeaturedProducts,
 } from "@/lib/products";
+import {
+  DEFAULT_HERO_IMAGES,
+} from "@/lib/default-content";
 
 import {
   getHomepageContent,
@@ -274,7 +277,9 @@ const [
   } = data;
 
   const heroImages = [
-    ...content.hero.images,
+    ...(content.hero.images.length > 0
+      ? content.hero.images
+      : DEFAULT_HERO_IMAGES),
   ].sort(
     (a, b) =>
       a.sortOrder -
@@ -1117,19 +1122,15 @@ const [
               data-reveal
             >
               <div className="store-story__visual store-story__visual--premium">
-                {content.storeSection.image ? (
+                {content.storeSection.image || DEFAULT_HERO_IMAGES[0] ? (
                   <img
                     src={
-                      content
-                        .storeSection
-                        .image
-                        .url
+                      content.storeSection.image?.url ||
+                      DEFAULT_HERO_IMAGES[0].url
                     }
                     alt={
-                      content
-                        .storeSection
-                        .image
-                        .alt ||
+                      content.storeSection.image?.alt ||
+                      DEFAULT_HERO_IMAGES[0].alt ||
                       content
                         .storeSection
                         .title
