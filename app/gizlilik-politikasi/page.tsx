@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Gizlilik Politikası",
   description:
     "Uğur Bey Spot gizlilik politikası ve veri işleme süreçleri hakkında genel bilgilendirme.",
+  alternates: { canonical: "/gizlilik-politikasi" },
 };
 
 export default function PrivacyPolicyPage() {

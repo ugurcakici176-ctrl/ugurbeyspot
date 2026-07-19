@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "KVKK Aydınlatma Metni",
   description:
     "Uğur Bey Spot kişisel verilerin işlenmesine ilişkin KVKK aydınlatma metni.",
+  alternates: { canonical: "/kvkk-aydinlatma-metni" },
 };
 
 export default function KvkkPage() {

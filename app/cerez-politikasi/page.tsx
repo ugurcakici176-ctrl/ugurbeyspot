@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Çerez Politikası",
   description:
     "Uğur Bey Spot web sitesi çerez ve tarayıcı tercih teknolojilerine ilişkin bilgilendirme.",
+  alternates: { canonical: "/cerez-politikasi" },
 };
 
 export default function CookiePolicyPage() {

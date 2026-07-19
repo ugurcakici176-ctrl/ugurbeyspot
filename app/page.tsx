@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: { absolute: DEFAULT_PAGE_SEO.home.title },
   description: DEFAULT_PAGE_SEO.home.description,
   keywords: DEFAULT_PAGE_SEO.home.keywords,
+  alternates: { canonical: "/" },
 };
 
 export default function HomePage() {

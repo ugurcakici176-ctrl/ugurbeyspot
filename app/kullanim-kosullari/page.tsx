@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Kullanım Koşulları",
   description:
     "Uğur Bey Spot web sitesi kullanım koşulları.",
+  alternates: { canonical: "/kullanim-kosullari" },
 };
 
 export default function TermsPage() {

@@ -30,9 +30,15 @@ export async function generateMetadata({
   }
 
   const canonical = `/kategori/${category.slug}`;
-  const title = `Konya İkinci El ${category.name} | Uğur Bey Spot`;
-  const description = categoryDescription(category.name, category.description);
-  const image = category.image?.url ? absoluteUrl(category.image.url) : undefined;
+  const title =
+    category.seo?.title?.trim() ||
+    `Konya İkinci El ${category.name} | Uğur Bey Spot`;
+  const description =
+    category.seo?.description?.trim() ||
+    categoryDescription(category.name, category.description);
+  const imageSource = category.seo?.ogImageUrl || category.image?.url;
+  const image = imageSource ? absoluteUrl(imageSource) : undefined;
+  const noIndex = Boolean(category.seo?.noIndex);
 
   return {
     title: { absolute: title },
@@ -44,7 +50,17 @@ export async function generateMetadata({
       "Uğur Bey Spot",
     ],
     alternates: { canonical },
-    robots: { index: true, follow: true },
+    robots: {
+      index: !noIndex,
+      follow: !noIndex,
+      googleBot: {
+        index: !noIndex,
+        follow: !noIndex,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
+    },
     openGraph: {
       type: "website",
       locale: SITE.locale,
