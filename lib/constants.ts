@@ -124,17 +124,36 @@ export const UPLOAD_LIMITS = {
 export const IMAGE_ACCEPT = UPLOAD_LIMITS.allowedImageTypes.join(",");
 
 export const DEFAULT_SEO: SeoConfig = {
-  title: "Konya Spotçu | İkinci El Eşya Alım Satım | Uğur Bey Spot",
+  title: "Konya Spot | İkinci El Eşya Alım Satım – Uğur Bey Spot",
   description:
-    "Konya'da ikinci el eşya alım satımı: mobilya, beyaz eşya, elektronik ve ev eşyaları. Güncel ürünleri inceleyin, Uğur Bey Spot'tan hızlı teklif alın.",
+    "Konya'nın güvenilir spot mağazası Uğur Bey Spot'ta ikinci el mobilya, beyaz eşya, elektronik ve ev eşyası alım satımı yapın. Güncel ürünleri inceleyin, hızlı teklif alın.",
   keywords: [
-    "Uğur Bey Spot",
+    "Konya spot",
+    "spot ikinci el",
     "Konya spotçu",
     "Konya ikinci el eşya",
     "Konya spot eşya",
+    "ikinci el eşya Konya",
+    "spot eşya Konya",
     "ikinci el mobilya Konya",
     "ikinci el beyaz eşya Konya",
     "ikinci el eşya alanlar Konya",
+    "ikinci el eşya satanlar Konya",
+    "2.el eşya Konya",
+    "spot mobilya Konya",
+    "spot beyaz eşya Konya",
+    "ucuz ikinci el eşya Konya",
+    "Konya spot mağaza",
+    "Konya ikinci el mobilya",
+    "Konya ikinci el beyaz eşya",
+    "Konya ikinci el elektronik",
+    "spot eşya alım satım Konya",
+    "ikinci el eşya fiyatları Konya",
+    "Uğur Bey Spot",
+    "Uğur Bey Spot Konya",
+    "Konya spot eşya mağazası",
+    "Konya'da spotçu",
+    "en ucuz spot eşya Konya",
   ],
   noIndex: false,
 };
@@ -143,38 +162,52 @@ export const DEFAULT_PAGE_SEO = {
   home: DEFAULT_SEO,
 
   about: {
-    title: "Konya İkinci El Eşya Uzmanı | Hakkımızda",
+    title: "Konya Spot Eşya Uzmanı – Hakkımızda | Uğur Bey Spot",
     description:
-      "Konya'da ikinci el eşya alım satımı yapan Uğur Bey Spot'un ürün seçimi, güvenilir hizmet ve hızlı teklif yaklaşımını yakından tanıyın.",
+      "Konya'da ikinci el eşya alım satımında güvenilir adres Uğur Bey Spot. Spot mobilya, beyaz eşya ve elektronik konusundaki deneyimimizi yakından tanıyın.",
     keywords: [
       "Uğur Bey Spot hakkında",
       "Uğur Bey Spot mağaza",
-      "spot mağaza",
+      "Konya spot mağaza",
+      "Konya ikinci el eşya mağazası",
+      "spot eşya alım satım",
+      "Konya spotçu hakkında",
+      "güvenilir spot mağaza Konya",
     ],
     noIndex: false,
   },
 
   products: {
-    title: "Konya İkinci El Eşya ve Spot Ürünler",
+    title: "Konya Spot Ürünler – İkinci El Mobilya, Beyaz Eşya, Elektronik",
     description:
-      "Konya'da satışta olan ikinci el mobilya, beyaz eşya, elektronik ve spot ürünleri inceleyin. Güncel fiyat ve stok için Uğur Bey Spot'a ulaşın.",
+      "Konya'da satışa sunulan ikinci el mobilya, beyaz eşya, elektronik ve spot ürünleri inceleyin. Güncel fiyat ve stok bilgisi için Uğur Bey Spot'a ulaşın.",
     keywords: [
+      "Konya spot ürünler",
+      "ikinci el ürünler Konya",
+      "spot mobilya Konya",
+      "ikinci el beyaz eşya Konya",
+      "spot elektronik Konya",
+      "ikinci el eşya fiyatları",
+      "ucuz mobilya Konya",
+      "2.el beyaz eşya Konya",
+      "Konya spot eşya satış",
       "Uğur Bey Spot ürünler",
-      "elektronik ürünler",
-      "ev yaşam ürünleri",
-      "spot ürünler",
     ],
     noIndex: false,
   },
 
   contact: {
-    title: "Konya Spotçu İletişim ve Yol Tarifi",
+    title: "Konya Spot Mağaza İletişim – Adres, Telefon | Uğur Bey Spot",
     description:
-      "Konya Uğur Bey Spot iletişim, WhatsApp ve yol tarifi bilgileri. İkinci el eşya satmak veya ürünlerimiz hakkında bilgi almak için bize ulaşın.",
+      "Konya Uğur Bey Spot iletişim bilgileri, mağaza adresi, WhatsApp ve yol tarifi. İkinci el eşya satmak veya spot ürünler hakkında bilgi almak için bize ulaşın.",
     keywords: [
       "Uğur Bey Spot iletişim",
       "Uğur Bey Spot telefon",
       "Uğur Bey Spot adres",
+      "Konya spotçu iletişim",
+      "Konya ikinci el eşya telefon",
+      "Konya spot mağaza adresi",
+      "spot eşya Konya iletişim",
     ],
     noIndex: false,
   },

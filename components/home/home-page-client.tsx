@@ -70,10 +70,10 @@ export default function HomePageClient() {
     pageReady,
     setPageReady,
   ] = useState(false);
-const [
-  quoteOpen,
-  setQuoteOpen,
-] = useState(false);
+  const [
+    quoteOpen,
+    setQuoteOpen,
+  ] = useState(false);
   useEffect(() => {
     let active = true;
 
@@ -313,10 +313,9 @@ const [
     <SiteChrome>
       <div
         className={
-          `home-experience ${
-            pageReady
-              ? "is-ready"
-              : ""
+          `home-experience ${pageReady
+            ? "is-ready"
+            : ""
           }`
         }
       >
@@ -554,52 +553,52 @@ const [
 
         {activeTrustItems.length >
           0 && (
-          <section
-            className="trust-strip"
-            data-reveal
-          >
-            <div className="site-container trust-strip__grid">
-              {activeTrustItems.map(
-                (
-                  item,
-                  index,
-                ) => (
-                  <article
-                    key={item.id}
-                    className="trust-item"
-                    style={{
-                      transitionDelay:
-                        `${index * 70}ms`,
-                    }}
-                  >
-                    <span>
-                      <Icon
-                        name={
-                          item.icon
-                        }
-                        size={22}
-                      />
-                    </span>
+            <section
+              className="trust-strip"
+              data-reveal
+            >
+              <div className="site-container trust-strip__grid">
+                {activeTrustItems.map(
+                  (
+                    item,
+                    index,
+                  ) => (
+                    <article
+                      key={item.id}
+                      className="trust-item"
+                      style={{
+                        transitionDelay:
+                          `${index * 70}ms`,
+                      }}
+                    >
+                      <span>
+                        <Icon
+                          name={
+                            item.icon
+                          }
+                          size={22}
+                        />
+                      </span>
 
-                    <div>
-                      <strong>
-                        {
-                          item.title
-                        }
-                      </strong>
+                      <div>
+                        <strong>
+                          {
+                            item.title
+                          }
+                        </strong>
 
-                      <p>
-                        {
-                          item.description
-                        }
-                      </p>
-                    </div>
-                  </article>
-                ),
-              )}
-            </div>
-          </section>
-        )}
+                        <p>
+                          {
+                            item.description
+                          }
+                        </p>
+                      </div>
+                    </article>
+                  ),
+                )}
+              </div>
+            </section>
+          )}
 
         <section className="section section--soft">
           <div className="site-container">
@@ -635,7 +634,7 @@ const [
             </div>
 
             {categories.length >
-            0 ? (
+              0 ? (
               <div className="category-grid">
                 {categories
                   .slice(0, 8)
@@ -1110,247 +1109,247 @@ const [
 
         {content.storeSection.status ===
           "active" && (
-          <section className="section">
-            <div
-              className="site-container store-story"
-              data-reveal
-            >
-              <div className="store-story__visual store-story__visual--premium">
-                {content.storeSection.image || DEFAULT_HERO_IMAGES[0] ? (
-                  <img
-                    src={
-                      content.storeSection.image?.url ||
-                      DEFAULT_HERO_IMAGES[0].url
+            <section className="section">
+              <div
+                className="site-container store-story"
+                data-reveal
+              >
+                <div className="store-story__visual store-story__visual--premium">
+                  {content.storeSection.image || DEFAULT_HERO_IMAGES[0] ? (
+                    <img
+                      src={
+                        content.storeSection.image?.url ||
+                        DEFAULT_HERO_IMAGES[0].url
+                      }
+                      alt={
+                        content.storeSection.image?.alt ||
+                        DEFAULT_HERO_IMAGES[0].alt ||
+                        content
+                          .storeSection
+                          .title
+                      }
+                    />
+                  ) : (
+                    <div className="store-story__placeholder">
+                      <Icon
+                        name="store"
+                        size={42}
+                      />
+
+                      <span>
+                        Mağaza görseli
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="store-story__visual-gradient" />
+
+                  <span className="store-story__label">
+                    <span />
+
+                    GERÇEK MAĞAZA
+                  </span>
+                </div>
+
+                <div className="store-story__content">
+                  <span className="eyebrow">
+                    {
+                      content
+                        .storeSection
+                        .eyebrow
                     }
-                    alt={
-                      content.storeSection.image?.alt ||
-                      DEFAULT_HERO_IMAGES[0].alt ||
+                  </span>
+
+                  <h2>
+                    {
                       content
                         .storeSection
                         .title
                     }
-                  />
-                ) : (
-                  <div className="store-story__placeholder">
-                    <Icon
-                      name="store"
-                      size={42}
-                    />
+                  </h2>
 
-                    <span>
-                      Mağaza görseli
-                    </span>
+                  <p>
+                    {
+                      content
+                        .storeSection
+                        .description
+                    }
+                  </p>
+
+                  <div className="store-story__details">
+                    {content.storeSection.address && (
+                      <div>
+                        <Icon
+                          name="map-pin"
+                          size={21}
+                        />
+
+                        <span>
+                          {
+                            content
+                              .storeSection
+                              .address
+                          }
+                        </span>
+                      </div>
+                    )}
+
+                    {content.storeSection.workingHoursText && (
+                      <div>
+                        <Icon
+                          name="clock"
+                          size={21}
+                        />
+
+                        <span>
+                          {
+                            content
+                              .storeSection
+                              .workingHoursText
+                          }
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                <div className="store-story__visual-gradient" />
+                  <Link
+                    className="button button--dark button--premium"
+                    href={
+                      content
+                        .storeSection
+                        .directionsButton
+                        .href
+                    }
+                    target={
+                      content
+                        .storeSection
+                        .directionsButton
+                        .target
+                    }
+                  >
+                    {
+                      content
+                        .storeSection
+                        .directionsButton
+                        .label
+                    }
 
-                <span className="store-story__label">
-                  <span />
-
-                  GERÇEK MAĞAZA
-                </span>
-              </div>
-
-              <div className="store-story__content">
-                <span className="eyebrow">
-                  {
-                    content
-                      .storeSection
-                      .eyebrow
-                  }
-                </span>
-
-                <h2>
-                  {
-                    content
-                      .storeSection
-                      .title
-                  }
-                </h2>
-
-                <p>
-                  {
-                    content
-                      .storeSection
-                      .description
-                  }
-                </p>
-
-                <div className="store-story__details">
-                  {content.storeSection.address && (
-                    <div>
+                    <span className="button__icon">
                       <Icon
-                        name="map-pin"
-                        size={21}
+                        name="arrow-up-right"
+                        size={18}
                       />
-
-                      <span>
-                        {
-                          content
-                            .storeSection
-                            .address
-                        }
-                      </span>
-                    </div>
-                  )}
-
-                  {content.storeSection.workingHoursText && (
-                    <div>
-                      <Icon
-                        name="clock"
-                        size={21}
-                      />
-
-                      <span>
-                        {
-                          content
-                            .storeSection
-                            .workingHoursText
-                        }
-                      </span>
-                    </div>
-                  )}
+                    </span>
+                  </Link>
                 </div>
-
-                <Link
-                  className="button button--dark button--premium"
-                  href={
-                    content
-                      .storeSection
-                      .directionsButton
-                      .href
-                  }
-                  target={
-                    content
-                      .storeSection
-                      .directionsButton
-                      .target
-                  }
-                >
-                  {
-                    content
-                      .storeSection
-                      .directionsButton
-                      .label
-                  }
-
-                  <span className="button__icon">
-                    <Icon
-                      name="arrow-up-right"
-                      size={18}
-                    />
-                  </span>
-                </Link>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
 
         {content.finalCta.status ===
           "active" && (
-          <section className="section">
-            <div className="site-container">
-              <div
-                className="final-cta final-cta--premium"
-                data-reveal
-              >
-                <div className="final-cta__glow" />
+            <section className="section">
+              <div className="site-container">
+                <div
+                  className="final-cta final-cta--premium"
+                  data-reveal
+                >
+                  <div className="final-cta__glow" />
 
-                <span className="eyebrow eyebrow--light">
-                  {
-                    content
-                      .finalCta
-                      .eyebrow
-                  }
-                </span>
-
-                <h2>
-                  {
-                    content
-                      .finalCta
-                      .title
-                  }
-                </h2>
-
-                <p>
-                  {
-                    content
-                      .finalCta
-                      .description
-                  }
-                </p>
-
-                <div className="final-cta__actions">
-                  <Link
-                    className="button button--light button--premium"
-                    href={
-                      content
-                        .finalCta
-                        .primaryButton
-                        .href
-                    }
-                    target={
-                      content
-                        .finalCta
-                        .primaryButton
-                        .target
-                    }
-                  >
+                  <span className="eyebrow eyebrow--light">
                     {
                       content
                         .finalCta
-                        .primaryButton
-                        .label
+                        .eyebrow
                     }
+                  </span>
 
-                    <Icon
-                      name="message-circle"
-                      size={19}
-                    />
-                  </Link>
-
-                  <Link
-                    className="button button--outline-light"
-                    href={
-                      content
-                        .finalCta
-                        .secondaryButton
-                        .href
-                    }
-                    target={
-                      content
-                        .finalCta
-                        .secondaryButton
-                        .target
-                    }
-                  >
+                  <h2>
                     {
                       content
                         .finalCta
-                        .secondaryButton
-                        .label
+                        .title
                     }
-                  </Link>
+                  </h2>
+
+                  <p>
+                    {
+                      content
+                        .finalCta
+                        .description
+                    }
+                  </p>
+
+                  <div className="final-cta__actions">
+                    <Link
+                      className="button button--light button--premium"
+                      href={
+                        content
+                          .finalCta
+                          .primaryButton
+                          .href
+                      }
+                      target={
+                        content
+                          .finalCta
+                          .primaryButton
+                          .target
+                      }
+                    >
+                      {
+                        content
+                          .finalCta
+                          .primaryButton
+                          .label
+                      }
+
+                      <Icon
+                        name="message-circle"
+                        size={19}
+                      />
+                    </Link>
+
+                    <Link
+                      className="button button--outline-light"
+                      href={
+                        content
+                          .finalCta
+                          .secondaryButton
+                          .href
+                      }
+                      target={
+                        content
+                          .finalCta
+                          .secondaryButton
+                          .target
+                      }
+                    >
+                      {
+                        content
+                          .finalCta
+                          .secondaryButton
+                          .label
+                      }
+                    </Link>
+                  </div>
+
+                  <span className="final-cta__mark">
+                    UB
+                  </span>
                 </div>
-
-                <span className="final-cta__mark">
-                  UB
-                </span>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
       </div>
-          <QuickQuoteModal
+      <QuickQuoteModal
 
-  open={quoteOpen}
+        open={quoteOpen}
 
-  onClose={() => setQuoteOpen(false)}
+        onClose={() => setQuoteOpen(false)}
 
-  sourcePage="/"
+        sourcePage="/"
 
-/>
+      />
     </SiteChrome>
   );
 }

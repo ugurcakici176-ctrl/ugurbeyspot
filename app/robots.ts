@@ -1,5 +1,9 @@
 import type { MetadataRoute } from "next";
-import { SITE_URL } from "@/lib/site-url";
+
+import {
+  absoluteUrl,
+  SITE_URL,
+} from "@/lib/site-url";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -12,13 +16,29 @@ export default function robots(): MetadataRoute.Robots {
           "/admin/",
           "/api/",
           "/giris",
+          "/giris/",
           "/kayit",
+          "/kayit/",
           "/hesabim",
+          "/hesabim/",
           "/sepet",
+          "/sepet/",
+          "/odeme",
+          "/odeme/",
+          "/siparis",
+          "/siparis/",
+          "/arama",
+          "/*?*sort=",
+          "/*?*filter=",
+          "/*?*page=",
         ],
       },
     ],
-    sitemap: `${SITE_URL}/sitemap.xml`,
+
+    sitemap: absoluteUrl(
+      "/sitemap.xml",
+    ),
+
     host: SITE_URL,
   };
 }
