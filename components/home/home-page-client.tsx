@@ -41,6 +41,9 @@ import type {
   Product,
 } from "@/lib/types";
 
+const WHATSAPP_CATALOG_URL =
+  "https://www.whatsapp.com/catalog/905520715689/?app_absent=0";
+
 export interface HomeData {
   content: HomepageContent;
   categories: Category[];
@@ -624,6 +627,150 @@ export default function HomePageClient({
               </div>
             </section>
           )}
+
+        <section
+          className="whatsapp-catalog"
+          aria-labelledby="whatsapp-catalog-title"
+        >
+          <div className="site-container">
+            <div
+              className="whatsapp-catalog__card"
+              data-reveal
+            >
+              <div className="whatsapp-catalog__content">
+                <span className="whatsapp-catalog__eyebrow">
+                  <span className="whatsapp-catalog__status" />
+                  WHATSAPP KATALOĞU
+                </span>
+
+                <h2 id="whatsapp-catalog-title">
+                  Güncel ürünleri
+                  <span> WhatsApp&apos;ta keşfet.</span>
+                </h2>
+
+                <p>
+                  Mağazadaki güncel ürün seçkisine göz at, beğendiğin
+                  ürünün detaylarını ve stok durumunu bize hemen sor.
+                </p>
+
+                <div className="whatsapp-catalog__actions">
+                  <a
+                    className="button whatsapp-catalog__button"
+                    href={WHATSAPP_CATALOG_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Uğur Bey Spot WhatsApp kataloğunu yeni sekmede aç"
+                  >
+                    <Icon
+                      name="message-circle"
+                      size={20}
+                    />
+                    Kataloğu Görüntüle
+                    <Icon
+                      name="arrow-up-right"
+                      size={18}
+                    />
+                  </a>
+
+                  <span className="whatsapp-catalog__note">
+                    WhatsApp&apos;ta güvenli şekilde açılır
+                  </span>
+                </div>
+              </div>
+
+              <a
+                className="whatsapp-catalog__preview"
+                href={WHATSAPP_CATALOG_URL}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="WhatsApp kataloğuna git"
+              >
+                <div className="whatsapp-catalog__phone-bar">
+                  <span className="whatsapp-catalog__avatar">
+                    UB
+                  </span>
+
+                  <span>
+                    <strong>Uğur Bey Spot</strong>
+                    <small>Ürün kataloğu</small>
+                  </span>
+
+                  <Icon
+                    name="external-link"
+                    size={18}
+                  />
+                </div>
+
+                <div className="whatsapp-catalog__products">
+                  {products
+                    .slice(0, 3)
+                    .map((product) => (
+                      <article key={product.id}>
+                        {product.images[0] ? (
+                          <img
+                            src={product.images[0].url}
+                            alt=""
+                            loading="lazy"
+                          />
+                        ) : (
+                          <span className="whatsapp-catalog__placeholder">
+                            <Icon
+                              name="package"
+                              size={26}
+                            />
+                          </span>
+                        )}
+
+                        <strong>{product.title}</strong>
+                        <small>
+                          {product.categoryName ||
+                            "Güncel ürün"}
+                        </small>
+                      </article>
+                    ))}
+
+                  {products.length === 0 &&
+                    [
+                      {
+                        label: "Mobilya",
+                        image:
+                          "/images/whatsapp-catalog/mobilya.png",
+                      },
+                      {
+                        label: "Beyaz Eşya",
+                        image:
+                          "/images/whatsapp-catalog/beyaz-esya.png",
+                      },
+                      {
+                        label: "Elektronik",
+                        image:
+                          "/images/whatsapp-catalog/elektronik.png",
+                      },
+                    ].map((item) => (
+                        <article key={item.label}>
+                          <img
+                            src={item.image}
+                            alt={`${item.label} ürün seçkisi`}
+                            loading="lazy"
+                          />
+                          <strong>{item.label}</strong>
+                          <small>Ürünleri incele</small>
+                        </article>
+                      ),
+                    )}
+                </div>
+
+                <span className="whatsapp-catalog__tap">
+                  Kataloğa git
+                  <Icon
+                    name="arrow-right"
+                    size={17}
+                  />
+                </span>
+              </a>
+            </div>
+          </div>
+        </section>
 
         <section className="section section--soft">
           <div className="site-container">
