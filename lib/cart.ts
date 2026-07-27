@@ -11,6 +11,8 @@ export interface CartItem {
 
 const CART_STORAGE_KEY = "ugurbey_cart_v1";
 export const CART_CHANGE_EVENT = "ugurbey:cart-change";
+export const CART_MAX_QUANTITY = 99;
+const CART_MAX_ITEMS = 50;
 
 function canUseStorage(): boolean {
   return typeof window !== "undefined";
@@ -33,6 +35,7 @@ function sanitizeItems(value: unknown): CartItem[] {
         item.title.length > 0 &&
         typeof item.price === "number" &&
         Number.isFinite(item.price) &&
+        item.price >= 0 &&
         typeof item.quantity === "number" &&
         Number.isFinite(item.quantity),
     )
@@ -45,8 +48,12 @@ function sanitizeItems(value: unknown): CartItem[] {
         typeof item.imageUrl === "string" && item.imageUrl
           ? item.imageUrl
           : undefined,
-      quantity: Math.max(1, Math.floor(item.quantity as number)),
-    }));
+      quantity: Math.min(
+        CART_MAX_QUANTITY,
+        Math.max(1, Math.floor(item.quantity as number)),
+      ),
+    }))
+    .slice(0, CART_MAX_ITEMS);
 }
 
 export function readCart(): CartItem[] {
@@ -79,7 +86,10 @@ function writeCart(items: CartItem[]): void {
 
 export function addCartItem(item: Omit<CartItem, "quantity">, quantity = 1): void {
   const items = readCart();
-  const safeQuantity = Math.max(1, Math.floor(quantity));
+  const safeQuantity = Math.min(
+    CART_MAX_QUANTITY,
+    Math.max(1, Math.floor(quantity)),
+  );
   const index = items.findIndex((entry) => entry.productId === item.productId);
 
   if (index > -1) {
@@ -89,7 +99,10 @@ export function addCartItem(item: Omit<CartItem, "quantity">, quantity = 1): voi
       slug: item.slug,
       price: item.price,
       imageUrl: item.imageUrl,
-      quantity: items[index].quantity + safeQuantity,
+      quantity: Math.min(
+        CART_MAX_QUANTITY,
+        items[index].quantity + safeQuantity,
+      ),
     };
   } else {
     items.push({
@@ -103,7 +116,10 @@ export function addCartItem(item: Omit<CartItem, "quantity">, quantity = 1): voi
 
 export function updateCartItemQuantity(productId: string, quantity: number): void {
   const items = readCart();
-  const nextQuantity = Math.floor(quantity);
+  const nextQuantity = Math.min(
+    CART_MAX_QUANTITY,
+    Math.floor(quantity),
+  );
 
   if (nextQuantity <= 0) {
     writeCart(items.filter((item) => item.productId !== productId));
@@ -141,16 +157,22 @@ export function buildCartWhatsappMessage(items: CartItem[]): string {
   }
 
   const lines = items.map(
-    (item, index) =>
-      `${index + 1}. ${item.title} x${item.quantity} - ${formatCurrency(item.price)}`,
+    (item, index) => {
+      const lineTotal =
+        item.price * item.quantity;
+
+      return `${index + 1}. ${item.title}\n   ${item.quantity} adet × ${formatCurrency(item.price)} = ${formatCurrency(lineTotal)}`;
+    },
   );
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return [
-    "Merhaba, sepetimdeki urunler icin teklif almak istiyorum:",
+    "Merhaba, sepetimdeki ürünler için teklif almak istiyorum:",
     ...lines,
     "",
-    `Toplam: ${formatCurrency(total)}`,
+    `Tahmini toplam: ${formatCurrency(total)}`,
+    "",
+    "Güncel stok ve kesin fiyat bilgisini paylaşabilir misiniz?",
   ].join("\n");
 }

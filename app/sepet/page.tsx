@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import CartPageClient from "@/components/cart/cart-page-client";
 
 export const metadata: Metadata = {
-  title: "Sepet",
+  title: "Teklif Sepeti",
   description:
-    "Teklif sepetinizdeki urunleri inceleyin ve WhatsApp uzerinden hizlica siparis surecini baslatin.",
+    "Teklif sepetinizdeki ürünleri inceleyin ve mağazadan güncel stok ile kesin fiyat bilgisi alın.",
   robots: { index: false, follow: false },
 };
 

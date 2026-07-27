@@ -14,6 +14,7 @@ import { useSiteSettings } from "@/hooks/use-site-settings";
 
 import {
   buildCartWhatsappMessage,
+  CART_MAX_QUANTITY,
 } from "@/lib/cart";
 
 import {
@@ -31,6 +32,7 @@ export default function CartPageClient() {
 
   const {
     items,
+    ready,
     totalCount,
     totalPrice,
     updateItemQuantity,
@@ -42,6 +44,7 @@ export default function CartPageClient() {
     customerNote,
     setCustomerNote,
   ] = useState("");
+  const customerNoteLimit = 800;
 
   const whatsappMessage =
     useMemo(() => {
@@ -118,12 +121,13 @@ export default function CartPageClient() {
               </span>
 
               <strong>
-                {totalCount}
+                {ready ? totalCount : "—"}
               </strong>
 
               <small>
-                Sepetinizde toplam{" "}
-                {itemCountLabel} bulunuyor
+                {ready
+                  ? `Sepetinizde toplam ${itemCountLabel} bulunuyor`
+                  : "Sepet bilgisi yükleniyor"}
               </small>
             </div>
           </div>
@@ -159,7 +163,19 @@ export default function CartPageClient() {
             )}
           </div>
 
-          {items.length === 0 ? (
+          {!ready ? (
+            <div
+              className="cart-loading"
+              role="status"
+              aria-live="polite"
+            >
+              <span className="cart-loading__mark">
+                <Icon name="shopping-bag" size={24} />
+              </span>
+              <strong>Sepetiniz hazırlanıyor</strong>
+              <p>Seçtiğiniz ürünler güvenli şekilde yükleniyor.</p>
+            </div>
+          ) : items.length === 0 ? (
             <div className="cart-empty">
               <span className="cart-empty__icon">
                 <Icon
@@ -250,6 +266,9 @@ export default function CartPageClient() {
                             alt={
                               item.title
                             }
+                            width="224"
+                            height="224"
+                            loading="lazy"
                           />
                         ) : (
                           <span>
@@ -303,7 +322,8 @@ export default function CartPageClient() {
                         <div className="cart-item__actions">
                           <div
                             className="cart-qty"
-                            aria-label="Ürün adedi"
+                            role="group"
+                            aria-label={`${item.title} ürün adedi`}
                           >
                             <button
                               type="button"
@@ -315,11 +335,12 @@ export default function CartPageClient() {
                                 )
                               }
                               aria-label="Adet azalt"
+                              title="Adet azalt"
                             >
                               −
                             </button>
 
-                            <span>
+                            <span aria-live="polite">
                               {
                                 item.quantity
                               }
@@ -335,6 +356,14 @@ export default function CartPageClient() {
                                 )
                               }
                               aria-label="Adet artır"
+                              title={
+                                item.quantity >= CART_MAX_QUANTITY
+                                  ? `En fazla ${CART_MAX_QUANTITY} adet eklenebilir`
+                                  : "Adet artır"
+                              }
+                              disabled={
+                                item.quantity >= CART_MAX_QUANTITY
+                              }
                             >
                               +
                             </button>
@@ -409,6 +438,9 @@ export default function CartPageClient() {
 
                   <textarea
                     rows={4}
+                    maxLength={
+                      customerNoteLimit
+                    }
                     value={
                       customerNote
                     }
@@ -424,8 +456,8 @@ export default function CartPageClient() {
                   />
 
                   <small>
-                    Bu not WhatsApp mesajına
-                    otomatik eklenir.
+                    Bu not WhatsApp mesajına otomatik eklenir.{" "}
+                    {customerNote.length}/{customerNoteLimit}
                   </small>
                 </label>
 
@@ -465,20 +497,17 @@ export default function CartPageClient() {
                     />
                   </a>
                 ) : (
-                  <button
-                    type="button"
+                  <Link
                     className="button button--ghost button--block"
-                    disabled
-                    title="Admin panelinden WhatsApp numarası ekleyin"
+                    href={ROUTES.contact}
                   >
                     <Icon
                       name="message-circle"
                       size={19}
                     />
 
-                    WhatsApp Numarası
-                    Bekleniyor
-                  </button>
+                    İletişim Formuna Git
+                  </Link>
                 )}
 
                 <Link

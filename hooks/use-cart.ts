@@ -19,9 +19,11 @@ import {
 
 export function useCart() {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [ready, setReady] = useState(false);
 
   const refresh = useCallback(() => {
     setItems(readCart());
+    setReady(true);
   }, []);
 
   useEffect(() => {
@@ -75,6 +77,7 @@ export function useCart() {
 
   return {
     items,
+    ready,
     totalCount,
     totalPrice,
     addItem,

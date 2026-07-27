@@ -16,12 +16,29 @@ const INITIAL_FORM = {
   message: "",
 };
 
+const STORE_MAP_EMBED_URL =
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3149.348238125836!2d32.52562707647072!3d37.87553800634833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14d08506c83815e5%3A0xe304d1d3ec04f9ab!2sU%C4%9Furbey%20Spot!5e0!3m2!1str!2str!4v1785171358810!5m2!1str!2str";
+
+const STORE_MAP_DIRECTIONS_URL =
+  "https://www.google.com/maps/search/?api=1&query=U%C4%9Furbey%20Spot";
+
 export default function ContactPageClient() {
   const { settings } = useSiteSettings();
   const [form, setForm] = useState(INITIAL_FORM);
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const phone = settings.contact.phone?.trim();
+  const whatsapp = settings.contact.whatsapp?.trim();
+  const email = settings.contact.email?.trim();
+  const address = settings.contact.address?.trim();
+  const mapsUrl =
+    settings.contact.googleMapsUrl?.trim() ||
+    STORE_MAP_DIRECTIONS_URL;
+  const location =
+    [settings.contact.district, settings.contact.city]
+      .filter(Boolean)
+      .join(", ") || "Konya";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,89 +68,177 @@ export default function ContactPageClient() {
   return (
     <SiteChrome>
       <section className="page-hero page-hero--contact">
-        <div className="site-container">
-          <span className="eyebrow">İLETİŞİM</span>
-          <h1>Size Nasıl Yardımcı Olabiliriz?</h1>
-          <p>
-            Ürünler hakkında bilgi almak veya mağazamıza ulaşmak için bize yazın.
-          </p>
+        <div className="contact-hero__glow contact-hero__glow--one" />
+        <div className="contact-hero__glow contact-hero__glow--two" />
+
+        <div className="site-container contact-hero">
+          <div className="contact-hero__content">
+            <span className="eyebrow eyebrow--light">BİZE ULAŞIN</span>
+            <h1>
+              Sorunuz varsa,
+              <span> birlikte çözelim.</span>
+            </h1>
+            <p>
+              Ürün, stok, fiyat, teslimat veya eşya satışı hakkında hızlıca
+              bilgi alın. Size en uygun kanaldan ulaşabilirsiniz.
+            </p>
+
+            <div className="contact-hero__actions">
+              {whatsapp ? (
+                <a
+                  className="button button--light"
+                  href={buildWhatsappUrl(whatsapp)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Icon name="message-circle" size={18} />
+                  WhatsApp&apos;tan Yaz
+                </a>
+              ) : (
+                <a className="button button--light" href="#contact-form">
+                  Mesaj Gönder
+                  <Icon name="arrow-right" size={18} />
+                </a>
+              )}
+
+              <a className="contact-hero__text-link" href="#contact-map">
+                Konumu Gör
+                <Icon name="arrow-up-right" size={17} />
+              </a>
+            </div>
+          </div>
+
+          <aside className="contact-hero__card">
+            <span className="contact-hero__card-label">UĞUR BEY SPOT</span>
+            <strong>Mağazamız size bir mesaj kadar yakın.</strong>
+
+            <div className="contact-hero__status">
+              <span />
+              Hızlı mağaza iletişimi
+            </div>
+
+            <div className="contact-hero__card-row">
+              <Icon name="map-pin" size={19} />
+              <div>
+                <small>KONUM</small>
+                <span>{location}</span>
+              </div>
+            </div>
+
+            <div className="contact-hero__card-row">
+              <Icon name="clock" size={19} />
+              <div>
+                <small>DESTEK</small>
+                <span>Ürün ve mağaza bilgisi</span>
+              </div>
+            </div>
+          </aside>
         </div>
       </section>
 
       <section className="section contact-section">
         <div className="site-container">
+          <header className="contact-section__heading">
+            <div>
+              <span className="eyebrow">İLETİŞİM KANALLARI</span>
+              <h2>Size en uygun yolu seçin</h2>
+            </div>
+            <p>
+              Hızlı bilgi için telefon veya WhatsApp&apos;ı, detaylı talepler
+              için iletişim formunu kullanabilirsiniz.
+            </p>
+          </header>
+
           <div className="contact-cards">
             <a
               className="contact-card"
               href={
-                settings.contact.phone
-                  ? buildTelUrl(settings.contact.phone)
+                phone
+                  ? buildTelUrl(phone)
                   : "#contact-form"
               }
             >
-              <span><Icon name="phone" size={23} /></span>
-              <small>TELEFON</small>
-              <strong>{settings.contact.phone || "Yakında"}</strong>
+              <div className="contact-card__top">
+                <span><Icon name="phone" size={23} /></span>
+                <Icon name="arrow-up-right" size={17} />
+              </div>
+              <small>HEMEN ARAYIN</small>
+              <strong>{phone || "Mesaj bırakın"}</strong>
+              <p>Ürün ve stok bilgisi için doğrudan görüşün.</p>
             </a>
 
             <a
               className="contact-card"
               href={
-                settings.contact.whatsapp
-                  ? buildWhatsappUrl(settings.contact.whatsapp)
+                whatsapp
+                  ? buildWhatsappUrl(whatsapp)
                   : "#contact-form"
               }
-              target={settings.contact.whatsapp ? "_blank" : undefined}
-              rel={settings.contact.whatsapp ? "noreferrer" : undefined}
+              target={whatsapp ? "_blank" : undefined}
+              rel={whatsapp ? "noreferrer" : undefined}
             >
-              <span><Icon name="message-circle" size={23} /></span>
+              <div className="contact-card__top">
+                <span><Icon name="message-circle" size={23} /></span>
+                <Icon name="arrow-up-right" size={17} />
+              </div>
               <small>WHATSAPP</small>
               <strong>Hızlıca Bilgi Alın</strong>
+              <p>Fotoğraf gönderin, ürününüzü veya ihtiyacınızı anlatın.</p>
             </a>
 
             <a
               className="contact-card"
               href={
-                settings.contact.email
-                  ? `mailto:${settings.contact.email}`
+                email
+                  ? `mailto:${email}`
                   : "#contact-form"
               }
             >
-              <span><Icon name="mail" size={23} /></span>
+              <div className="contact-card__top">
+                <span><Icon name="mail" size={23} /></span>
+                <Icon name="arrow-up-right" size={17} />
+              </div>
               <small>E-POSTA</small>
-              <strong>{settings.contact.email || "Yakında"}</strong>
+              <strong>{email || "Formu kullanın"}</strong>
+              <p>Detaylı sorularınızı yazılı olarak iletin.</p>
             </a>
 
             <a
               className="contact-card"
-              href={settings.contact.googleMapsUrl || "#contact-form"}
-              target={settings.contact.googleMapsUrl ? "_blank" : undefined}
-              rel={settings.contact.googleMapsUrl ? "noreferrer" : undefined}
+              href={mapsUrl}
+              target="_blank"
+              rel="noreferrer"
             >
-              <span><Icon name="map-pin" size={23} /></span>
-              <small>MAĞAZA</small>
-              <strong>
-                {[settings.contact.district, settings.contact.city]
-                  .filter(Boolean)
-                  .join(", ") || "Yol Tarifi"}
-              </strong>
+              <div className="contact-card__top">
+                <span><Icon name="map-pin" size={23} /></span>
+                <Icon name="arrow-up-right" size={17} />
+              </div>
+              <small>MAĞAZAMIZ</small>
+              <strong>{location}</strong>
+              <p>Google Maps üzerinden kolayca yol tarifi alın.</p>
             </a>
           </div>
 
           <div className="contact-layout">
             <div className="contact-form-panel" id="contact-form">
-              <span className="eyebrow">BİZE YAZIN</span>
-              <h2>Mesajınızı Bırakın</h2>
-              <p>
-                Formu doldurun. Mesajınız yönetim panelimize doğrudan ulaşsın.
-              </p>
+              <div className="contact-form-panel__heading">
+                <div>
+                  <span className="eyebrow">BİZE YAZIN</span>
+                  <h2>Nasıl yardımcı olabiliriz?</h2>
+                  <p>
+                    Formu doldurun; talebiniz doğrudan mağaza ekibimize ulaşsın.
+                  </p>
+                </div>
+                <span className="contact-form-panel__number">01</span>
+              </div>
 
               <form className="contact-form" onSubmit={handleSubmit}>
                 <div className="form-grid">
                   <label>
-                    <span>Ad Soyad</span>
+                    <span>Ad Soyad *</span>
                     <input
                       required
+                      autoComplete="name"
                       value={form.fullName}
                       onChange={(event) =>
                         setForm((current) => ({
@@ -146,9 +251,12 @@ export default function ContactPageClient() {
                   </label>
 
                   <label>
-                    <span>Telefon</span>
+                    <span>Telefon *</span>
                     <input
                       required
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       value={form.phone}
                       onChange={(event) =>
                         setForm((current) => ({
@@ -166,6 +274,7 @@ export default function ContactPageClient() {
                     <span>E-posta</span>
                     <input
                       type="email"
+                      autoComplete="email"
                       value={form.email}
                       onChange={(event) =>
                         setForm((current) => ({
@@ -178,8 +287,8 @@ export default function ContactPageClient() {
                   </label>
 
                   <label>
-                    <span>Konu</span>
-                    <input
+                    <span>Konu *</span>
+                    <select
                       required
                       value={form.subject}
                       onChange={(event) =>
@@ -188,13 +297,19 @@ export default function ContactPageClient() {
                           subject: event.target.value,
                         }))
                       }
-                      placeholder="Nasıl yardımcı olabiliriz?"
-                    />
+                    >
+                      <option value="">Konu seçin</option>
+                      <option value="Ürün bilgisi">Ürün bilgisi</option>
+                      <option value="Eşya satışı">Eşya satışı</option>
+                      <option value="Stok ve fiyat">Stok ve fiyat</option>
+                      <option value="Teslimat">Teslimat</option>
+                      <option value="Diğer">Diğer</option>
+                    </select>
                   </label>
                 </div>
 
                 <label>
-                  <span>Mesajınız</span>
+                  <span>Mesajınız *</span>
                   <textarea
                     required
                     rows={6}
@@ -210,32 +325,49 @@ export default function ContactPageClient() {
                 </label>
 
                 {error && (
-                  <div className="form-alert form-alert--error">{error}</div>
+                  <div
+                    className="form-alert form-alert--error"
+                    role="alert"
+                  >
+                    {error}
+                  </div>
                 )}
 
                 {success && (
-                  <div className="form-alert form-alert--success">
+                  <div
+                    className="form-alert form-alert--success"
+                    role="status"
+                  >
                     Mesajınız başarıyla gönderildi.
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  className="button button--dark"
-                  disabled={sending}
-                >
-                  {sending ? "Gönderiliyor..." : "Mesajı Gönder"}
-                  <Icon name="arrow-right" size={18} />
-                </button>
+                <div className="contact-form__footer">
+                  <p>
+                    Bilgileriniz yalnızca talebinize dönüş yapmak için
+                    kullanılır.
+                  </p>
+                  <button
+                    type="submit"
+                    className="button button--dark"
+                    disabled={sending}
+                  >
+                    {sending ? "Gönderiliyor..." : "Mesajı Gönder"}
+                    <Icon name="arrow-right" size={18} />
+                  </button>
+                </div>
               </form>
             </div>
 
             <aside className="contact-info-panel">
-              <span className="eyebrow eyebrow--light">MAĞAZA</span>
-              <h2>Bizi Ziyaret Edin</h2>
+              <div className="contact-info-panel__mark">
+                <Icon name="store" size={23} />
+              </div>
+              <span className="eyebrow eyebrow--light">MAĞAZA BİLGİSİ</span>
+              <h2>Kapımız size açık.</h2>
               <p>
-                {settings.contact.address ||
-                  "Mağaza adresi admin panelinden eklendiğinde burada görüntülenecek."}
+                {address ||
+                  `${location} konumundaki mağazamıza gelmeden önce bizi arayarak güncel ürün ve stok bilgisini öğrenebilirsiniz.`}
               </p>
 
               {settings.contact.workingHours.length > 0 && (
@@ -251,23 +383,103 @@ export default function ContactPageClient() {
                             : `${item.openingTime || "--:--"} - ${item.closingTime || "--:--"}`}
                         </strong>
                       </div>
-                    ))}
+                  ))}
                 </div>
               )}
 
-              {settings.contact.googleMapsUrl && (
+              {settings.contact.workingHours.length === 0 && (
+                <div className="contact-info-panel__note">
+                  <Icon name="clock" size={19} />
+                  <span>
+                    Ziyaret öncesinde çalışma saatlerini telefonla teyit
+                    etmenizi öneririz.
+                  </span>
+                </div>
+              )}
+
+              <div className="contact-info-panel__actions">
                 <a
                   className="button button--light button--block"
-                  href={settings.contact.googleMapsUrl}
+                  href={mapsUrl}
                   target="_blank"
                   rel="noreferrer"
                 >
                   Yol Tarifi Al
                   <Icon name="arrow-up-right" size={18} />
                 </a>
-              )}
+
+                {phone && (
+                  <a
+                    className="contact-info-panel__phone"
+                    href={buildTelUrl(phone)}
+                  >
+                    <Icon name="phone" size={17} />
+                    {phone}
+                  </a>
+                )}
+              </div>
             </aside>
           </div>
+
+          <section
+            className="contact-map"
+            id="contact-map"
+            aria-labelledby="contact-map-title"
+          >
+            <div className="contact-map__content">
+              <span className="eyebrow">KONUMUMUZ</span>
+
+              <h2 id="contact-map-title">
+                Mağazamıza Kolayca Ulaşın
+              </h2>
+
+              <p>
+                Uğur Bey Spot mağazamızı harita üzerinden inceleyin ve
+                bulunduğunuz noktadan yol tarifi alın.
+              </p>
+
+              <div className="contact-map__details">
+                <span>
+                  <Icon name="map-pin" size={19} />
+                  Konya
+                </span>
+
+                <span>
+                  <Icon name="store" size={19} />
+                  Uğur Bey Spot
+                </span>
+              </div>
+
+              <a
+                className="button button--dark"
+                href={
+                  mapsUrl
+                }
+                target="_blank"
+                rel="noreferrer"
+              >
+                Google Maps&apos;te Aç
+                <Icon name="arrow-up-right" size={18} />
+              </a>
+            </div>
+
+            <div className="contact-map__frame">
+              <iframe
+                src={STORE_MAP_EMBED_URL}
+                title="Uğur Bey Spot mağaza konumu"
+                width="600"
+                height="450"
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+
+              <span className="contact-map__badge">
+                <Icon name="map-pin" size={16} />
+                Uğur Bey Spot
+              </span>
+            </div>
+          </section>
         </div>
       </section>
     </SiteChrome>
