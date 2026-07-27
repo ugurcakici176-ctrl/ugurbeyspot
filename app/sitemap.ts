@@ -145,8 +145,6 @@ function deduplicateEntries(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const generatedAt = new Date();
-
   let productEntries: MetadataRoute.Sitemap =
     [];
 
@@ -256,7 +254,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     [
       {
         url: SITE_URL,
-        lastModified: generatedAt,
         changeFrequency:
           "weekly",
         priority: 1,
@@ -270,7 +267,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: absoluteUrl(
           "/urunler",
         ),
-        lastModified: generatedAt,
         changeFrequency:
           "daily",
         priority: 0.9,

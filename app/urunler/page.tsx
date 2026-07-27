@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 
 import ProductsPageClient from "@/components/products/products-page-client";
 import { DEFAULT_PAGE_SEO } from "@/lib/constants";
+import { getCategories } from "@/lib/categories";
+import { getProducts } from "@/lib/products";
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: DEFAULT_PAGE_SEO.products.title,
@@ -34,6 +38,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ProductsPage() {
-  return <ProductsPageClient />;
+async function getInitialProductData() {
+  try {
+    const [initialProducts, initialCategories] = await Promise.all([
+      getProducts(),
+      getCategories(),
+    ]);
+
+    return { initialProducts, initialCategories };
+  } catch (error) {
+    console.error("Products initial SEO data could not be loaded:", error);
+    return {};
+  }
+}
+
+export default async function ProductsPage() {
+  const { initialProducts, initialCategories } =
+    await getInitialProductData();
+
+  return (
+    <ProductsPageClient
+      initialProducts={initialProducts}
+      initialCategories={initialCategories}
+    />
+  );
 }

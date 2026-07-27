@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 
-import HomePageClient from "@/components/home/home-page-client";
+import HomePageClient, {
+  type HomeData,
+} from "@/components/home/home-page-client";
+import { getBanners } from "@/lib/banners";
+import { getCategories } from "@/lib/categories";
 import { DEFAULT_PAGE_SEO, SITE } from "@/lib/constants";
+import { getFeaturedProducts } from "@/lib/products";
 import { SITE_URL } from "@/lib/site-url";
+import { getHomepageContent } from "@/lib/site-content";
 
 export const revalidate = 3600;
 
@@ -49,7 +55,30 @@ const faqItems = [
   },
 ];
 
-export default function HomePage() {
+async function getInitialHomeData(): Promise<HomeData | undefined> {
+  try {
+    const [content, categories, products, banners] = await Promise.all([
+      getHomepageContent(),
+      getCategories(),
+      getFeaturedProducts(),
+      getBanners(),
+    ]);
+
+    return {
+      content,
+      categories,
+      products,
+      banners,
+    };
+  } catch (error) {
+    console.error("Homepage initial SEO data could not be loaded:", error);
+    return undefined;
+  }
+}
+
+export default async function HomePage() {
+  const initialData = await getInitialHomeData();
+
   const pageSchema = {
     "@context": "https://schema.org",
     "@graph": [
@@ -87,7 +116,7 @@ export default function HomePage() {
         }}
       />
 
-      <HomePageClient />
+      <HomePageClient initialData={initialData} />
     </>
   );
 }

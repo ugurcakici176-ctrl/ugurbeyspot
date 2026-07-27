@@ -73,6 +73,10 @@ export default function SiteFooter({
       href: ROUTES.home,
     },
     {
+      label: "Konya Spot",
+      href: ROUTES.konyaSpot,
+    },
+    {
       label: "Hakkımızda",
       href: ROUTES.about,
     },

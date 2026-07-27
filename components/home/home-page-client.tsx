@@ -41,23 +41,29 @@ import type {
   Product,
 } from "@/lib/types";
 
-interface HomeData {
+export interface HomeData {
   content: HomepageContent;
   categories: Category[];
   products: Product[];
   banners: CampaignBanner[];
 }
 
-export default function HomePageClient() {
+export default function HomePageClient({
+  initialData,
+}: {
+  initialData?: HomeData;
+}) {
   const [
     data,
     setData,
-  ] = useState<HomeData | null>({
-    content: DEFAULT_HOMEPAGE_CONTENT,
-    categories: [],
-    products: [],
-    banners: [],
-  });
+  ] = useState<HomeData | null>(
+    initialData || {
+      content: DEFAULT_HOMEPAGE_CONTENT,
+      categories: [],
+      products: [],
+      banners: [],
+    },
+  );
 
   const [
     error,
@@ -75,6 +81,14 @@ export default function HomePageClient() {
     setQuoteOpen,
   ] = useState(false);
   useEffect(() => {
+    if (initialData) {
+      const frameId = window.requestAnimationFrame(
+        () => setPageReady(true),
+      );
+
+      return () => window.cancelAnimationFrame(frameId);
+    }
+
     let active = true;
 
     void Promise.all([
@@ -128,7 +142,7 @@ export default function HomePageClient() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialData]);
 
   useEffect(() => {
     if (!data) {
@@ -473,10 +487,21 @@ export default function HomePageClient() {
                     src={
                       heroImages[0].url
                     }
+                    width={
+                      heroImages[0].width ||
+                      1536
+                    }
+                    height={
+                      heroImages[0].height ||
+                      1024
+                    }
                     alt={
                       heroImages[0].alt ||
                       "Öne çıkan ürün"
                     }
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
                   />
                 ) : (
                   <div className="hero-showcase__placeholder">

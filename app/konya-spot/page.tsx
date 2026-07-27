@@ -74,25 +74,25 @@ const categories = [
     title: "İkinci El Mobilya",
     description:
       "Koltuk takımı, masa, sandalye, dolap ve ev yaşam ürünlerini inceleyin.",
-    href: "/urunler",
+    href: "/kategori/koltuk-mobilya",
   },
   {
     title: "İkinci El Beyaz Eşya",
     description:
       "Buzdolabı, çamaşır makinesi ve farklı beyaz eşya seçeneklerini keşfedin.",
-    href: "/urunler",
+    href: "/kategori/buzdolabi",
   },
   {
     title: "Spot Elektronik",
     description:
       "Televizyon ve farklı elektronik ürün seçeneklerine göz atın.",
-    href: "/urunler",
+    href: "/kategori/televizyon-elektronik",
   },
   {
     title: "Ev Yaşam Ürünleri",
     description:
       "Evinizin ihtiyaçlarına uygun, avantajlı ve güncel ürünleri bulun.",
-    href: "/urunler",
+    href: "/kategori/kucuk-ev-aletleri",
   },
 ] as const;
 

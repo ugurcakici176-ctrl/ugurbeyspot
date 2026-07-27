@@ -32,6 +32,7 @@ export const DOCUMENTS = {
 
 export const ROUTES = {
   home: "/",
+  konyaSpot: "/konya-spot",
   about: "/hakkimizda",
   products: "/urunler",
   contact: "/iletisim",

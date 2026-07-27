@@ -21,9 +21,11 @@ function absoluteUrl(pathOrUrl: string): string {
 }
 
 const businessPhone = process.env.NEXT_PUBLIC_BUSINESS_PHONE?.trim();
+const businessEmail = process.env.NEXT_PUBLIC_BUSINESS_EMAIL?.trim();
 const streetAddress = process.env.NEXT_PUBLIC_BUSINESS_STREET_ADDRESS?.trim();
 const postalCode = process.env.NEXT_PUBLIC_BUSINESS_POSTAL_CODE?.trim();
 const district = process.env.NEXT_PUBLIC_BUSINESS_DISTRICT?.trim();
+const mapsUrl = process.env.NEXT_PUBLIC_BUSINESS_MAPS_URL?.trim();
 const latitude = Number(process.env.NEXT_PUBLIC_BUSINESS_LATITUDE);
 const longitude = Number(process.env.NEXT_PUBLIC_BUSINESS_LONGITUDE);
 const openingHours = process.env.NEXT_PUBLIC_BUSINESS_OPENING_HOURS?.trim();
@@ -140,6 +142,8 @@ export default function RootLayout({
         description:
           "Konya'da ikinci el mobilya, beyaz eşya, elektronik ve ev eşyası alım satımı yapan spot mağaza.",
         ...(businessPhone ? { telephone: businessPhone } : {}),
+        ...(businessEmail ? { email: businessEmail } : {}),
+        ...(mapsUrl ? { hasMap: mapsUrl } : {}),
         priceRange: "₺₺",
         currenciesAccepted: "TRY",
         paymentAccepted: "Cash, Credit Card",
@@ -150,9 +154,9 @@ export default function RootLayout({
         address: {
           "@type": "PostalAddress",
           ...(streetAddress ? { streetAddress } : {}),
-          ...(district ? { addressRegion: district } : {}),
+          ...(district ? { addressLocality: district } : {}),
           ...(postalCode ? { postalCode } : {}),
-          addressLocality: "Konya",
+          addressRegion: "Konya",
           addressCountry: "TR",
         },
         ...(Number.isFinite(latitude) && Number.isFinite(longitude)
