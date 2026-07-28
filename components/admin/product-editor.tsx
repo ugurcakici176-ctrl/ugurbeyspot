@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import AdminPageHeading from "@/components/admin/admin-page-heading";
@@ -49,6 +49,57 @@ const EMPTY_VALUES: ProductFormValues = {
   },
 };
 
+function limitSeoText(value: string, maxLength: number): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 1).trimEnd()}…`;
+}
+
+function createProductSeo(
+  title: string,
+  categoryName: string,
+  shortDescription: string,
+  description: string,
+): ProductFormValues["seo"] {
+  const cleanTitle = title.trim();
+  const cleanCategory = categoryName.trim();
+  const titleParts = [
+    cleanTitle,
+    cleanCategory ? `Konya ${cleanCategory}` : "Konya İkinci El Eşya",
+  ].filter(Boolean);
+
+  const descriptionSource =
+    shortDescription.trim() ||
+    description.trim() ||
+    `${cleanTitle || "Bu ürün"} hakkında fiyat, özellik ve güncel stok bilgilerini inceleyin.`;
+
+  const keywordSource = [
+    cleanTitle,
+    cleanCategory,
+    "Konya",
+    "ikinci el",
+    "spot",
+    "Uğur Bey Spot",
+  ];
+  const keywords = Array.from(
+    new Set(
+      keywordSource
+        .flatMap((item) => [item.trim(), ...item.trim().split(/\s+/)])
+        .filter((item) => item.length > 2),
+    ),
+  ).slice(0, 12);
+
+  return {
+    ...DEFAULT_SEO,
+    title: limitSeoText(titleParts.join(" | "), 60),
+    description: limitSeoText(
+      `${descriptionSource} Konya Uğur Bey Spot'ta güncel fiyat ve detayları keşfedin.`,
+      155,
+    ),
+    keywords,
+  };
+}
+
 export default function ProductEditor({
   productId,
 }: {
@@ -61,6 +112,57 @@ export default function ProductEditor({
   const [loading, setLoading] = useState(Boolean(productId));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const seoTitleEdited = useRef(Boolean(productId));
+  const seoDescriptionEdited = useRef(Boolean(productId));
+  const seoKeywordsEdited = useRef(Boolean(productId));
+
+  function withAutomaticSeo(
+    current: ProductFormValues,
+    changes: Partial<ProductFormValues>,
+  ): ProductFormValues {
+    const next = { ...current, ...changes };
+    if (productId) return next;
+
+    const categoryName =
+      categories.find((item) => item.id === next.categoryId)?.name || "";
+    const generated = createProductSeo(
+      next.title,
+      categoryName,
+      next.shortDescription,
+      next.description,
+    );
+
+    return {
+      ...next,
+      seo: {
+        ...next.seo,
+        title: seoTitleEdited.current ? next.seo.title : generated.title,
+        description: seoDescriptionEdited.current
+          ? next.seo.description
+          : generated.description,
+        keywords: seoKeywordsEdited.current
+          ? next.seo.keywords
+          : generated.keywords,
+      },
+    };
+  }
+
+  function regenerateSeo(): void {
+    const categoryName =
+      categories.find((item) => item.id === values.categoryId)?.name || "";
+    seoTitleEdited.current = false;
+    seoDescriptionEdited.current = false;
+    seoKeywordsEdited.current = false;
+    setValues((current) => ({
+      ...current,
+      seo: createProductSeo(
+        current.title,
+        categoryName,
+        current.shortDescription,
+        current.description,
+      ),
+    }));
+  }
 
   useEffect(() => {
     let active = true;
@@ -287,8 +389,7 @@ export default function ProductEditor({
                   value={values.title}
                   onChange={(event) => {
                     const title = event.target.value;
-                    setValues((current) => ({
-                      ...current,
+                    setValues((current) => withAutomaticSeo(current, {
                       title,
                       slug: productId ? current.slug : slugify(title),
                     }));
@@ -313,7 +414,11 @@ export default function ProductEditor({
                   required
                   value={values.categoryId}
                   onChange={(event) =>
-                    updateField("categoryId", event.target.value)
+                    setValues((current) =>
+                      withAutomaticSeo(current, {
+                        categoryId: event.target.value,
+                      }),
+                    )
                   }
                 >
                   <option value="">Kategori seçin</option>
@@ -331,7 +436,11 @@ export default function ProductEditor({
                   rows={3}
                   value={values.shortDescription}
                   onChange={(event) =>
-                    updateField("shortDescription", event.target.value)
+                    setValues((current) =>
+                      withAutomaticSeo(current, {
+                        shortDescription: event.target.value,
+                      }),
+                    )
                   }
                 />
               </label>
@@ -342,7 +451,11 @@ export default function ProductEditor({
                   rows={8}
                   value={values.description}
                   onChange={(event) =>
-                    updateField("description", event.target.value)
+                    setValues((current) =>
+                      withAutomaticSeo(current, {
+                        description: event.target.value,
+                      }),
+                    )
                   }
                 />
               </label>
@@ -484,21 +597,31 @@ export default function ProductEditor({
                 <span>04</span>
                 <div>
                   <h2>SEO</h2>
-                  <p>Google sonuçları için ürün meta alanları.</p>
+                  <p>Ürün bilgilerine göre otomatik hazırlanır; isterseniz düzenleyebilirsiniz.</p>
                 </div>
+                <button
+                  type="button"
+                  className="admin-secondary-button"
+                  onClick={regenerateSeo}
+                >
+                  <Icon name="sparkles" size={17} />
+                  SEO&apos;yu Yenile
+                </button>
               </div>
 
               <label className="admin-field">
                 <span>SEO Başlığı</span>
                 <input
                   value={values.seo.title}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    seoTitleEdited.current = true;
                     setValues((current) => ({
                       ...current,
                       seo: { ...current.seo, title: event.target.value },
-                    }))
-                  }
+                    }));
+                  }}
                 />
+                <small>{values.seo.title.length}/60 karakter</small>
               </label>
 
               <label className="admin-field">
@@ -506,23 +629,26 @@ export default function ProductEditor({
                 <textarea
                   rows={3}
                   value={values.seo.description}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    seoDescriptionEdited.current = true;
                     setValues((current) => ({
                       ...current,
                       seo: {
                         ...current.seo,
                         description: event.target.value,
                       },
-                    }))
-                  }
+                    }));
+                  }}
                 />
+                <small>{values.seo.description.length}/155 karakter</small>
               </label>
 
               <label className="admin-field">
                 <span>Anahtar Kelimeler</span>
                 <input
                   value={values.seo.keywords.join(", ")}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    seoKeywordsEdited.current = true;
                     setValues((current) => ({
                       ...current,
                       seo: {
@@ -531,8 +657,8 @@ export default function ProductEditor({
                           .split(",")
                           .map((item) => item.trim()),
                       },
-                    }))
-                  }
+                    }));
+                  }}
                 />
               </label>
             </section>
