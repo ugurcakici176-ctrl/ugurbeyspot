@@ -49,47 +49,16 @@ export default function manifest(): MetadataRoute.Manifest {
 
     icons: [
       {
-        src: "/icons/icon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "any",
-      },
-      {
-        src: "/icons/icon-192-maskable.png",
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "maskable",
-      },
-      {
-        src: "/icons/icon-512.png",
+        src: "/branding/ugurbey-mark-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/icon-512-maskable.png",
+        src: "/branding/ugurbey-mark-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
-      },
-    ],
-
-    screenshots: [
-      {
-        src: "/screenshots/home-mobile.png",
-        sizes: "750x1334",
-        type: "image/png",
-        form_factor: "narrow",
-        label:
-          "Uğur Bey Spot mobil ana sayfası",
-      },
-      {
-        src: "/screenshots/home-desktop.png",
-        sizes: "1440x900",
-        type: "image/png",
-        form_factor: "wide",
-        label:
-          "Uğur Bey Spot masaüstü ana sayfası",
       },
     ],
 
@@ -102,8 +71,8 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/urunler",
         icons: [
           {
-            src: "/icons/shortcut-products.png",
-            sizes: "192x192",
+            src: "/branding/ugurbey-mark-512.png",
+            sizes: "512x512",
             type: "image/png",
           },
         ],
@@ -116,8 +85,8 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/iletisim",
         icons: [
           {
-            src: "/icons/shortcut-contact.png",
-            sizes: "192x192",
+            src: "/branding/ugurbey-mark-512.png",
+            sizes: "512x512",
             type: "image/png",
           },
         ],

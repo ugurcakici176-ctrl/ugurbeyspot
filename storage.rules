@@ -2,6 +2,11 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+
+    // ============================================================
+    // AUTH / ADMIN
+    // ============================================================
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -10,18 +15,90 @@ service firebase.storage {
       return /databases/(default)/documents/admins/$(request.auth.uid);
     }
 
-    function isAdmin() {
+    function isActiveAdmin() {
       return isSignedIn()
         && firestore.exists(adminPath())
-        && firestore.get(adminPath()).data.status == "active";
+        && firestore.get(adminPath()).data.status == "active"
+        && firestore.get(adminPath()).data.role in [
+          "super_admin",
+          "admin",
+          "editor"
+        ];
     }
 
-    match /{allPaths=**} {
-      allow read: if true;
-      allow create, update: if isAdmin()
+    // ============================================================
+    // IMAGE VALIDATION
+    // ============================================================
+
+    function isValidImageUpload() {
+      return request.resource.size > 0
         && request.resource.size <= 10 * 1024 * 1024
-        && request.resource.contentType.matches("image/.*");
-      allow delete: if isAdmin();
+        && request.resource.contentType.matches(
+          "image/(jpeg|png|webp|avif)"
+        )
+        && (
+          !("originalName" in request.resource.metadata)
+          || request.resource.metadata.originalName.size() <= 200
+        );
+    }
+
+    function isPublicImage() {
+      return resource != null
+        && resource.contentType.matches(
+          "image/(jpeg|png|webp|avif)"
+        );
+    }
+
+    // ============================================================
+    // SELL REQUEST IMAGES
+    // ============================================================
+
+    match /sell-requests/{requestId}/{fileName} {
+
+      // Ziyaretçiler teklif formundan fotoğraf yükleyebilir.
+      allow create:
+        if requestId.size() > 0
+        && requestId.size() <= 128
+        && fileName.size() > 0
+        && fileName.size() <= 200
+        && isValidImageUpload();
+
+      // Müşteri tarafındaki önizleme/indirme URL'si ve admin galerisi
+      // Firebase Storage indirme isteği yaptığı için okuma açıktır.
+      // Dosya yolları tahmin edilemeyen benzersiz kimlikler içerir.
+      allow read:
+        if isPublicImage();
+
+      // Var olan teklif dosyasının üzerine yazılamaz.
+      allow update:
+        if false;
+
+      // Teklif görsellerini yalnızca yöneticiler silebilir.
+      allow delete:
+        if isActiveAdmin();
+    }
+
+    // ============================================================
+    // WEBSITE MEDIA
+    // ============================================================
+
+    match /{topLevel}/{allPaths=**} {
+
+      // sell-requests için yukarıdaki özel kurallar geçerlidir.
+      // Bu kontrol, genel kuralın teklif görsellerini açmasını engeller.
+      allow read:
+        if topLevel != "sell-requests"
+        && isPublicImage();
+
+      // Normal site medyasını yalnızca aktif yöneticiler yükleyebilir.
+      allow create, update:
+        if topLevel != "sell-requests"
+        && isActiveAdmin()
+        && isValidImageUpload();
+
+      allow delete:
+        if topLevel != "sell-requests"
+        && isActiveAdmin();
     }
   }
 }

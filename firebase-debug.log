@@ -1,0 +1,152 @@
+[debug] [2026-07-28T09:33:24.476Z] ----------------------------------------------------------------------
+[debug] [2026-07-28T09:33:24.477Z] Command:       /opt/homebrew/Cellar/node/25.8.1_1/bin/node /opt/homebrew/bin/firebase deploy --only firestore:rules,storage --dry-run
+[debug] [2026-07-28T09:33:24.478Z] CLI Version:   15.12.0
+[debug] [2026-07-28T09:33:24.478Z] Platform:      darwin
+[debug] [2026-07-28T09:33:24.478Z] Node Version:  v25.8.1
+[debug] [2026-07-28T09:33:24.478Z] Time:          Tue Jul 28 2026 12:33:24 GMT+0300 (Türkiye Standard Time)
+[debug] [2026-07-28T09:33:24.478Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-28T09:33:24.478Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-07-28T09:33:25.107Z] Object "/extensions" in "firebase.json" has unknown property: {"additionalProperty":"firestore-send-email"}
+[debug] [2026-07-28T09:33:25.109Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-28T09:33:25.109Z] > authorizing via signed-in user (dromocop@gmail.com)
+[debug] [2026-07-28T09:33:25.109Z] [iam] checking project ugurbeyspot-51329 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]
+[debug] [2026-07-28T09:33:25.110Z] Checked if tokens are valid: false, expires at: 1784733685144
+[debug] [2026-07-28T09:33:25.110Z] Checked if tokens are valid: false, expires at: 1784733685144
+[debug] [2026-07-28T09:33:25.110Z] > refreshing access token with scopes: []
+[debug] [2026-07-28T09:33:25.111Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-28T09:33:25.111Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-28T09:33:25.112Z] *** [apiv2] error from fetch(https://firebase-public.firebaseio.com/cli.json, {"headers":{},"method":"GET"}): FetchError: request to https://firebase-public.firebaseio.com/cli.json failed, reason: getaddrinfo ENOTFOUND firebase-public.firebaseio.com
+[warn] ⚠  Unable to fetch the CLI MOTD and remote config. This is not a fatal error, but may indicate an issue with your network connection. 
+[debug] [2026-07-28T09:33:25.113Z] Failed to fetch MOTD FirebaseError: Failed to make request to https://firebase-public.firebaseio.com/cli.json
+[debug] [2026-07-28T09:33:25.113Z] *** [apiv2] error from fetch(https://www.googleapis.com/oauth2/v3/token, {"headers":{},"method":"POST","body":{"_overheadLength":545,"_valueLength":212,"_valuesToMeasure":[],"writable":false,"readable":true,"dataSize":0,"maxDataSize":2097152,"pauseStreams":true,"_released":true,"_streams":[],"_currentStream":null,"_insideLoop":false,"_pendingNext":false,"_boundary":"--------------------------0a55b7412552c346b99ca729","_events":{},"_eventsCount":1}}): FetchError: request to https://www.googleapis.com/oauth2/v3/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-28T09:33:25.113Z] [iam] error while checking permissions, command may fail: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[info] 
+[info] === Deploying to 'ugurbeyspot-51329'...
+[info] 
+[info] i  deploying storage, firestore 
+[info] i  storage: ensuring required API firebasestorage.googleapis.com is enabled... 
+[debug] [2026-07-28T09:33:25.114Z] Checked if tokens are valid: false, expires at: 1784733685144
+[debug] [2026-07-28T09:33:25.114Z] Checked if tokens are valid: false, expires at: 1784733685144
+[debug] [2026-07-28T09:33:25.114Z] > refreshing access token with scopes: []
+[debug] [2026-07-28T09:33:25.114Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-28T09:33:25.114Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-28T09:33:25.123Z] *** [apiv2] error from fetch(https://www.googleapis.com/oauth2/v3/token, {"headers":{},"method":"POST","body":{"_overheadLength":545,"_valueLength":212,"_valuesToMeasure":[],"writable":false,"readable":true,"dataSize":0,"maxDataSize":2097152,"pauseStreams":true,"_released":true,"_streams":[],"_currentStream":null,"_insideLoop":false,"_pendingNext":false,"_boundary":"--------------------------d38950504e53193539916b8e","_events":{},"_eventsCount":1}}): FetchError: request to https://www.googleapis.com/oauth2/v3/token failed, reason: getaddrinfo ENOTFOUND www.googleapis.com
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] 
+[error] Error: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-07-28T09:33:25.384Z] Error: EPERM: operation not permitted, open '/Users/cihaterdem/.config/configstore/firebase-tools.json.2545837282'
+    at Object.openSync (node:fs:556:18)
+    at writeFile.writeFileSync [as sync] (/opt/homebrew/lib/node_modules/firebase-tools/node_modules/write-file-atomic/index.js:205:13)
+    at set all (/opt/homebrew/lib/node_modules/firebase-tools/node_modules/configstore/index.js:61:20)
+    at Configstore.delete (/opt/homebrew/lib/node_modules/firebase-tools/node_modules/configstore/index.js:101:12)
+    at process.<anonymous> (/opt/homebrew/lib/node_modules/firebase-tools/lib/bin/cli.js:65:45)
+    at process.emit (node:events:520:22)
+    at process.exit (node:internal/process/per_thread:236:15)
+    at Timeout._onTimeout (/opt/homebrew/lib/node_modules/firebase-tools/lib/errorOut.js:20:17)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-07-28T09:34:06.643Z] ----------------------------------------------------------------------
+[debug] [2026-07-28T09:34:06.644Z] Command:       /opt/homebrew/Cellar/node/25.8.1_1/bin/node /opt/homebrew/bin/firebase emulators:exec --only firestore true
+[debug] [2026-07-28T09:34:06.644Z] CLI Version:   15.12.0
+[debug] [2026-07-28T09:34:06.644Z] Platform:      darwin
+[debug] [2026-07-28T09:34:06.644Z] Node Version:  v25.8.1
+[debug] [2026-07-28T09:34:06.644Z] Time:          Tue Jul 28 2026 12:34:06 GMT+0300 (Türkiye Standard Time)
+[debug] [2026-07-28T09:34:06.644Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-28T09:34:06.645Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-07-28T09:34:06.887Z] Object "/extensions" in "firebase.json" has unknown property: {"additionalProperty":"firestore-send-email"}
+[debug] [2026-07-28T09:34:06.890Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-28T09:34:06.890Z] > authorizing via signed-in user (dromocop@gmail.com)
+[debug] [2026-07-28T09:34:06.894Z] *** [apiv2] error from fetch(https://firebase-public.firebaseio.com/cli.json, {"headers":{},"method":"GET"}): FetchError: request to https://firebase-public.firebaseio.com/cli.json failed, reason: getaddrinfo ENOTFOUND firebase-public.firebaseio.com
+[warn] ⚠  Unable to fetch the CLI MOTD and remote config. This is not a fatal error, but may indicate an issue with your network connection. 
+[debug] [2026-07-28T09:34:06.894Z] Failed to fetch MOTD FirebaseError: Failed to make request to https://firebase-public.firebaseio.com/cli.json
+[debug] [2026-07-28T09:34:07.360Z] java version "24.0.2" 2025-07-15
+
+[debug] [2026-07-28T09:34:07.360Z] Java(TM) SE Runtime Environment (build 24.0.2+12-54)
+Java HotSpot(TM) 64-Bit Server VM (build 24.0.2+12-54, mixed mode, sharing)
+
+[debug] [2026-07-28T09:34:07.363Z] Parsed Java major version: 24
+[info] i  emulators: Starting emulators: firestore {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: firestore"}}
+[warn] ⚠  hub: Error when trying to check port 4400 on 127.0.0.1: Error: listen EPERM: operation not permitted 127.0.0.1:4400 {"metadata":{"emulator":{"name":"hub"},"message":"Error when trying to check port 4400 on 127.0.0.1: Error: listen EPERM: operation not permitted 127.0.0.1:4400"}}
+[warn] ⚠  logging: Error when trying to check port 4500 on 127.0.0.1: Error: listen EPERM: operation not permitted 127.0.0.1:4500 {"metadata":{"emulator":{"name":"logging"},"message":"Error when trying to check port 4500 on 127.0.0.1: Error: listen EPERM: operation not permitted 127.0.0.1:4500"}}
+[warn] ⚠  firestore: Error when trying to check port 8080 on 127.0.0.1: Error: listen EPERM: operation not permitted 127.0.0.1:8080 {"metadata":{"emulator":{"name":"firestore"},"message":"Error when trying to check port 8080 on 127.0.0.1: Error: listen EPERM: operation not permitted 127.0.0.1:8080"}}
+[warn] ⚠  firestore.websocket: Error when trying to check port 9150 on 127.0.0.1: Error: listen EPERM: operation not permitted 127.0.0.1:9150 {"metadata":{"emulator":{"name":"firestore"},"message":"Error when trying to check port 9150 on 127.0.0.1: Error: listen EPERM: operation not permitted 127.0.0.1:9150"}}
+[warn] ⚠  hub: Error when trying to check port 4400 on ::1: Error: listen EPERM: operation not permitted ::1:4400 {"metadata":{"emulator":{"name":"hub"},"message":"Error when trying to check port 4400 on ::1: Error: listen EPERM: operation not permitted ::1:4400"}}
+[warn] ⚠  hub: Port 4400 is not open on localhost (127.0.0.1,::1), could not start emulator hub. {"metadata":{"emulator":{"name":"hub"},"message":"Port 4400 is not open on localhost (127.0.0.1,::1), could not start emulator hub."}}
+[warn] ⚠  hub: To select a different host/port, specify that host/port in a firebase.json config file:
+      {
+        // ...
+        "emulators": {
+          "hub": {
+            "host": "HOST",
+            "port": "PORT"
+          }
+        }
+      } {"metadata":{"emulator":{"name":"hub"},"message":"To select a different host/port, specify that host/port in a firebase.json config file:\n      {\n        // ...\n        \"emulators\": {\n          \"hub\": {\n            \"host\": \"HOST\",\n            \"port\": \"PORT\"\n          }\n        }\n      }"}}
+[warn] ⚠  logging: Error when trying to check port 4500 on ::1: Error: listen EPERM: operation not permitted ::1:4500 {"metadata":{"emulator":{"name":"logging"},"message":"Error when trying to check port 4500 on ::1: Error: listen EPERM: operation not permitted ::1:4500"}}
+[warn] ⚠  logging: Port 4500 is not open on localhost (127.0.0.1,::1), could not start Logging Emulator. {"metadata":{"emulator":{"name":"logging"},"message":"Port 4500 is not open on localhost (127.0.0.1,::1), could not start Logging Emulator."}}
+[warn] ⚠  logging: To select a different host/port, specify that host/port in a firebase.json config file:
+      {
+        // ...
+        "emulators": {
+          "logging": {
+            "host": "HOST",
+            "port": "PORT"
+          }
+        }
+      } {"metadata":{"emulator":{"name":"logging"},"message":"To select a different host/port, specify that host/port in a firebase.json config file:\n      {\n        // ...\n        \"emulators\": {\n          \"logging\": {\n            \"host\": \"HOST\",\n            \"port\": \"PORT\"\n          }\n        }\n      }"}}
+[warn] ⚠  firestore: Error when trying to check port 8080 on ::1: Error: listen EPERM: operation not permitted ::1:8080 {"metadata":{"emulator":{"name":"firestore"},"message":"Error when trying to check port 8080 on ::1: Error: listen EPERM: operation not permitted ::1:8080"}}
+[warn] ⚠  firestore: Port 8080 is not open on localhost (127.0.0.1,::1), could not start Firestore Emulator. {"metadata":{"emulator":{"name":"firestore"},"message":"Port 8080 is not open on localhost (127.0.0.1,::1), could not start Firestore Emulator."}}
+[warn] ⚠  firestore: To select a different host/port, specify that host/port in a firebase.json config file:
+      {
+        // ...
+        "emulators": {
+          "firestore": {
+            "host": "HOST",
+            "port": "PORT"
+          }
+        }
+      } {"metadata":{"emulator":{"name":"firestore"},"message":"To select a different host/port, specify that host/port in a firebase.json config file:\n      {\n        // ...\n        \"emulators\": {\n          \"firestore\": {\n            \"host\": \"HOST\",\n            \"port\": \"PORT\"\n          }\n        }\n      }"}}
+[warn] ⚠  firestore.websocket: Error when trying to check port 9150 on ::1: Error: listen EPERM: operation not permitted ::1:9150 {"metadata":{"emulator":{"name":"firestore"},"message":"Error when trying to check port 9150 on ::1: Error: listen EPERM: operation not permitted ::1:9150"}}
+[warn] ⚠  firestore: Port 9150 is not open on localhost (127.0.0.1,::1), could not start websocket server for firestore. {"metadata":{"emulator":{"name":"firestore"},"message":"Port 9150 is not open on localhost (127.0.0.1,::1), could not start websocket server for firestore."}}
+[warn] ⚠  firestore: To select a different port, specify that port in a firebase.json config file:
+      {
+        // ...
+        "emulators": {
+          "firestore": {
+            "host": "HOST",
+            ...
+            "websocketPort": "WEBSOCKET_PORT"
+          }
+        }
+      } {"metadata":{"emulator":{"name":"firestore"},"message":"To select a different port, specify that port in a firebase.json config file:\n      {\n        // ...\n        \"emulators\": {\n          \"firestore\": {\n            \"host\": \"HOST\",\n            ...\n            \"websocketPort\": \"WEBSOCKET_PORT\"\n          }\n        }\n      }"}}
+[debug] [2026-07-28T09:34:07.721Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] i  emulators: Shutting down emulators. {"metadata":{"emulator":{"name":"hub"},"message":"Shutting down emulators."}}
+[debug] [2026-07-28T09:34:07.722Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[error] 
+[error] Error: Could not start emulator hub, port taken.
+[debug] [2026-07-28T09:34:07.988Z] Error: EPERM: operation not permitted, open '/Users/cihaterdem/.config/configstore/firebase-tools.json.2700330117'
+    at Object.openSync (node:fs:556:18)
+    at writeFile.writeFileSync [as sync] (/opt/homebrew/lib/node_modules/firebase-tools/node_modules/write-file-atomic/index.js:205:13)
+    at set all (/opt/homebrew/lib/node_modules/firebase-tools/node_modules/configstore/index.js:61:20)
+    at Configstore.delete (/opt/homebrew/lib/node_modules/firebase-tools/node_modules/configstore/index.js:101:12)
+    at process.<anonymous> (/opt/homebrew/lib/node_modules/firebase-tools/lib/bin/cli.js:65:45)
+    at process.emit (node:events:520:22)
+    at process.exit (node:internal/process/per_thread:236:15)
+    at Timeout._onTimeout (/opt/homebrew/lib/node_modules/firebase-tools/lib/errorOut.js:20:17)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[error] 
+[error] Error: An unexpected error has occurred.

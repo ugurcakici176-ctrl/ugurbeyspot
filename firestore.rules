@@ -635,6 +635,64 @@ service cloud.firestore {
       allow delete: if isManagerAdmin();
     }
 
+    match /sell_requests/{requestId} {
+      allow create: if request.resource.data.keys().hasAll([
+        "fullName", "phone", "category", "condition", "description",
+        "images", "status", "createdAt", "updatedAt"
+      ])
+      && request.resource.data.keys().hasOnly([
+        "customerUid", "customerEmail", "fullName", "phone", "district", "category", "brandModel",
+        "condition", "description", "expectedPrice", "images", "status",
+        "createdAt", "updatedAt"
+      ])
+      && request.resource.data.fullName is string
+      && request.resource.data.fullName.size() >= 2
+      && request.resource.data.fullName.size() <= 100
+      && request.resource.data.phone is string
+      && request.resource.data.phone.size() >= 7
+      && request.resource.data.phone.size() <= 30
+      && (
+        !("customerUid" in request.resource.data)
+        || (
+          isSignedIn()
+          && request.resource.data.customerUid is string
+          && request.resource.data.customerUid == request.auth.uid
+        )
+      )
+      && (
+        !("customerEmail" in request.resource.data)
+        || (
+          isSignedIn()
+          && request.auth.token.email is string
+          && request.resource.data.customerEmail == request.auth.token.email
+        )
+      )
+      && request.resource.data.category is string
+      && request.resource.data.category.size() <= 80
+      && request.resource.data.condition is string
+      && request.resource.data.condition.size() <= 80
+      && request.resource.data.description is string
+      && request.resource.data.description.size() >= 10
+      && request.resource.data.description.size() <= 2000
+      && request.resource.data.images is list
+      && request.resource.data.images.size() >= 1
+      && request.resource.data.images.size() <= 6
+      && request.resource.data.images[0] is map
+      && request.resource.data.images[0].keys().hasAll([
+        "id", "url", "storagePath", "alt", "sortOrder"
+      ])
+      && request.resource.data.status == "new";
+      allow get, list: if isActiveAdmin() || (
+        isSignedIn()
+        && resource.data.customerUid is string
+        && resource.data.customerUid == request.auth.uid
+      );
+      allow update: if isActiveAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(["status", "adminNote", "offeredPrice", "updatedAt"]);
+      allow delete: if isManagerAdmin();
+    }
+
     match /admins/{adminId} {
       allow get: if isSignedIn() && (
         request.auth.uid == adminId || isSuperAdmin()

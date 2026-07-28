@@ -103,6 +103,13 @@ const NAV_ITEMS: readonly AdminNavigationItem[] = [
     group: "commerce",
   },
   {
+    href: ROUTES.adminSellRequests,
+    label: "Satış Talepleri",
+    description: "Fotoğraflı eşya teklifleri",
+    icon: "image",
+    group: "commerce",
+  },
+  {
     href: ROUTES.adminHomepage,
     label: "Ana Sayfa",
     description:

@@ -13,6 +13,7 @@ import SiteChrome from "@/components/site/site-chrome";
 import EmptyState from "@/components/ui/empty-state";
 import Icon from "@/components/ui/icon";
 import QuickQuoteModal from "@/components/site/quick-quote-modal";
+import SellItemModal from "@/components/site/sell-item-modal";
 
 import {
   getBanners,
@@ -83,6 +84,7 @@ export default function HomePageClient({
     quoteOpen,
     setQuoteOpen,
   ] = useState(false);
+  const [sellOpen, setSellOpen] = useState(false);
   useEffect(() => {
     if (initialData) {
       const frameId = window.requestAnimationFrame(
@@ -960,6 +962,30 @@ export default function HomePageClient({
             )}
           </div>
         </section>
+        <section className="sell-home" aria-labelledby="sell-home-title">
+          <div className="site-container">
+            <div className="sell-home__card" data-reveal>
+              <div className="sell-home__visual">
+                <img src="/images/spot/ikinci-el-koltuk.jpg" alt="Satmak istediği koltuğun fotoğrafını çeken müşteri" />
+                <div className="sell-home__photo-card sell-home__photo-card--one"><Icon name="image" size={18} /><span>Fotoğrafları yükle</span><strong>1–6 fotoğraf</strong></div>
+                <div className="sell-home__photo-card sell-home__photo-card--two"><Icon name="check" size={18} /><span>Ücretsiz değerlendirme</span><strong>Hızlı geri dönüş</strong></div>
+              </div>
+              <div className="sell-home__content">
+                <span className="eyebrow">EŞYAN MI VAR?</span>
+                <h2 id="sell-home-title">Fotoğrafını gönder,<br /><em>değerini birlikte bulalım.</em></h2>
+                <p>Kullanmadığın beyaz eşya, mobilya veya elektroniğin fotoğraflarını bize gönder. Uzman ekibimiz incelesin, sana hızlıca teklif versin.</p>
+                <ol>
+                  <li><span>01</span><div><strong>Fotoğrafları ekle</strong><small>Eşyayı farklı açılardan göster.</small></div></li>
+                  <li><span>02</span><div><strong>Kısaca anlat</strong><small>Marka, model ve durumunu belirt.</small></div></li>
+                  <li><span>03</span><div><strong>Teklifini al</strong><small>Ekibimiz seni telefonla arasın.</small></div></li>
+                </ol>
+                <button type="button" className="button button--dark sell-home__button" onClick={() => setSellOpen(true)}>Eşyam için teklif al <Icon name="arrow-right" /></button>
+                <small className="sell-home__note"><Icon name="shield-check" size={15} /> Ücretsiz değerlendirme · Zorunluluk yok</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="section quick-quote-home">
           <div className="site-container">
             <div
@@ -1522,6 +1548,7 @@ export default function HomePageClient({
         sourcePage="/"
 
       />
+      <SellItemModal open={sellOpen} onClose={() => setSellOpen(false)} />
     </SiteChrome>
   );
 }

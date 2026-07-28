@@ -24,6 +24,49 @@ export type UploadProgressCallback = (
   progress: UploadProgress,
 ) => void;
 
+const CUSTOMER_IMAGE_MAX_EDGE = 1920;
+const CUSTOMER_IMAGE_QUALITY = 0.78;
+
+export async function optimizeImageForUpload(file: File): Promise<File> {
+  if (typeof window === "undefined" || !file.type.startsWith("image/")) {
+    return file;
+  }
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(
+    1,
+    CUSTOMER_IMAGE_MAX_EDGE / Math.max(bitmap.width, bitmap.height),
+  );
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d", { alpha: false });
+  if (!context) {
+    bitmap.close();
+    return file;
+  }
+
+  context.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/webp", CUSTOMER_IMAGE_QUALITY);
+  });
+
+  if (!blob || blob.size >= file.size) {
+    return file;
+  }
+
+  const baseName = file.name.replace(/\.[^.]+$/, "") || "esya-fotografi";
+  return new File([blob], `${baseName}.webp`, {
+    type: "image/webp",
+    lastModified: file.lastModified,
+  });
+}
+
 function validateImageFile(file: File): void {
   if (
     !UPLOAD_LIMITS.allowedImageTypes.includes(
@@ -152,6 +195,46 @@ export async function uploadImages(
   }
 
   return uploaded;
+}
+
+export async function uploadCustomerImages(
+  files: File[],
+  folder: string,
+  alt: string,
+  onProgress?: (percent: number) => void,
+): Promise<ImageAsset[]> {
+  onProgress?.(3);
+  const optimized = await Promise.all(
+    files.map(async (file) => {
+      try {
+        return await optimizeImageForUpload(file);
+      } catch {
+        // Eski tarayıcılarda görsel dönüştürme desteklenmiyorsa yüklemeyi
+        // durdurmak yerine güvenli biçimde özgün dosyayla devam et.
+        return file;
+      }
+    }),
+  );
+  onProgress?.(15);
+
+  const transferred = optimized.map(() => 0);
+  const totals = optimized.map((file) => file.size);
+  const uploaded = await Promise.all(
+    optimized.map((file, index) =>
+      uploadImage(file, folder, alt, index, (item) => {
+        transferred[index] = item.transferredBytes;
+        totals[index] = item.totalBytes;
+        const totalBytes = totals.reduce((sum, size) => sum + size, 0);
+        const sentBytes = transferred.reduce((sum, size) => sum + size, 0);
+        onProgress?.(
+          Math.min(99, 15 + Math.round((sentBytes / totalBytes) * 84)),
+        );
+      }),
+    ),
+  );
+
+  onProgress?.(100);
+  return uploaded.sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 export async function deleteImageAsset(

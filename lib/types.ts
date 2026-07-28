@@ -21,6 +21,13 @@ export type QuoteRequestStatus =
   | "offered"
   | "closed";
 
+export type SellRequestStatus =
+  | "new"
+  | "reviewing"
+  | "offered"
+  | "completed"
+  | "rejected";
+
 export type AdminRole = "super_admin" | "admin" | "editor";
 
 export type ButtonTarget = "_self" | "_blank";
@@ -383,6 +390,23 @@ export interface QuoteRequest extends FirestoreEntity {
   adminNote?: string;
   offeredPrice?: number;
   offeredAt?: ISODateString;
+}
+
+export interface SellRequest extends FirestoreEntity {
+  customerUid?: string;
+  customerEmail?: string;
+  fullName: string;
+  phone: string;
+  district?: string;
+  category: string;
+  brandModel?: string;
+  condition: string;
+  description: string;
+  expectedPrice?: number;
+  images: ImageAsset[];
+  status: SellRequestStatus;
+  adminNote?: string;
+  offeredPrice?: number;
 }
 
 export interface SiteBranding {

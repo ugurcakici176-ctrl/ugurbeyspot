@@ -22,6 +22,17 @@ import {
 import {
   logoutPublicUser,
 } from "@/lib/public-auth";
+import { getCustomerSellRequests } from "@/lib/sell-requests";
+import type { SellRequest, SellRequestStatus } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
+
+const SELL_STATUS_LABELS: Record<SellRequestStatus, string> = {
+  new: "Talebiniz Alındı",
+  reviewing: "İnceleniyor",
+  offered: "Teklif Hazır",
+  completed: "Tamamlandı",
+  rejected: "Uygun Bulunmadı",
+};
 
 function formatDateLabel(value: string | null | undefined): string {
   if (!value) {
@@ -114,6 +125,9 @@ export default function AccountPage() {
     setCopyingUid,
   ] = useState(false);
 
+  const [sellRequests, setSellRequests] = useState<SellRequest[]>([]);
+  const [sellRequestsLoading, setSellRequestsLoading] = useState(true);
+
   useEffect(() => {
     if (
       !loading &&
@@ -128,6 +142,28 @@ export default function AccountPage() {
     loading,
     router,
   ]);
+
+  useEffect(() => {
+    if (!session?.user.uid) {
+      return;
+    }
+
+    let active = true;
+    void getCustomerSellRequests()
+      .then((items) => {
+        if (active) setSellRequests(items);
+      })
+      .catch((reason: unknown) => {
+        console.error("Satış talepleri yüklenemedi:", reason);
+      })
+      .finally(() => {
+        if (active) setSellRequestsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [session?.user.uid]);
 
   useEffect(() => {
     if (!session?.user.email) {
@@ -664,6 +700,60 @@ export default function AccountPage() {
             </button>
           </section>
         </div>
+
+        <section className="account-sell-requests">
+          <div className="section-heading section-heading--actions">
+            <div>
+              <span className="eyebrow">EŞYA SATIŞI</span>
+              <h2>Tekliflerim</h2>
+              <p>Gönderdiğiniz eşyaların değerlendirme sürecini ve mağazamızın teklifini takip edin.</p>
+            </div>
+            <span className="account-sell-requests__count">{sellRequests.length} talep</span>
+          </div>
+
+          {sellRequestsLoading ? (
+            <div className="account-sell-empty">Teklifleriniz yükleniyor...</div>
+          ) : sellRequests.length === 0 ? (
+            <div className="account-sell-empty">
+              <span><Icon name="image" size={26} /></span>
+              <div>
+                <strong>Henüz hesabınıza bağlı satış talebi yok.</strong>
+                <small>Giriş yaptıktan sonra göndereceğiniz eşya talepleri burada görünecek.</small>
+              </div>
+              <Link href="/" className="button button--dark button--compact">Eşya gönder</Link>
+            </div>
+          ) : (
+            <div className="account-sell-list">
+              {sellRequests.map((request) => (
+                <article className="account-sell-card" key={request.id}>
+                  <div className="account-sell-card__image">
+                    {request.images[0] ? <img src={request.images[0].url} alt={request.images[0].alt || request.category} /> : <Icon name="image" size={28} />}
+                  </div>
+                  <div className="account-sell-card__body">
+                    <div className="account-sell-card__top">
+                      <div>
+                        <small>{request.category}</small>
+                        <h3>{request.brandModel || "Eşya değerlendirme talebi"}</h3>
+                      </div>
+                      <span data-status={request.status}>{SELL_STATUS_LABELS[request.status]}</span>
+                    </div>
+                    <p>{request.description}</p>
+                    <div className="account-sell-card__meta">
+                      <span><Icon name="clock" size={15} /> {formatDateLabel(request.createdAt)}</span>
+                      <span>{request.images.length} fotoğraf</span>
+                    </div>
+                    {request.status === "offered" && request.offeredPrice !== undefined && (
+                      <div className="account-sell-offer">
+                        <div><small>UĞUR BEY SPOT TEKLİFİ</small><strong>{formatCurrency(request.offeredPrice)}</strong></div>
+                        <a href="tel:+905520715689" className="button button--dark button--compact"><Icon name="phone" size={17} /> Teklif için ara</a>
+                      </div>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section className="account-actions">
           <div className="section-heading section-heading--actions">

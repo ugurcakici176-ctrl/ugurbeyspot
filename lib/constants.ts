@@ -18,6 +18,7 @@ export const COLLECTIONS = {
   about: "about",
   contactMessages: "contact_messages",
   quoteRequests: "quote_requests",
+  sellRequests: "sell_requests",
   productReviews: "product_reviews",
   banners: "banners",
   gallery: "gallery",
@@ -48,6 +49,7 @@ export const ROUTES = {
   adminAbout: "/admin/hakkimizda",
   adminMessages: "/admin/mesajlar",
   adminQuoteRequests: "/admin/hizli-teklifler",
+  adminSellRequests: "/admin/satis-talepleri",
   adminReviews: "/admin/yorumlar",
   adminSettings: "/admin/ayarlar",
   adminSeo: "/admin/seo",
@@ -65,6 +67,7 @@ export const STORAGE_PATHS = {
   gallery: "gallery",
   branding: "branding",
   banners: "banners",
+  sellRequests: "sell-requests",
 
   product: (productId: string) => `products/${productId}`,
   category: (categoryId: string) => `categories/${categoryId}`,
