@@ -4306,6 +4306,237 @@ button { cursor: pointer; }
   }
 }
 
+/* =========================================================
+   MOBILE OVERFLOW SAFETY LAYER
+   Keep this final so later page extensions cannot reintroduce
+   horizontal scrolling on narrow devices.
+   ========================================================= */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img,
+video,
+iframe,
+canvas {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+  min-width: 0;
+}
+
+.site-container,
+.admin-editor,
+.admin-editor__layout,
+.admin-editor__main,
+.admin-editor__side,
+.admin-panel,
+.account-page,
+.account-sell-card,
+.account-sell-card__body,
+.sell-modal__panel,
+.quick-quote-modal__panel {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .site-container {
+    width: min(calc(100% - 24px), var(--container));
+  }
+
+  h1,
+  h2,
+  h3,
+  p,
+  strong,
+  small,
+  a,
+  dd {
+    overflow-wrap: anywhere;
+  }
+
+  .button,
+  .admin-secondary-button {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .section-heading,
+  .section-heading--actions,
+  .admin-form-section__heading {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .section-heading--actions,
+  .admin-form-section__heading {
+    align-items: stretch;
+  }
+
+  .section-heading--actions .button,
+  .admin-form-section__heading .admin-secondary-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .site-header__inner,
+  .account-topbar {
+    gap: 10px;
+  }
+
+  .account-topbar .brand {
+    min-width: 0;
+  }
+
+  .account-topbar .brand__text {
+    min-width: 0;
+  }
+
+  .account-topbar .button {
+    flex: 0 0 auto;
+    padding-inline: 12px;
+    font-size: .68rem;
+  }
+
+  .account-hero h1,
+  .page-hero h1,
+  .hero h1 {
+    max-width: 100%;
+    font-size: clamp(2.45rem, 13vw, 3.45rem);
+  }
+
+  .account-uid-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-sell-card__meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .account-sell-offer .button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sell-form__member {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 13px;
+  }
+
+  .sell-form__member > span {
+    width: 42px;
+    height: 42px;
+  }
+
+  .sell-form__member em {
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sell-modal__header {
+    padding-right: 28px;
+  }
+
+  .sell-modal__header h2,
+  .sell-modal__success h2 {
+    font-size: clamp(2rem, 11vw, 2.75rem);
+  }
+
+  .sell-upload__empty {
+    padding-inline: 12px;
+    text-align: center;
+  }
+
+  .sell-admin__detail {
+    padding: 18px 14px;
+  }
+
+  .sell-admin__actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .sell-admin__actions .button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .quick-quote-modal__header > div,
+  .quick-quote-products,
+  .quick-quote-field {
+    min-width: 0;
+  }
+
+  .quick-quote-modal__actions {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+
+  .admin-spec-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-spec-row button {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .admin-image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-editor__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-panel,
+  .admin-form-section {
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .site-container {
+    width: min(calc(100% - 18px), var(--container));
+  }
+
+  .brand__mark {
+    width: 38px;
+    height: 38px;
+  }
+
+  .account-topbar .brand__text {
+    display: none;
+  }
+
+  .hero-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .product-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sell-upload__previews,
+  .sell-admin__gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* Fotoğraflı eşya satış akışı */
 .sell-home { padding: 100px 0; background: #f3f1eb; }
 .sell-home__card { display: grid; grid-template-columns: 1.05fr .95fr; overflow: hidden; min-height: 650px; border-radius: 36px; background: #fff; box-shadow: 0 30px 80px rgba(28,25,18,.1); }
