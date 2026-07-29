@@ -128,7 +128,7 @@ export const UPLOAD_LIMITS = {
 export const IMAGE_ACCEPT = UPLOAD_LIMITS.allowedImageTypes.join(",");
 
 export const DEFAULT_SEO: SeoConfig = {
-  title: "Konya Spot | İkinci El Eşya Alım Satım – Uğur Bey Spot",
+  title: "Konya Spot Eşya | İkinci El Eşya – Uğur Bey Spot",
   description:
     "Konya'nın güvenilir spot mağazası Uğur Bey Spot'ta ikinci el mobilya, beyaz eşya, elektronik ve ev eşyası alım satımı yapın. Güncel ürünleri inceleyin, hızlı teklif alın.",
   keywords: [

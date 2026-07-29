@@ -141,6 +141,34 @@ export default function RootLayout({
         logo: absoluteUrl(BRAND_ASSETS.mark),
         description:
           "Konya'da ikinci el mobilya, beyaz eşya, elektronik ve ev eşyası alım satımı yapan spot mağaza.",
+        knowsAbout: [
+          "Konya spot eşya",
+          "İkinci el mobilya",
+          "İkinci el beyaz eşya",
+          "İkinci el elektronik",
+          "İkinci el eşya alım satımı",
+        ],
+        hasOfferCatalog: {
+          "@type": "OfferCatalog",
+          name: "Konya Spot ve İkinci El Eşya Ürünleri",
+          itemListElement: [
+            {
+              "@type": "OfferCatalog",
+              name: "İkinci El Mobilya",
+              url: absoluteUrl("/kategori/koltuk-mobilya"),
+            },
+            {
+              "@type": "OfferCatalog",
+              name: "İkinci El Beyaz Eşya",
+              url: absoluteUrl("/urunler"),
+            },
+            {
+              "@type": "OfferCatalog",
+              name: "Spot Elektronik",
+              url: absoluteUrl("/kategori/televizyon-elektronik"),
+            },
+          ],
+        },
         ...(businessPhone ? { telephone: businessPhone } : {}),
         ...(businessEmail ? { email: businessEmail } : {}),
         ...(mapsUrl ? { hasMap: mapsUrl } : {}),

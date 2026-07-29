@@ -34,14 +34,19 @@ const NAVIGATION = [
     key: "home",
     href: "/",
   },
+   {
+    key: "products",
+    href: "/urunler",
+  },
+  {
+    label: "Konya Spot",
+    href: ROUTES.konyaSpot,
+  },
   {
     key: "about",
     href: "/hakkimizda",
   },
-  {
-    key: "products",
-    href: "/urunler",
-  },
+ 
   {
     key: "contact",
     href: "/iletisim",
@@ -258,16 +263,22 @@ const [
   } as CSSProperties;
 
   const navigation = NAVIGATION.map(
-    (item) => ({
-      ...item,
-      label:
-        settings.header.navLabels[
-          item.key
-        ] ||
-        DEFAULT_NAV_LABELS[
-          item.key
-        ],
-    }),
+    (item) => {
+      if ("label" in item) {
+        return item;
+      }
+
+      return {
+        ...item,
+        label:
+          settings.header.navLabels[
+            item.key
+          ] ||
+          DEFAULT_NAV_LABELS[
+            item.key
+          ],
+      };
+    },
   );
 
   const hasPrimaryCta =

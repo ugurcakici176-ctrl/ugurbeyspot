@@ -87,11 +87,9 @@ export default function HomePageClient({
   const [sellOpen, setSellOpen] = useState(false);
   useEffect(() => {
     if (initialData) {
-      const frameId = window.requestAnimationFrame(
+      window.requestAnimationFrame(
         () => setPageReady(true),
       );
-
-      return () => window.cancelAnimationFrame(frameId);
     }
 
     let active = true;
@@ -132,14 +130,16 @@ export default function HomePageClient({
       .catch(
         (reason: unknown) => {
           console.error(
-            "Homepage could not be loaded:",
+            "Homepage could not be refreshed:",
             reason,
           );
 
-          if (active) {
+          if (active && !initialData) {
             setError(
               "Ana sayfa içerikleri şu anda yüklenemedi.",
             );
+
+            setPageReady(true);
           }
         },
       );
