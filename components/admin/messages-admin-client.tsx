@@ -246,17 +246,28 @@ export default function MessagesAdminClient() {
       [messages, selectedId],
     );
 
-  useEffect(() => {
+useEffect(() => {
+  const timeoutId = window.setTimeout(() => {
     setReplyText(
-      selected?.adminReply ??
-        "",
+      selected?.adminReply ?? "",
     );
 
     setActionError(null);
     setActionSuccess(null);
-  }, [selected?.id]);
+  }, 0);
 
-  useEffect(() => {
+  return () => {
+    window.clearTimeout(timeoutId);
+  };
+}, [
+  selected?.id,
+  selected?.adminReply,
+]);
+
+useEffect(() => {
+  let unsubscribe: (() => void) | undefined;
+
+  const timeoutId = window.setTimeout(() => {
     if (!selectedId) {
       setChatMessages([]);
       setThreadLoading(false);
@@ -265,34 +276,30 @@ export default function MessagesAdminClient() {
 
     setThreadLoading(true);
 
-    const unsubscribe =
+    unsubscribe =
       observeContactChatMessages(
         selectedId,
         (items) => {
           setChatMessages(items);
-          setThreadLoading(
-            false,
-          );
+          setThreadLoading(false);
         },
-        (
-          reason: unknown,
-        ) => {
+        (reason: unknown) => {
           setActionError(
             reason instanceof Error
               ? reason.message
               : "Sohbet mesajları yüklenemedi.",
           );
 
-          setThreadLoading(
-            false,
-          );
+          setThreadLoading(false);
         },
       );
+  }, 0);
 
-    return () => {
-      unsubscribe();
-    };
-  }, [selectedId]);
+  return () => {
+    window.clearTimeout(timeoutId);
+    unsubscribe?.();
+  };
+}, [selectedId]);
 
   useEffect(() => {
     if (
@@ -325,8 +332,7 @@ export default function MessagesAdminClient() {
       );
     };
   }, [
-    selected?.id,
-    selected?.status,
+    selected
   ]);
 
   const statistics =

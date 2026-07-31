@@ -238,14 +238,20 @@ export default function AdminShell({
     setLoggingOut,
   ] = useState(false);
 
-  const [
-    mounted,
-    setMounted,
-  ] = useState(false);
+const [
+  mounted,
+  setMounted,
+] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
+  const timeoutId = window.setTimeout(() => {
     setMounted(true);
-  }, []);
+  }, 0);
+
+  return () => {
+    window.clearTimeout(timeoutId);
+  };
+}, []);
 
   useEffect(() => {
     const timeoutId =

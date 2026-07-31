@@ -262,7 +262,8 @@ export default function QuoteRequestsAdminClient() {
       [requests, selectedId],
     );
 
-  useEffect(() => {
+ useEffect(() => {
+  const timeoutId = window.setTimeout(() => {
     if (!selected) {
       setDraftStatus("new");
       setOfferedPriceText("");
@@ -270,23 +271,23 @@ export default function QuoteRequestsAdminClient() {
       return;
     }
 
-    setDraftStatus(
-      selected.status,
-    );
+    setDraftStatus(selected.status);
 
     setOfferedPriceText(
-      typeof selected.offeredPrice ===
-        "number"
-        ? String(
-            selected.offeredPrice,
-          )
+      typeof selected.offeredPrice === "number"
+        ? String(selected.offeredPrice)
         : "",
     );
 
     setAdminNote(
       selected.adminNote ?? "",
     );
-  }, [selected]);
+  }, 0);
+
+  return () => {
+    window.clearTimeout(timeoutId);
+  };
+}, [selected]);
 
   const statistics =
     useMemo(() => {

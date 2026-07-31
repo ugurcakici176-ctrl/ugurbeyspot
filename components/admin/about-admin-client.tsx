@@ -124,9 +124,15 @@ function ImagePreview({
 }: ImagePreviewProps) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
-  useEffect(() => {
+ useEffect(() => {
+  const timeoutId = window.setTimeout(() => {
     setFailedUrl(null);
-  }, [url]);
+  }, 0);
+
+  return () => {
+    window.clearTimeout(timeoutId);
+  };
+}, [url]);
 
   const normalizedUrl = url?.trim() ?? "";
   const hasValidPreview = normalizedUrl && failedUrl !== normalizedUrl;
@@ -226,18 +232,20 @@ export default function AboutAdminClient() {
     [],
   );
 
-  const loadContent = useCallback(
-    async (options?: { askBeforeDiscard?: boolean }) => {
-      if (
-        options?.askBeforeDiscard &&
-        isDirty &&
-        !window.confirm(
-          "Kaydedilmemiş değişiklikleriniz silinecek. İçeriği yeniden yüklemek istiyor musunuz?",
-        )
-      ) {
-        return;
-      }
-
+ const loadContent = useCallback(
+  async (options?: {
+    askBeforeDiscard?: boolean;
+    currentlyDirty?: boolean;
+  }) => {
+    if (
+      options?.askBeforeDiscard &&
+      options.currentlyDirty &&
+      !window.confirm(
+        "Kaydedilmemiş değişiklikleriniz silinecek. İçeriği yeniden yüklemek istiyor musunuz?",
+      )
+    ) {
+      return;
+    }
       setLoading(true);
       setNotice(null);
 
@@ -269,12 +277,18 @@ export default function AboutAdminClient() {
         setLoading(false);
       }
     },
-    [isDirty, showNotice],
+    [showNotice],
   );
 
-  useEffect(() => {
+useEffect(() => {
+  const timeoutId = window.setTimeout(() => {
     void loadContent();
-  }, []);
+  }, 0);
+
+  return () => {
+    window.clearTimeout(timeoutId);
+  };
+}, [loadContent]);
 
   useEffect(() => {
     function handleBeforeUnload(event: BeforeUnloadEvent) {

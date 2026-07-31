@@ -387,6 +387,9 @@ export interface QuoteRequest extends FirestoreEntity {
   answers: QuoteRequestAnswers;
   estimate?: QuoteRequestEstimate;
   sourcePage?: string;
+
+  tracking?: LeadAttribution;
+
   adminNote?: string;
   offeredPrice?: number;
   offeredAt?: ISODateString;
@@ -479,7 +482,26 @@ export interface AdminUser extends FirestoreEntity {
   status: EntityStatus;
   lastLoginAt?: ISODateString;
 }
+export interface AttributionData {
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
 
+  gclid?: string;
+  gbraid?: string;
+  wbraid?: string;
+
+  landingPage?: string;
+  referrer?: string;
+  capturedAt?: ISODateString;
+}
+
+export interface LeadAttribution {
+  firstTouch?: AttributionData;
+  lastTouch?: AttributionData;
+} 
 export interface DashboardSummary {
   totalProducts: number;
   activeProducts: number;

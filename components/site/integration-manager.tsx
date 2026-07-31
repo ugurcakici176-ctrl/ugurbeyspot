@@ -27,18 +27,9 @@ import LiveAnalyticsTracker from "@/components/site/live-analytics-tracker";
 declare global {
   interface Window {
     dataLayer?: unknown[];
-    gtag?: (
-      command: string,
-      action: string,
-      parameters?: Record<
-        string,
-        unknown
-      >,
-    ) => void;
-    fbq?: (
-      ...args: unknown[]
-    ) => void;
-    _fbq?: unknown;
+    gtag?: (...args: unknown[]) => void;
+
+    fbq?: (...args: unknown[]) => void;
   }
 }
 
