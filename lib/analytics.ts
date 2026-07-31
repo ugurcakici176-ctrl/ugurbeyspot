@@ -102,10 +102,18 @@ export function trackLeadConversion({
 
   // Google Ads conversion
   const label = LABELS[formName];
+console.log("ADS_ID =", ADS_ID);
+console.log("LABEL =", label);
+console.log("SEND_TO =", `${ADS_ID}/${label}`);
+ if (!ADS_ID || !label) {
+  console.warn("Google Ads conversion yapılandırması eksik:", {
+    formName,
+    adsIdExists: Boolean(ADS_ID),
+    labelExists: Boolean(label),
+  });
 
-  if (!ADS_ID || !label) {
-    return;
-  }
+  return;
+}
 
   gtag("event", "conversion", {
     send_to: `${ADS_ID}/${label}`,

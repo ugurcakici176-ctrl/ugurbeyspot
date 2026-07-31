@@ -194,15 +194,7 @@ function handleClose(): void {
     ],
   );
 
-  const selectedProductsTotal = useMemo(
-    () =>
-      selectedProducts.reduce(
-        (total, item) =>
-          total + item.price,
-        0,
-      ),
-    [selectedProducts],
-  );
+ 
 
   const currentSourcePage = useMemo(() => {
     if (
@@ -289,17 +281,13 @@ function handleClose(): void {
        * belgeyi başarıyla oluşturduktan sonra
        * gönderilir.
        */
-      trackLeadConversion({
-        formName: "quick_quote",
-        transactionId: requestId,
-        value:
-          selectedProductsTotal > 0
-            ? selectedProductsTotal
-            : 1,
-        currency: "TRY",
-        sourcePage:
-          currentSourcePage,
-      });
+    trackLeadConversion({
+  formName: "quick_quote",
+  transactionId: requestId,
+  value: 1,
+  currency: "TRY",
+  sourcePage: currentSourcePage,
+});
 
       resetForm();
 
