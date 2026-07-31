@@ -1,9 +1,22 @@
-// Search engines must see one stable origin in canonicals, sitemaps and
-// structured data. Firebase App Hosting exposes a hosted.app URL as well, so
-// deriving this value from the deployment environment can accidentally leak
-// that temporary hostname into Google Search Console.
+// lib/site-url.ts
+
+/**
+ * Sitenin tek resmi adresi.
+ * Canonical, sitemap, robots ve metadata burada kullanılır.
+ */
 export const SITE_URL = "https://ugurbeyspot.com";
 
-export function absoluteUrl(path = "/"): string {
-  return new URL(path, `${SITE_URL}/`).toString();
+/**
+ * Relative path'i tam URL'ye çevirir.
+ *
+ * absoluteUrl("/") =>
+ * https://ugurbeyspot.com/
+ *
+ * absoluteUrl("/urunler") =>
+ * https://ugurbeyspot.com/urunler
+ */
+export function absoluteUrl(path: string = "/"): string {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+
+  return new URL(cleanPath, SITE_URL).toString();
 }

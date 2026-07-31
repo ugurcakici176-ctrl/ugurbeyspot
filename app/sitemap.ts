@@ -2,324 +2,250 @@ import type { MetadataRoute } from "next";
 
 import { getCategories } from "@/lib/categories";
 import { getProducts } from "@/lib/products";
-import {
-  absoluteUrl,
-  SITE_URL,
-} from "@/lib/site-url";
+import { absoluteUrl, SITE_URL } from "@/lib/site-url";
 
-/**
- * Sitemap verisini belirli aralıklarla yeniler.
- * Ürün ve kategori değişikliklerinin sitemap'e yansımasını sağlar.
- */
 export const revalidate = 3600;
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
 
-function normalizeDate(
-  value: unknown,
-): Date | undefined {
+function normalizeDate(value: unknown): Date | undefined {
   if (!value) {
     return undefined;
   }
 
   if (value instanceof Date) {
-    return Number.isNaN(value.getTime())
-      ? undefined
-      : value;
+    return Number.isNaN(value.getTime()) ? undefined : value;
   }
 
   if (
     typeof value === "object" &&
     value !== null &&
     "toDate" in value &&
-    typeof (
-      value as {
-        toDate?: unknown;
-      }
-    ).toDate === "function"
+    typeof (value as { toDate?: unknown }).toDate === "function"
   ) {
     try {
-      const date = (
-        value as {
-          toDate: () => Date;
-        }
-      ).toDate();
+      const date = (value as { toDate: () => Date }).toDate();
 
-      return Number.isNaN(date.getTime())
-        ? undefined
-        : date;
+      return Number.isNaN(date.getTime()) ? undefined : date;
     } catch {
       return undefined;
     }
   }
 
-  if (
-    typeof value === "string" ||
-    typeof value === "number"
-  ) {
+  if (typeof value === "string" || typeof value === "number") {
     const date = new Date(value);
 
-    return Number.isNaN(date.getTime())
-      ? undefined
-      : date;
+    return Number.isNaN(date.getTime()) ? undefined : date;
   }
 
   return undefined;
 }
 
-function normalizeAbsoluteUrl(
-  value: unknown,
-): string | null {
-  if (
-    typeof value !== "string" ||
-    value.trim().length === 0
-  ) {
+function normalizeAbsoluteUrl(value: unknown): string | null {
+  if (typeof value !== "string" || value.trim().length === 0) {
     return null;
   }
 
   try {
-    const url = absoluteUrl(
-      value.trim(),
-    );
+    const url = new URL(value.trim(), `${SITE_URL}/`);
 
-    const parsedUrl = new URL(url);
-
-    if (
-      parsedUrl.protocol !== "http:" &&
-      parsedUrl.protocol !== "https:"
-    ) {
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
       return null;
     }
 
-    parsedUrl.hash = "";
+    url.hash = "";
 
-    return parsedUrl.toString();
+    return url.toString();
   } catch {
     return null;
   }
 }
 
 function normalizeImages(
-  values: Array<
-    string | null | undefined
-  >,
+  values: Array<string | null | undefined>,
 ): string[] | undefined {
-  const images = Array.from(
-    new Set(
-      values
-        .map(normalizeAbsoluteUrl)
-        .filter(
-          (
-            value,
-          ): value is string =>
-            Boolean(value),
-        ),
-    ),
-  );
+  const images: string[] = [];
 
-  return images.length > 0
-    ? images
-    : undefined;
+  for (const value of values) {
+    const normalizedUrl = normalizeAbsoluteUrl(value);
+
+    if (normalizedUrl && !images.includes(normalizedUrl)) {
+      images.push(normalizedUrl);
+    }
+  }
+
+  return images.length > 0 ? images : undefined;
+}
+
+function normalizeSlug(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const slug = value.trim().replace(/^\/+|\/+$/g, "");
+
+  return slug.length > 0 ? slug : null;
 }
 
 function deduplicateEntries(
-  entries: SitemapEntry[],
+  entries: MetadataRoute.Sitemap,
 ): MetadataRoute.Sitemap {
-  const entriesByUrl =
-    new Map<string, SitemapEntry>();
+  const entryMap = new Map<string, SitemapEntry>();
 
   for (const entry of entries) {
     if (!entry.url) {
       continue;
     }
 
-    entriesByUrl.set(
-      entry.url,
-      entry,
-    );
+    try {
+      const url = new URL(entry.url);
+
+      url.hash = "";
+
+      entryMap.set(url.toString(), {
+        ...entry,
+        url: url.toString(),
+      });
+    } catch {
+      console.warn("Geçersiz sitemap URL'si atlandı:", entry.url);
+    }
   }
 
-  return Array.from(
-    entriesByUrl.values(),
-  );
+  return Array.from(entryMap.values());
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  let productEntries: MetadataRoute.Sitemap =
-    [];
+  const staticEntries: MetadataRoute.Sitemap = [
+    {
+      url: absoluteUrl("/"),
+      changeFrequency: "weekly",
+      priority: 1,
+    },
+    {
+      url: absoluteUrl("/konya-spot"),
+      changeFrequency: "weekly",
+      priority: 0.95,
+    },
+    {
+      url: absoluteUrl("/urunler"),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: absoluteUrl("/hakkimizda"),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: absoluteUrl("/iletisim"),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: absoluteUrl("/gizlilik-politikasi"),
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: absoluteUrl("/kvkk-aydinlatma-metni"),
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: absoluteUrl("/cerez-politikasi"),
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: absoluteUrl("/kullanim-kosullari"),
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+  ];
 
-  let categoryEntries: MetadataRoute.Sitemap =
-    [];
-
-  try {
-    const products =
-      await getProducts();
-
-    productEntries = products
-      .filter(
-        (product) =>
-          Boolean(product.slug) &&
-          !product.seo?.noIndex,
-      )
-      .map((product) => {
-        const lastModified =
-          normalizeDate(
-            product.updatedAt,
-          ) ||
-          normalizeDate(
-            product.createdAt,
-          );
-
-        const images =
-          normalizeImages(
-            product.images?.map(
-              (image) =>
-                image.url,
-            ) || [],
-          );
-
-        return {
-          url: absoluteUrl(
-            `/urunler/${encodeURIComponent(
-              product.slug,
-            )}`,
-          ),
-          ...(lastModified
-            ? { lastModified }
-            : {}),
-          changeFrequency:
-            "weekly" as const,
-          priority: 0.8,
-          ...(images
-            ? { images }
-            : {}),
-        };
-      });
-  } catch (error) {
-    console.error(
-      "Products could not be added to sitemap:",
-      error,
-    );
-  }
+  const categoryEntries: MetadataRoute.Sitemap = [];
+  const productEntries: MetadataRoute.Sitemap = [];
 
   try {
-    const categories =
-      await getCategories();
+    const categories = await getCategories();
 
-    categoryEntries = categories
-      .filter(
-        (category) =>
-          Boolean(category.slug) &&
-          !category.seo?.noIndex,
-      )
-      .map((category) => {
-        const lastModified =
-          normalizeDate(
-            category.updatedAt,
-          ) ||
-          normalizeDate(
-            category.createdAt,
-          );
+    for (const category of categories) {
+      const slug = normalizeSlug(category.slug);
 
-        const images =
-          normalizeImages([
-            category.image?.url,
-          ]);
+      if (!slug || category.seo?.noIndex === true) {
+        continue;
+      }
 
-        return {
-          url: absoluteUrl(
-            `/kategori/${encodeURIComponent(
-              category.slug,
-            )}`,
-          ),
-          ...(lastModified
-            ? { lastModified }
-            : {}),
-          changeFrequency:
-            "weekly" as const,
-          priority: 0.85,
-          ...(images
-            ? { images }
-            : {}),
-        };
-      });
-  } catch (error) {
-    console.error(
-      "Categories could not be added to sitemap:",
-      error,
-    );
-  }
+      const lastModified =
+        normalizeDate(category.updatedAt) ??
+        normalizeDate(category.createdAt);
 
-  const staticEntries: MetadataRoute.Sitemap =
-    [
-      {
-        url: SITE_URL,
-        changeFrequency:
-          "weekly",
-        priority: 1,
-      },
-      {
-        url: absoluteUrl("/konya-spot"),
+      const images = normalizeImages([category.image?.url]);
+
+      const entry: SitemapEntry = {
+        url: absoluteUrl(`/kategori/${encodeURIComponent(slug)}`),
         changeFrequency: "weekly",
-        priority: 0.95,
-      },
-      {
-        url: absoluteUrl(
-          "/urunler",
-        ),
-        changeFrequency:
-          "daily",
-        priority: 0.9,
-      },
-      {
-        url: absoluteUrl(
-          "/hakkimizda",
-        ),
-        changeFrequency:
-          "monthly",
-        priority: 0.7,
-      },
-      {
-        url: absoluteUrl(
-          "/iletisim",
-        ),
-        changeFrequency:
-          "monthly",
-        priority: 0.7,
-      },
-      {
-        url: absoluteUrl(
-          "/gizlilik-politikasi",
-        ),
-        changeFrequency:
-          "yearly",
-        priority: 0.3,
-      },
-      {
-        url: absoluteUrl(
-          "/kvkk-aydinlatma-metni",
-        ),
-        changeFrequency:
-          "yearly",
-        priority: 0.3,
-      },
-      {
-        url: absoluteUrl(
-          "/cerez-politikasi",
-        ),
-        changeFrequency:
-          "yearly",
-        priority: 0.3,
-      },
-      {
-        url: absoluteUrl(
-          "/kullanim-kosullari",
-        ),
-        changeFrequency:
-          "yearly",
-        priority: 0.3,
-      },
-    ];
+        priority: 0.85,
+      };
+
+      if (lastModified) {
+        entry.lastModified = lastModified;
+      }
+
+      if (images) {
+        entry.images = images;
+      }
+
+      categoryEntries.push(entry);
+    }
+  } catch (error) {
+    console.error(
+      "Sitemap kategori verileri oluşturulamadı:",
+      error,
+    );
+  }
+
+  try {
+    const products = await getProducts();
+
+    for (const product of products) {
+      const slug = normalizeSlug(product.slug);
+
+      if (!slug || product.seo?.noIndex === true) {
+        continue;
+      }
+
+      const lastModified =
+        normalizeDate(product.updatedAt) ??
+        normalizeDate(product.createdAt);
+
+      const productImageUrls =
+        product.images?.map((image) => image.url) ?? [];
+
+      const images = normalizeImages(productImageUrls);
+
+      const entry: SitemapEntry = {
+        url: absoluteUrl(`/urunler/${encodeURIComponent(slug)}`),
+        changeFrequency: "weekly",
+        priority: 0.8,
+      };
+
+      if (lastModified) {
+        entry.lastModified = lastModified;
+      }
+
+      if (images) {
+        entry.images = images;
+      }
+
+      productEntries.push(entry);
+    }
+  } catch (error) {
+    console.error(
+      "Sitemap ürün verileri oluşturulamadı:",
+      error,
+    );
+  }
 
   return deduplicateEntries([
     ...staticEntries,
