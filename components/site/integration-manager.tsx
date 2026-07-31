@@ -22,6 +22,7 @@ import {
   GOOGLE_ANALYTICS_ID,
   GOOGLE_TAG_MANAGER_ID,
 } from "@/lib/google-analytics";
+import LiveAnalyticsTracker from "@/components/site/live-analytics-tracker";
 
 declare global {
   interface Window {
@@ -263,6 +264,11 @@ export default function IntegrationManager({
 
   return (
     <>
+      <LiveAnalyticsTracker
+        enabled={analyticsAllowed}
+        pathname={pathname}
+      />
+
       {loadGa4 && !ga4LoadedInLayout && (
         <>
           <Script
