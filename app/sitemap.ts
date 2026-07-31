@@ -2,12 +2,19 @@ import type { MetadataRoute } from "next";
 
 import { getCategories } from "@/lib/categories";
 import { getProducts } from "@/lib/products";
-import { absoluteUrl, SITE_URL } from "@/lib/site-url";
+import { absoluteUrl } from "@/lib/site-url";
 
+/**
+ * Sitemap verisini saatte bir yeniden oluşturur.
+ */
 export const revalidate = 3600;
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
 
+/**
+ * Firestore Timestamp, Date, string veya number değerlerini
+ * geçerli JavaScript Date nesnesine dönüştürür.
+ */
 function normalizeDate(value: unknown): Date | undefined {
   if (!value) {
     return undefined;
@@ -41,42 +48,9 @@ function normalizeDate(value: unknown): Date | undefined {
   return undefined;
 }
 
-function normalizeAbsoluteUrl(value: unknown): string | null {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    return null;
-  }
-
-  try {
-    const url = new URL(value.trim(), `${SITE_URL}/`);
-
-    if (url.protocol !== "http:" && url.protocol !== "https:") {
-      return null;
-    }
-
-    url.hash = "";
-
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
-function normalizeImages(
-  values: Array<string | null | undefined>,
-): string[] | undefined {
-  const images: string[] = [];
-
-  for (const value of values) {
-    const normalizedUrl = normalizeAbsoluteUrl(value);
-
-    if (normalizedUrl && !images.includes(normalizedUrl)) {
-      images.push(normalizedUrl);
-    }
-  }
-
-  return images.length > 0 ? images : undefined;
-}
-
+/**
+ * Slug değerini sitemap için güvenli hâle getirir.
+ */
 function normalizeSlug(value: unknown): string | null {
   if (typeof value !== "string") {
     return null;
@@ -87,10 +61,13 @@ function normalizeSlug(value: unknown): string | null {
   return slug.length > 0 ? slug : null;
 }
 
+/**
+ * Aynı URL'nin sitemap içinde birden fazla kez görünmesini engeller.
+ */
 function deduplicateEntries(
   entries: MetadataRoute.Sitemap,
 ): MetadataRoute.Sitemap {
-  const entryMap = new Map<string, SitemapEntry>();
+  const entriesByUrl = new Map<string, SitemapEntry>();
 
   for (const entry of entries) {
     if (!entry.url) {
@@ -98,23 +75,26 @@ function deduplicateEntries(
     }
 
     try {
-      const url = new URL(entry.url);
+      const normalizedUrl = new URL(entry.url);
 
-      url.hash = "";
+      normalizedUrl.hash = "";
 
-      entryMap.set(url.toString(), {
+      entriesByUrl.set(normalizedUrl.toString(), {
         ...entry,
-        url: url.toString(),
+        url: normalizedUrl.toString(),
       });
     } catch {
       console.warn("Geçersiz sitemap URL'si atlandı:", entry.url);
     }
   }
 
-  return Array.from(entryMap.values());
+  return Array.from(entriesByUrl.values());
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  /*
+   * Sabit sayfalar
+   */
   const staticEntries: MetadataRoute.Sitemap = [
     {
       url: absoluteUrl("/"),
@@ -166,13 +146,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const categoryEntries: MetadataRoute.Sitemap = [];
   const productEntries: MetadataRoute.Sitemap = [];
 
+  /*
+   * Kategoriler
+   */
   try {
     const categories = await getCategories();
 
     for (const category of categories) {
       const slug = normalizeSlug(category.slug);
 
-      if (!slug || category.seo?.noIndex === true) {
+      if (!slug) {
+        continue;
+      }
+
+      if (category.seo?.noIndex === true) {
         continue;
       }
 
@@ -180,10 +167,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         normalizeDate(category.updatedAt) ??
         normalizeDate(category.createdAt);
 
-      const images = normalizeImages([category.image?.url]);
-
       const entry: SitemapEntry = {
-        url: absoluteUrl(`/kategori/${encodeURIComponent(slug)}`),
+        url: absoluteUrl(
+          `/kategori/${encodeURIComponent(slug)}`,
+        ),
         changeFrequency: "weekly",
         priority: 0.85,
       };
@@ -192,26 +179,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         entry.lastModified = lastModified;
       }
 
-      if (images) {
-        entry.images = images;
-      }
-
       categoryEntries.push(entry);
     }
   } catch (error) {
     console.error(
-      "Sitemap kategori verileri oluşturulamadı:",
+      "Kategoriler sitemap'e eklenemedi:",
       error,
     );
   }
 
+  /*
+   * Ürünler
+   */
   try {
     const products = await getProducts();
 
     for (const product of products) {
       const slug = normalizeSlug(product.slug);
 
-      if (!slug || product.seo?.noIndex === true) {
+      if (!slug) {
+        continue;
+      }
+
+      if (product.seo?.noIndex === true) {
         continue;
       }
 
@@ -219,13 +209,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         normalizeDate(product.updatedAt) ??
         normalizeDate(product.createdAt);
 
-      const productImageUrls =
-        product.images?.map((image) => image.url) ?? [];
-
-      const images = normalizeImages(productImageUrls);
-
       const entry: SitemapEntry = {
-        url: absoluteUrl(`/urunler/${encodeURIComponent(slug)}`),
+        url: absoluteUrl(
+          `/urunler/${encodeURIComponent(slug)}`,
+        ),
         changeFrequency: "weekly",
         priority: 0.8,
       };
@@ -234,15 +221,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         entry.lastModified = lastModified;
       }
 
-      if (images) {
-        entry.images = images;
-      }
-
       productEntries.push(entry);
     }
   } catch (error) {
     console.error(
-      "Sitemap ürün verileri oluşturulamadı:",
+      "Ürünler sitemap'e eklenemedi:",
       error,
     );
   }
