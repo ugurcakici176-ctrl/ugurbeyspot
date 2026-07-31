@@ -588,8 +588,8 @@ export default function SellItemModal({
                         <figure
                           key={`${file.name}-${file.size}-${file.lastModified}`}
                         >
-                          {/* Blob URL önizlemesi Next Image optimizasyonuna uygun değildir. */}
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                         
+                          
                           <img
                             src={url}
                             alt={`Eşya fotoğrafı ${index + 1}`}

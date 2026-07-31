@@ -8,14 +8,23 @@ import {
 } from "react";
 
 import Icon from "@/components/ui/icon";
-import { trackLeadConversion } from "@/lib/analytics";
-import { getProducts } from "@/lib/products";
-import { submitQuickQuoteRequest } from "@/lib/quote-requests";
+import { usePublicSession } from "@/hooks/use-public-session";
+import {
+  trackLeadConversion,
+} from "@/lib/analytics";
+import {
+  getProducts,
+} from "@/lib/products";
+import {
+  submitQuickQuoteRequest,
+} from "@/lib/quote-requests";
 import type {
   Product,
   SiteSettings,
 } from "@/lib/types";
-import { formatCurrency } from "@/lib/utils";
+import {
+  formatCurrency,
+} from "@/lib/utils";
 
 interface QuickQuoteModalProps {
   open: boolean;
@@ -43,7 +52,8 @@ const BUDGET_OPTIONS = [
   },
   {
     value: "belirsiz",
-    label: "Bütçeyi birlikte netleştirelim",
+    label:
+      "Bütçeyi birlikte netleştirelim",
   },
 ] as const;
 
@@ -72,84 +82,153 @@ export default function QuickQuoteModal({
   settings,
   sourcePage,
 }: QuickQuoteModalProps) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loadingProducts, setLoadingProducts] =
-    useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    session,
+    profile,
+    authenticated,
+    profileLoading,
+  } = usePublicSession();
 
-  const [successMessage, setSuccessMessage] =
+  const [
+    products,
+    setProducts,
+  ] = useState<Product[]>([]);
+
+  const [
+    loadingProducts,
+    setLoadingProducts,
+  ] = useState(false);
+
+  const [
+    submitting,
+    setSubmitting,
+  ] = useState(false);
+
+  const [
+    successMessage,
+    setSuccessMessage,
+  ] =
     useState<string | null>(null);
-  const [errorMessage, setErrorMessage] =
+
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] =
     useState<string | null>(null);
 
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [need, setNeed] = useState("");
+  const [
+    fullName,
+    setFullName,
+  ] = useState("");
 
-  const [budgetRange, setBudgetRange] =
-    useState<string>(
-      BUDGET_OPTIONS[4].value,
-    );
+  const [
+    phone,
+    setPhone,
+  ] = useState("");
 
-  const [urgency, setUrgency] =
-    useState<string>(
-      URGENCY_OPTIONS[3].value,
-    );
+  const [
+    email,
+    setEmail,
+  ] = useState("");
 
-  const [additionalNotes, setAdditionalNotes] =
-    useState("");
+  const [
+    need,
+    setNeed,
+  ] = useState("");
+
+  const [
+    budgetRange,
+    setBudgetRange,
+  ] = useState<string>(
+    BUDGET_OPTIONS[4].value,
+  );
+
+  const [
+    urgency,
+    setUrgency,
+  ] = useState<string>(
+    URGENCY_OPTIONS[3].value,
+  );
+
+  const [
+    additionalNotes,
+    setAdditionalNotes,
+  ] = useState("");
 
   const [
     selectedProductIds,
     setSelectedProductIds,
   ] = useState<string[]>([]);
 
-useEffect(() => {
-  if (!open) {
-    return;
-  }
+  const accountFullName =
+    profile?.fullName?.trim() ||
+    session?.user.displayName?.trim() ||
+    "";
 
-  let active = true;
+  const accountPhone =
+    profile?.phone?.trim() || "";
 
-  const loadProducts = async (): Promise<void> => {
-    try {
-      const items = await getProducts({
-        includePassive: false,
-        limitCount: 80,
-      });
+  const accountEmail =
+    profile?.email?.trim() ||
+    session?.user.email?.trim() ||
+    "";
 
-      if (!active) {
-        return;
-      }
+  const hasCompleteProfile =
+    authenticated &&
+    accountFullName.length >= 2 &&
+    accountPhone.length >= 7;
 
-      setProducts(items);
-    } catch (reason: unknown) {
-      console.error(
-        "Hızlı teklif ürünleri yüklenemedi:",
-        reason,
-      );
-    } finally {
-      if (active) {
-        setLoadingProducts(false);
-      }
-    }
-  };
-
-  const timeoutId = window.setTimeout(() => {
-    if (!active) {
+  useEffect(() => {
+    if (!open) {
       return;
     }
 
-    setLoadingProducts(true);
-    void loadProducts();
-  }, 0);
+    let active = true;
 
-  return () => {
-    active = false;
-    window.clearTimeout(timeoutId);
-  };
-}, [open]);
+    const loadProducts =
+      async (): Promise<void> => {
+        try {
+          const items =
+            await getProducts({
+              includePassive: false,
+              limitCount: 80,
+            });
+
+          if (active) {
+            setProducts(items);
+          }
+        } catch (
+          reason: unknown
+        ) {
+          console.error(
+            "Hızlı teklif ürünleri yüklenemedi:",
+            reason,
+          );
+        } finally {
+          if (active) {
+            setLoadingProducts(false);
+          }
+        }
+      };
+
+    const timeoutId =
+      window.setTimeout(() => {
+        if (!active) {
+          return;
+        }
+
+        setLoadingProducts(true);
+        void loadProducts();
+      }, 0);
+
+    return () => {
+      active = false;
+
+      window.clearTimeout(
+        timeoutId,
+      );
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) {
@@ -159,77 +238,114 @@ useEffect(() => {
     const previousOverflow =
       document.body.style.overflow;
 
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow =
+      "hidden";
 
     return () => {
       document.body.style.overflow =
         previousOverflow;
     };
   }, [open]);
-function handleClose(): void {
-  if (submitting) {
-    return;
-  }
 
-  setErrorMessage(null);
-  setSuccessMessage(null);
-  onClose();
-}
-
-  const selectedProducts = useMemo(
-    () =>
-      products
-        .filter((item) =>
-          selectedProductIds.includes(item.id),
-        )
-        .map((item) => ({
-          productId: item.id,
-          title: item.title,
-          slug: item.slug,
-          price: item.price,
-        })),
-    [
-      products,
-      selectedProductIds,
-    ],
-  );
-
- 
-
-  const currentSourcePage = useMemo(() => {
+  useEffect(() => {
     if (
-      typeof window === "undefined"
+      !open ||
+      !authenticated ||
+      profileLoading
     ) {
-      return sourcePage;
+      return;
     }
 
-    return (
-      sourcePage ||
-      `${window.location.pathname}${window.location.search}`
+    const timeoutId =
+      window.setTimeout(() => {
+        setFullName(
+          accountFullName,
+        );
+
+        setPhone(accountPhone);
+        setEmail(accountEmail);
+      }, 0);
+
+    return () => {
+      window.clearTimeout(
+        timeoutId,
+      );
+    };
+  }, [
+    open,
+    authenticated,
+    profileLoading,
+    accountFullName,
+    accountPhone,
+    accountEmail,
+  ]);
+
+  const selectedProducts =
+    useMemo(
+      () =>
+        products
+          .filter((item) =>
+            selectedProductIds.includes(
+              item.id,
+            ),
+          )
+          .map((item) => ({
+            productId: item.id,
+            title: item.title,
+            slug: item.slug,
+            price: item.price,
+          })),
+      [
+        products,
+        selectedProductIds,
+      ],
     );
-  }, [sourcePage]);
+
+  const currentSourcePage =
+    useMemo(() => {
+      if (
+        typeof window ===
+        "undefined"
+      ) {
+        return sourcePage;
+      }
+
+      return (
+        sourcePage ||
+        `${window.location.pathname}${window.location.search}`
+      );
+    }, [sourcePage]);
+
+  function handleClose(): void {
+    if (submitting) {
+      return;
+    }
+
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    onClose();
+  }
 
   function handleToggleProduct(
     productId: string,
   ): void {
-    setSelectedProductIds((current) => {
-      if (current.includes(productId)) {
-        return current.filter(
-          (id) => id !== productId,
-        );
-      }
-
-      return [
-        ...current,
-        productId,
-      ];
-    });
+    setSelectedProductIds(
+      (current) =>
+        current.includes(productId)
+          ? current.filter(
+              (id) =>
+                id !== productId,
+            )
+          : [
+              ...current,
+              productId,
+            ],
+    );
   }
 
-  function resetForm(): void {
-    setFullName("");
-    setPhone("");
-    setEmail("");
+  function resetRequestFields():
+    void {
     setNeed("");
 
     setBudgetRange(
@@ -242,6 +358,12 @@ function handleClose(): void {
 
     setAdditionalNotes("");
     setSelectedProductIds([]);
+
+    if (!authenticated) {
+      setFullName("");
+      setPhone("");
+      setEmail("");
+    }
   }
 
   async function handleSubmit(
@@ -253,6 +375,41 @@ function handleClose(): void {
       return;
     }
 
+    const resolvedFullName =
+      authenticated
+        ? accountFullName
+        : fullName.trim();
+
+    const resolvedPhone =
+      authenticated
+        ? accountPhone
+        : phone.trim();
+
+    const resolvedEmail =
+      authenticated
+        ? accountEmail
+        : email.trim();
+
+    if (
+      resolvedFullName.length < 2
+    ) {
+      setErrorMessage(
+        "Ad soyad bilgisi eksik.",
+      );
+      return;
+    }
+
+    if (
+      resolvedPhone.length < 7
+    ) {
+      setErrorMessage(
+        authenticated
+          ? "Hesabınızdaki telefon bilgisi eksik. Hesabım sayfasından telefonunuzu kaydedin."
+          : "Geçerli bir telefon numarası girin.",
+      );
+      return;
+    }
+
     setSubmitting(true);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -260,41 +417,40 @@ function handleClose(): void {
     try {
       const requestId =
         await submitQuickQuoteRequest({
-          fullName,
-          phone,
-          email,
+          fullName:
+            resolvedFullName,
+          phone: resolvedPhone,
+          email:
+            resolvedEmail ||
+            undefined,
           selectedProducts,
-
           answers: {
             need,
             budgetRange,
             urgency,
             additionalNotes,
           },
-
           sourcePage:
             currentSourcePage,
         });
 
-      /**
-       * Dönüşüm yalnızca Firestore
-       * belgeyi başarıyla oluşturduktan sonra
-       * gönderilir.
-       */
-    trackLeadConversion({
-  formName: "quick_quote",
-  transactionId: requestId,
-  value: 1,
-  currency: "TRY",
-  sourcePage: currentSourcePage,
-});
+      trackLeadConversion({
+        formName: "quick_quote",
+        transactionId: requestId,
+        value: 1,
+        currency: "TRY",
+        sourcePage:
+          currentSourcePage,
+      });
 
-      resetForm();
+      resetRequestFields();
 
       setSuccessMessage(
         "Talebiniz alındı. En kısa sürede size teklif iletilecek.",
       );
-    } catch (reason: unknown) {
+    } catch (
+      reason: unknown
+    ) {
       console.error(
         "Hızlı teklif gönderilemedi:",
         reason,
@@ -316,7 +472,8 @@ function handleClose(): void {
 
   const preferredPhone =
     settings?.contact?.phone ||
-    settings?.contact?.whatsapp ||
+    settings?.contact
+      ?.whatsapp ||
     "";
 
   return (
@@ -329,6 +486,7 @@ function handleClose(): void {
         className="quick-quote-modal__backdrop"
         aria-label="Teklif penceresini kapat"
         onClick={handleClose}
+        disabled={submitting}
       />
 
       <section
@@ -340,16 +498,21 @@ function handleClose(): void {
       >
         <header className="quick-quote-modal__header">
           <div>
-            <small>HIZLI TEKLİF</small>
+            <small>
+              HIZLI TEKLİF
+            </small>
 
             <h2 id="quick-quote-title">
-              İhtiyacını Seç, Teklifini Al
+              İhtiyacını Seç,
+              Teklifini Al
             </h2>
 
             <p id="quick-quote-description">
-              Aradığın ürünleri seç veya
-              ihtiyacını yaz. Ekibimiz kısa
-              sürede fiyat teklifini hazırlasın.
+              Aradığın ürünleri seç
+              veya ihtiyacını yaz.
+              Ekibimiz kısa sürede
+              fiyat teklifini
+              hazırlasın.
             </p>
           </div>
 
@@ -358,6 +521,7 @@ function handleClose(): void {
             className="quick-quote-modal__close"
             aria-label="Kapat"
             onClick={handleClose}
+            disabled={submitting}
           >
             <Icon
               name="x"
@@ -371,66 +535,120 @@ function handleClose(): void {
           onSubmit={handleSubmit}
           noValidate
         >
-          <div className="quick-quote-modal__grid">
-            <label className="quick-quote-field">
-              <span>Ad Soyad</span>
-
-              <input
-                required
-                minLength={2}
-                maxLength={100}
-                autoComplete="name"
-                value={fullName}
-                onChange={(event) =>
-                  setFullName(
-                    event.target.value,
-                  )
-                }
-                placeholder="Adınız soyadınız"
-              />
-            </label>
-
-            <label className="quick-quote-field">
-              <span>Telefon</span>
-
-              <input
-                required
-                type="tel"
-                minLength={7}
-                maxLength={30}
-                inputMode="tel"
-                autoComplete="tel"
-                value={phone}
-                onChange={(event) =>
-                  setPhone(
-                    event.target.value,
-                  )
-                }
-                placeholder="05xx xxx xx xx"
-              />
-            </label>
-
-            <label className="quick-quote-field">
-              <span>
-                E-posta (opsiyonel)
+          {authenticated && (
+            <div className="quick-quote-account">
+              <span className="quick-quote-account__avatar">
+                {(accountFullName ||
+                  accountEmail ||
+                  "U")
+                  .slice(0, 1)
+                  .toLocaleUpperCase(
+                    "tr-TR",
+                  )}
               </span>
 
-              <input
-                type="email"
-                maxLength={160}
-                autoComplete="email"
-                value={email}
-                onChange={(event) =>
-                  setEmail(
-                    event.target.value,
-                  )
-                }
-                placeholder="ornek@eposta.com"
-              />
-            </label>
+              <div>
+                <small>
+                  KAYITLI HESAP
+                </small>
 
+                <strong>
+                  {accountFullName ||
+                    "Profil bilgileri eksik"}
+                </strong>
+
+                <span>
+                  {accountPhone ||
+                    "Telefon eklenmemiş"}
+                  {accountEmail
+                    ? ` · ${accountEmail}`
+                    : ""}
+                </span>
+              </div>
+
+              {hasCompleteProfile ? (
+                <Icon
+                  name="check"
+                  size={20}
+                />
+              ) : (
+                <a
+                  href="/hesabim"
+                  className="quick-quote-account__edit"
+                >
+                  Profili tamamla
+                </a>
+              )}
+            </div>
+          )}
+
+          {!authenticated && (
+            <div className="quick-quote-modal__grid">
+              <label className="quick-quote-field">
+                <span>Ad Soyad</span>
+
+                <input
+                  required
+                  minLength={2}
+                  maxLength={100}
+                  autoComplete="name"
+                  value={fullName}
+                  onChange={(event) =>
+                    setFullName(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Adınız soyadınız"
+                />
+              </label>
+
+              <label className="quick-quote-field">
+                <span>Telefon</span>
+
+                <input
+                  required
+                  type="tel"
+                  minLength={7}
+                  maxLength={30}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(event) =>
+                    setPhone(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="05xx xxx xx xx"
+                />
+              </label>
+
+              <label className="quick-quote-field">
+                <span>
+                  E-posta
+                  (opsiyonel)
+                </span>
+
+                <input
+                  type="email"
+                  maxLength={160}
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) =>
+                    setEmail(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="ornek@eposta.com"
+                />
+              </label>
+            </div>
+          )}
+
+          <div className="quick-quote-modal__grid">
             <label className="quick-quote-field">
-              <span>Bütçe aralığı</span>
+              <span>
+                Bütçe aralığı
+              </span>
 
               <select
                 value={budgetRange}
@@ -451,24 +669,6 @@ function handleClose(): void {
                   ),
                 )}
               </select>
-            </label>
-
-            <label className="quick-quote-field quick-quote-field--full">
-              <span>
-                Neye ihtiyacınız var?
-              </span>
-
-              <textarea
-                rows={3}
-                maxLength={1000}
-                value={need}
-                onChange={(event) =>
-                  setNeed(
-                    event.target.value,
-                  )
-                }
-                placeholder="Örnek: 65 inç TV ve orta segment ses sistemi"
-              />
             </label>
 
             <label className="quick-quote-field">
@@ -498,12 +698,34 @@ function handleClose(): void {
             </label>
 
             <label className="quick-quote-field quick-quote-field--full">
+              <span>
+                Neye ihtiyacınız var?
+              </span>
+
+              <textarea
+                required
+                rows={3}
+                minLength={3}
+                maxLength={1000}
+                value={need}
+                onChange={(event) =>
+                  setNeed(
+                    event.target.value,
+                  )
+                }
+                placeholder="Örnek: 65 inç TV ve orta segment ses sistemi"
+              />
+            </label>
+
+            <label className="quick-quote-field quick-quote-field--full">
               <span>Ek notlar</span>
 
               <textarea
                 rows={3}
                 maxLength={2500}
-                value={additionalNotes}
+                value={
+                  additionalNotes
+                }
                 onChange={(event) =>
                   setAdditionalNotes(
                     event.target.value,
@@ -517,60 +739,69 @@ function handleClose(): void {
           <div className="quick-quote-products">
             <div className="quick-quote-products__heading">
               <strong>
-                Ürün seçimi (opsiyonel)
+                Ürün seçimi
+                (opsiyonel)
               </strong>
 
               <small>
-                {selectedProductIds.length}
-                {" "}
+                {
+                  selectedProductIds.length
+                }{" "}
                 ürün seçili
               </small>
             </div>
 
             {loadingProducts ? (
               <div className="quick-quote-products__empty">
-                Ürünler yükleniyor...
+                Ürünler
+                yükleniyor...
               </div>
-            ) : products.length === 0 ? (
+            ) : products.length ===
+              0 ? (
               <div className="quick-quote-products__empty">
-                Seçilebilir ürün bulunamadı.
+                Seçilebilir ürün
+                bulunamadı.
               </div>
             ) : (
               <div className="quick-quote-products__grid">
-                {products.map((item) => {
-                  const active =
-                    selectedProductIds.includes(
-                      item.id,
+                {products.map(
+                  (item) => {
+                    const active =
+                      selectedProductIds.includes(
+                        item.id,
+                      );
+
+                    return (
+                      <button
+                        type="button"
+                        key={item.id}
+                        className={
+                          active
+                            ? "is-active"
+                            : undefined
+                        }
+                        aria-pressed={
+                          active
+                        }
+                        onClick={() =>
+                          handleToggleProduct(
+                            item.id,
+                          )
+                        }
+                      >
+                        <strong>
+                          {item.title}
+                        </strong>
+
+                        <small>
+                          {formatCurrency(
+                            item.price,
+                          )}
+                        </small>
+                      </button>
                     );
-
-                  return (
-                    <button
-                      type="button"
-                      key={item.id}
-                      className={
-                        active
-                          ? "is-active"
-                          : undefined
-                      }
-                      aria-pressed={active}
-                      onClick={() =>
-                        handleToggleProduct(
-                          item.id,
-                        )
-                      }
-                    >
-                      <strong>
-                        {item.title}
-                      </strong>
-
-                      <small>
-                        {formatCurrency(
-                          item.price,
-                        )}
-                      </small>
-                    </button>
-                  );
-                })}
+                  },
+                )}
               </div>
             )}
           </div>
@@ -606,23 +837,31 @@ function handleClose(): void {
             <button
               type="submit"
               className="button button--accent"
-              disabled={submitting}
+              disabled={
+                submitting ||
+                profileLoading ||
+                (authenticated &&
+                  !hasCompleteProfile)
+              }
             >
               <Icon
                 name="save"
                 size={18}
               />
 
-              {submitting
-                ? "Gönderiliyor..."
-                : "Teklif Talebi Gönder"}
+              {profileLoading
+                ? "Profil kontrol ediliyor..."
+                : submitting
+                  ? "Gönderiliyor..."
+                  : "Teklif Talebi Gönder"}
             </button>
           </div>
 
           {preferredPhone && (
             <small className="quick-quote-modal__help">
-              Acil durumlar için doğrudan
-              iletişim: {preferredPhone}
+              Acil durumlar için
+              doğrudan iletişim:{" "}
+              {preferredPhone}
             </small>
           )}
         </form>

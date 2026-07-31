@@ -7,7 +7,9 @@ import {
   useEffect,
   useState,
 } from "react";
-
+import {
+  saveCustomerProfile,
+} from "@/lib/customer-profile";
 import {
   useRouter,
 } from "next/navigation";
@@ -75,11 +77,13 @@ export default function AccountPage() {
     useRouter();
 
   const {
-    session,
-    loading,
-    authenticated,
-    isAdmin,
-  } = usePublicSession();
+  session,
+  profile,
+  loading,
+  profileLoading,
+  authenticated,
+  isAdmin,
+} = usePublicSession();
 
   const [
     message,
@@ -124,10 +128,64 @@ export default function AccountPage() {
     copyingUid,
     setCopyingUid,
   ] = useState(false);
+const [
+  profileFullName,
+  setProfileFullName,
+] = useState("");
 
+const [
+  profilePhone,
+  setProfilePhone,
+] = useState("");
+
+const [
+  profileDistrict,
+  setProfileDistrict,
+] = useState("");
+
+const [
+  profileSaving,
+  setProfileSaving,
+] = useState(false);
   const [sellRequests, setSellRequests] = useState<SellRequest[]>([]);
   const [sellRequestsLoading, setSellRequestsLoading] = useState(true);
+useEffect(() => {
+  if (
+    loading ||
+    profileLoading ||
+    !session
+  ) {
+    return;
+  }
 
+  const timeoutId =
+    window.setTimeout(() => {
+      setProfileFullName(
+        profile?.fullName ||
+          session.user.displayName ||
+          "",
+      );
+
+      setProfilePhone(
+        profile?.phone || "",
+      );
+
+      setProfileDistrict(
+        profile?.district || "",
+      );
+    }, 0);
+
+  return () => {
+    window.clearTimeout(
+      timeoutId,
+    );
+  };
+}, [
+  loading,
+  profileLoading,
+  session,
+  profile,
+]);
   useEffect(() => {
     if (
       !loading &&
@@ -368,7 +426,41 @@ export default function AccountPage() {
       setProcessing(false);
     }
   }
+async function handleProfileSave(
+  event: FormEvent<HTMLFormElement>,
+): Promise<void> {
+  event.preventDefault();
 
+  if (profileSaving) {
+    return;
+  }
+
+  setProfileSaving(true);
+  setMessage(null);
+  setError(null);
+
+  try {
+    await saveCustomerProfile({
+      fullName: profileFullName,
+      phone: profilePhone,
+      district: profileDistrict,
+    });
+
+    setMessage(
+      "Profil bilgileriniz başarıyla güncellendi. Teklif formlarında bu bilgiler otomatik kullanılacak.",
+    );
+
+    router.refresh();
+  } catch (reason: unknown) {
+    setError(
+      reason instanceof Error
+        ? reason.message
+        : "Profil bilgileriniz güncellenemedi.",
+    );
+  } finally {
+    setProfileSaving(false);
+  }
+}
   async function handleCopyUid(): Promise<void> {
     if (!session?.user.uid) {
       return;
@@ -552,7 +644,149 @@ export default function AccountPage() {
             <small>Kurumsal destek icin bu adresten iletisim kurabilirsiniz.</small>
           </article>
         </section>
+<section className="account-profile-editor">
+  <div className="section-heading section-heading--actions">
+    <div>
+      <span className="eyebrow">
+        MÜŞTERİ PROFİLİ
+      </span>
 
+      <h2>
+        İletişim Bilgilerim
+      </h2>
+
+      <p>
+        Bu bilgiler hızlı teklif,
+        eşya satışı ve iletişim
+        formlarında otomatik olarak
+        kullanılır.
+      </p>
+    </div>
+
+    <span
+      className={
+        profile?.phone
+          ? "account-profile-status is-complete"
+          : "account-profile-status is-incomplete"
+      }
+    >
+      {profile?.phone
+        ? "Profil tamamlandı"
+        : "Telefon eksik"}
+    </span>
+  </div>
+
+  <form
+    className="account-profile-form"
+    onSubmit={
+      handleProfileSave
+    }
+  >
+    <label>
+      <span>Ad Soyad *</span>
+
+      <input
+        type="text"
+        required
+        minLength={2}
+        maxLength={100}
+        autoComplete="name"
+        value={profileFullName}
+        onChange={(event) =>
+          setProfileFullName(
+            event.target.value,
+          )
+        }
+        placeholder="Adınız soyadınız"
+      />
+    </label>
+
+    <label>
+      <span>Telefon *</span>
+
+      <input
+        type="tel"
+        required
+        minLength={7}
+        maxLength={30}
+        inputMode="tel"
+        autoComplete="tel"
+        value={profilePhone}
+        onChange={(event) =>
+          setProfilePhone(
+            event.target.value,
+          )
+        }
+        placeholder="05xx xxx xx xx"
+      />
+    </label>
+
+    <label>
+      <span>
+        İlçe / Mahalle
+      </span>
+
+      <input
+        type="text"
+        maxLength={120}
+        autoComplete="address-level2"
+        value={profileDistrict}
+        onChange={(event) =>
+          setProfileDistrict(
+            event.target.value,
+          )
+        }
+        placeholder="Örn. Selçuklu"
+      />
+    </label>
+
+    <label>
+      <span>E-posta</span>
+
+      <input
+        type="email"
+        value={
+          session.user.email ||
+          ""
+        }
+        readOnly
+        disabled
+      />
+
+      <small>
+        E-posta adresi hesap
+        güvenliği nedeniyle buradan
+        değiştirilemez.
+      </small>
+    </label>
+
+    <div className="account-profile-form__actions">
+      <button
+        type="submit"
+        className="button button--dark"
+        disabled={
+          profileSaving ||
+          profileLoading
+        }
+      >
+        <Icon
+          name="save"
+          size={18}
+        />
+
+        {profileSaving
+          ? "Kaydediliyor..."
+          : "Bilgilerimi Kaydet"}
+      </button>
+
+      <small>
+        Kaydettikten sonra yeni
+        tekliflerde ad, telefon ve
+        e-posta tekrar sorulmaz.
+      </small>
+    </div>
+  </form>
+</section>
         <div className="account-grid">
           <section className="account-panel">
             <span>
@@ -570,7 +804,7 @@ export default function AccountPage() {
                 </dt>
 
                 <dd>
-                  {displayName}
+                  {profile?.fullName || displayName}
                 </dd>
               </div>
 
@@ -585,7 +819,14 @@ export default function AccountPage() {
                   }
                 </dd>
               </div>
+<div>
+  <dt>Telefon</dt>
 
+  <dd>
+    {profile?.phone ||
+      "Telefon eklenmemiş"}
+  </dd>
+</div>
               <div>
                 <dt>
                   E-posta Durumu

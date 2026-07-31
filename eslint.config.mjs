@@ -1,18 +1,36 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import {
+  defineConfig,
+  globalIgnores,
+} from "eslint/config";
 
-const eslintConfig = defineConfig([
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTypeScript from "eslint-config-next/typescript";
+
+export default defineConfig([
   ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
+  ...nextTypeScript,
+
+  {
+    name: "ugurbeyspot/custom-rules",
+
+    rules: {
+      /*
+       * Projede Firebase Storage, blob URL ve dinamik admin
+       * görselleri yoğun olarak kullanılıyor. Bu nedenle mevcut
+       * <img> kullanımları bilinçli şekilde korunuyor.
+       */
+      "@next/next/no-img-element": "off",
+    },
+  },
+
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
     "build/**",
+    "coverage/**",
+    "node_modules/**",
     "next-env.d.ts",
+    "firebase-debug.log",
+    "tmp/**",
   ]),
 ]);
-
-export default eslintConfig;

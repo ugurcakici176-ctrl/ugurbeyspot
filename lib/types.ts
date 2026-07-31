@@ -394,7 +394,15 @@ export interface QuoteRequest extends FirestoreEntity {
   offeredPrice?: number;
   offeredAt?: ISODateString;
 }
-
+export interface CustomerProfile {
+  uid: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  district?: string;
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
+}
 export interface SellRequest extends FirestoreEntity {
   customerUid?: string;
   customerEmail?: string;

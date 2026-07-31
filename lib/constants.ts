@@ -23,6 +23,7 @@ export const COLLECTIONS = {
   banners: "banners",
   gallery: "gallery",
   admins: "admins",
+  customers: "customers",
 } as const;
 
 export const DOCUMENTS = {
