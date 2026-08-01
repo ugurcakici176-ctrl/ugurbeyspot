@@ -693,6 +693,87 @@ service cloud.firestore {
       allow delete: if isManagerAdmin();
     }
 
+    // ────────────────────────────────────────
+    // QUOTE REQUESTS (Hızlı Teklifler)
+    // ────────────────────────────────────────
+
+    match /quote_requests/{requestId} {
+      // Herkes (anonim dahil) hızlı teklif oluşturabilir.
+      allow create: if request.resource.data.keys().hasAll([
+        "fullName", "phone", "status", "selectedProducts",
+        "answers", "createdAt", "updatedAt"
+      ])
+      && request.resource.data.fullName is string
+      && request.resource.data.fullName.size() >= 2
+      && request.resource.data.fullName.size() <= 100
+      && request.resource.data.phone is string
+      && request.resource.data.phone.size() >= 7
+      && request.resource.data.phone.size() <= 30
+      && request.resource.data.status == "new"
+      && request.resource.data.selectedProducts is list
+      && request.resource.data.selectedProducts.size() <= 8
+      && request.resource.data.answers is map
+      && (
+        request.resource.data.createdAt is string
+        || request.resource.data.createdAt is timestamp
+      )
+      && (
+        request.resource.data.updatedAt is string
+        || request.resource.data.updatedAt is timestamp
+      );
+
+      // Admin tüm teklifleri okuyabilir.
+      // Giriş yapmış müşteri, kendi e-postasıyla eşleşen talepleri okuyabilir.
+      allow get, list: if isActiveAdmin()
+        || (
+          isSignedIn()
+          && resource.data.email is string
+          && request.auth.token.email is string
+          && resource.data.email == request.auth.token.email
+        );
+
+      // Sadece admin durum/not/fiyat güncelleyebilir.
+      allow update: if isActiveAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(["status", "adminNote", "offeredPrice", "offeredAt", "updatedAt"])
+        && request.resource.data.status in ["new", "reviewing", "offered", "closed"];
+
+      // Yönetici admin silebilir.
+      allow delete: if isManagerAdmin();
+    }
+
+    // ────────────────────────────────────────
+    // CUSTOMERS (Müşteri Profilleri)
+    // ────────────────────────────────────────
+
+    match /customers/{customerId} {
+      // Müşteri kendi profilini okuyabilir, admin herkesinki.
+      allow get: if isActiveAdmin()
+        || (isSignedIn() && request.auth.uid == customerId);
+
+      allow list: if isActiveAdmin();
+
+      // Müşteri kendi profilini oluşturabilir/güncelleyebilir.
+      allow create, update: if isSignedIn()
+        && request.auth.uid == customerId
+        && request.resource.data.uid is string
+        && request.resource.data.uid == customerId
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() >= 2
+        && request.resource.data.fullName.size() <= 100
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() <= 30
+        && (
+          !("district" in request.resource.data)
+          || (
+            request.resource.data.district is string
+            && request.resource.data.district.size() <= 120
+          )
+        );
+
+      allow delete: if isSuperAdmin();
+    }
+
     match /admins/{adminId} {
       allow get: if isSignedIn() && (
         request.auth.uid == adminId || isSuperAdmin()

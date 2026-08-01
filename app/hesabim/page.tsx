@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   type FormEvent,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import {
@@ -25,7 +26,8 @@ import {
   logoutPublicUser,
 } from "@/lib/public-auth";
 import { getCustomerSellRequests } from "@/lib/sell-requests";
-import type { SellRequest, SellRequestStatus } from "@/lib/types";
+import { getCustomerQuoteRequests } from "@/lib/quote-requests";
+import type { QuoteRequest, SellRequest, SellRequestStatus } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
 const SELL_STATUS_LABELS: Record<SellRequestStatus, string> = {
@@ -34,6 +36,13 @@ const SELL_STATUS_LABELS: Record<SellRequestStatus, string> = {
   offered: "Teklif Hazır",
   completed: "Tamamlandı",
   rejected: "Uygun Bulunmadı",
+};
+
+const QUOTE_STATUS_LABELS: Record<string, string> = {
+  new: "Yeni Talep",
+  reviewing: "İnceleniyor",
+  offered: "Teklif Hazır",
+  closed: "Kapatıldı",
 };
 
 function formatDateLabel(value: string | null | undefined): string {
@@ -56,10 +65,40 @@ function formatDateLabel(value: string | null | undefined): string {
   }).format(date);
 }
 
+function formatRelativeDate(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return "Bugün";
+  }
+
+  if (diffDays === 1) {
+    return "Dün";
+  }
+
+  if (diffDays < 7) {
+    return `${diffDays} gün önce`;
+  }
+
+  if (diffDays < 30) {
+    return `${Math.floor(diffDays / 7)} hafta önce`;
+  }
+
+  return `${Math.floor(diffDays / 30)} ay önce`;
+}
+
 function getProviderLabel(providerId: string): string {
   switch (providerId) {
     case "password":
-      return "E-posta + Sifre";
+      return "E-posta + Şifre";
 
     case "google.com":
       return "Google";
@@ -70,6 +109,14 @@ function getProviderLabel(providerId: string): string {
     default:
       return providerId;
   }
+}
+
+interface TimelineItem {
+  id: string;
+  icon: string;
+  label: string;
+  date: string;
+  type: "sell" | "quote" | "system";
 }
 
 export default function AccountPage() {
@@ -149,6 +196,10 @@ const [
 ] = useState(false);
   const [sellRequests, setSellRequests] = useState<SellRequest[]>([]);
   const [sellRequestsLoading, setSellRequestsLoading] = useState(true);
+  const [quoteRequests, setQuoteRequests] = useState<QuoteRequest[]>([]);
+  const [quoteRequestsLoading, setQuoteRequestsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"sell" | "quote">("sell");
+
 useEffect(() => {
   if (
     loading ||
@@ -225,6 +276,29 @@ useEffect(() => {
 
   useEffect(() => {
     if (!session?.user.email) {
+      setQuoteRequestsLoading(false);
+      return;
+    }
+
+    let active = true;
+    void getCustomerQuoteRequests()
+      .then((items) => {
+        if (active) setQuoteRequests(items);
+      })
+      .catch((reason: unknown) => {
+        console.error("Hızlı teklifler yüklenemedi:", reason);
+      })
+      .finally(() => {
+        if (active) setQuoteRequestsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [session?.user.email]);
+
+  useEffect(() => {
+    if (!session?.user.email) {
       return;
     }
 
@@ -279,6 +353,102 @@ useEffect(() => {
     };
   }, [cooldownSeconds]);
 
+  /* ── Profil tamamlama yüzdesi ────── */
+  const profileCompletion = useMemo(() => {
+    if (!session) return 0;
+    let score = 0;
+    const totalSteps = 5;
+    if (profile?.fullName || session.user.displayName) score++;
+    if (profile?.phone) score++;
+    if (profile?.district) score++;
+    if (session.user.email) score++;
+    if (session.user.emailVerified || verifiedByCode) score++;
+    return Math.round((score / totalSteps) * 100);
+  }, [session, profile, verifiedByCode]);
+
+  /* ── Favori kategoriler ────── */
+  const favoriteCategories = useMemo(() => {
+    const categoryMap = new Map<string, number>();
+    for (const request of sellRequests) {
+      if (request.category) {
+        categoryMap.set(request.category, (categoryMap.get(request.category) || 0) + 1);
+      }
+    }
+    return Array.from(categoryMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([name, count]) => ({ name, count }));
+  }, [sellRequests]);
+
+  /* ── Aktivite timeline ────── */
+  const timelineItems = useMemo((): TimelineItem[] => {
+    const items: TimelineItem[] = [];
+
+    for (const req of sellRequests) {
+      items.push({
+        id: `sell-${req.id}`,
+        icon: "image",
+        label: `Eşya satış talebi gönderildi${req.brandModel ? ` – ${req.brandModel}` : ""}`,
+        date: req.createdAt,
+        type: "sell",
+      });
+
+      if (req.status === "offered" && req.offeredPrice !== undefined) {
+        items.push({
+          id: `sell-offer-${req.id}`,
+          icon: "badge-percent",
+          label: `Satış teklifinize ${formatCurrency(req.offeredPrice)} teklif verildi`,
+          date: req.updatedAt,
+          type: "sell",
+        });
+      }
+    }
+
+    for (const req of quoteRequests) {
+      items.push({
+        id: `quote-${req.id}`,
+        icon: "zap",
+        label: `Hızlı teklif talebi gönderildi${req.selectedProducts.length > 0 ? ` – ${req.selectedProducts.length} ürün` : ""}`,
+        date: req.createdAt,
+        type: "quote",
+      });
+
+      if (req.status === "offered" && req.offeredPrice !== undefined) {
+        items.push({
+          id: `quote-offer-${req.id}`,
+          icon: "badge-percent",
+          label: `Hızlı teklifinize ${formatCurrency(req.offeredPrice)} fiyat verildi`,
+          date: req.updatedAt,
+          type: "quote",
+        });
+      }
+    }
+
+    if (session?.user.metadata.creationTime) {
+      items.push({
+        id: "account-created",
+        icon: "user-plus",
+        label: "Hesabınız oluşturuldu",
+        date: new Date(session.user.metadata.creationTime).toISOString(),
+        type: "system",
+      });
+    }
+
+    return items.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
+  }, [sellRequests, quoteRequests, session]);
+
+  /* ── İstatistikler ────── */
+  const stats = useMemo(() => {
+    const totalRequests = sellRequests.length + quoteRequests.length;
+    const pendingCount = sellRequests.filter((r) => r.status === "new" || r.status === "reviewing").length
+      + quoteRequests.filter((r) => r.status === "new" || r.status === "reviewing").length;
+    const offeredCount = sellRequests.filter((r) => r.status === "offered").length
+      + quoteRequests.filter((r) => r.status === "offered").length;
+    const totalOfferedValue = sellRequests.reduce((sum, r) => sum + (r.offeredPrice || 0), 0)
+      + quoteRequests.reduce((sum, r) => sum + (r.offeredPrice || 0), 0);
+    return { totalRequests, pendingCount, offeredCount, totalOfferedValue };
+  }, [sellRequests, quoteRequests]);
+
   async function handleLogout(): Promise<void> {
     setProcessing(true);
 
@@ -294,7 +464,7 @@ useEffect(() => {
 
   async function handleVerificationSend(): Promise<void> {
     if (!session?.user.email) {
-      setError("E-posta bilgisi bulunamadi.");
+      setError("E-posta bilgisi bulunamadı.");
       return;
     }
 
@@ -327,7 +497,7 @@ useEffect(() => {
       if (!response.ok) {
         setError(
           payload?.error ||
-            "Kod gonderilemedi.",
+            "Kod gönderilemedi.",
         );
 
         return;
@@ -345,13 +515,13 @@ useEffect(() => {
       setVerificationModalOpen(true);
 
       setMessage(
-        "Dogrulama kodu e-posta adresinize gonderildi.",
+        "Doğrulama kodu e-posta adresinize gönderildi.",
       );
     } catch (reason: unknown) {
       setError(
         reason instanceof Error
           ? reason.message
-          : "Kod gonderilemedi.",
+          : "Kod gönderilemedi.",
       );
     } finally {
       setProcessing(false);
@@ -364,7 +534,7 @@ useEffect(() => {
     event.preventDefault();
 
     if (!session?.user.email) {
-      setError("E-posta bilgisi bulunamadi.");
+      setError("E-posta bilgisi bulunamadı.");
       return;
     }
 
@@ -402,7 +572,7 @@ useEffect(() => {
       if (!response.ok) {
         setError(
           payload?.error ||
-            "Kod dogrulanamadi.",
+            "Kod doğrulanamadı.",
         );
         return;
       }
@@ -415,17 +585,18 @@ useEffect(() => {
       );
       setVerificationModalOpen(false);
       setVerificationCode("");
-      setMessage("Hesabiniz basariyla dogrulandi.");
+      setMessage("Hesabınız başarıyla doğrulandı.");
     } catch (reason: unknown) {
       setError(
         reason instanceof Error
           ? reason.message
-          : "Kod dogrulanamadi.",
+          : "Kod doğrulanamadı.",
       );
     } finally {
       setProcessing(false);
     }
   }
+
 async function handleProfileSave(
   event: FormEvent<HTMLFormElement>,
 ): Promise<void> {
@@ -475,10 +646,10 @@ async function handleProfileSave(
 
     try {
       await navigator.clipboard.writeText(session.user.uid);
-      setMessage("Hesap ID panoya kopyalandi.");
+      setMessage("Hesap ID panoya kopyalandı.");
       setError(null);
     } catch {
-      setError("Hesap ID kopyalanamadi.");
+      setError("Hesap ID kopyalanamadı.");
     } finally {
       setCopyingUid(false);
     }
@@ -527,7 +698,7 @@ async function handleProfileSave(
 
   const securityLevel =
     securityScore >= 80
-      ? "Yuksek"
+      ? "Yüksek"
       : securityScore >= 55
         ? "Orta"
         : "Temel";
@@ -580,8 +751,8 @@ async function handleProfileSave(
             </h1>
 
             <p>
-              Hesap bilgilerinizi, dogrulama durumunuzu ve guvenlik aksiyonlarini
-              tek panelden yonetin.
+              Hesap bilgilerinizi, tekliflerinizi ve güvenlik ayarlarınızı
+              tek panelden yönetin.
             </p>
           </div>
 
@@ -625,25 +796,67 @@ async function handleProfileSave(
           </div>
         )}
 
+        {/* ── PROFİL İLERLEME ÇUBUĞU ────── */}
+        <section className="account-progress">
+          <div className="account-progress__header">
+            <div>
+              <span className="eyebrow">PROFİL DURUMU</span>
+              <strong>Profiliniz %{profileCompletion} tamamlandı</strong>
+            </div>
+            <span className="account-progress__badge" data-complete={profileCompletion === 100}>
+              {profileCompletion === 100 ? "Tamamlandı" : "Devam ediyor"}
+            </span>
+          </div>
+          <div className="account-progress__bar">
+            <div className="account-progress__fill" style={{ width: `${profileCompletion}%` }} />
+          </div>
+          <div className="account-progress__steps">
+            <span data-done={Boolean(profile?.fullName || session.user.displayName)}>
+              <Icon name="user" size={14} /> Ad Soyad
+            </span>
+            <span data-done={Boolean(profile?.phone)}>
+              <Icon name="phone" size={14} /> Telefon
+            </span>
+            <span data-done={Boolean(profile?.district)}>
+              <Icon name="map-pin" size={14} /> İlçe
+            </span>
+            <span data-done={Boolean(session.user.email)}>
+              <Icon name="mail" size={14} /> E-posta
+            </span>
+            <span data-done={isVerified}>
+              <Icon name="shield-check" size={14} /> Doğrulama
+            </span>
+          </div>
+        </section>
+
+        {/* ── İSTATİSTİK KARTLARI ────── */}
         <section className="account-highlights">
           <article className="account-highlight-card">
-            <span>Hesap Durumu</span>
-            <strong>{isVerified ? "Dogrulanmis" : "Dogrulama Bekleniyor"}</strong>
-            <small>Kurumsal islemler ve guvenlik icin dogrulama onemlidir.</small>
+            <span><Icon name="inbox" size={18} /></span>
+            <strong>{stats.totalRequests}</strong>
+            <small>Toplam Talep</small>
           </article>
 
           <article className="account-highlight-card">
-            <span>Guvenlik Skoru</span>
-            <strong>{securityScore}/100</strong>
-            <small>{securityLevel} seviye koruma</small>
+            <span><Icon name="clock" size={18} /></span>
+            <strong>{stats.pendingCount}</strong>
+            <small>Bekleyen</small>
           </article>
 
           <article className="account-highlight-card">
-            <span>Destek Maili</span>
-            <strong>info@ugurbeyspot.com</strong>
-            <small>Kurumsal destek icin bu adresten iletisim kurabilirsiniz.</small>
+            <span><Icon name="check-circle" size={18} /></span>
+            <strong>{stats.offeredCount}</strong>
+            <small>Teklifli</small>
+          </article>
+
+          <article className="account-highlight-card">
+            <span><Icon name="badge-percent" size={18} /></span>
+            <strong>{stats.totalOfferedValue > 0 ? formatCurrency(stats.totalOfferedValue) : "—"}</strong>
+            <small>Toplam Teklif</small>
           </article>
         </section>
+
+{/* ── MÜŞTERİ PROFİLİ ────── */}
 <section className="account-profile-editor">
   <div className="section-heading section-heading--actions">
     <div>
@@ -787,6 +1000,8 @@ async function handleProfileSave(
     </div>
   </form>
 </section>
+
+        {/* ── HESAP BİLGİLERİ + GÜVENLİK ────── */}
         <div className="account-grid">
           <section className="account-panel">
             <span>
@@ -819,6 +1034,7 @@ async function handleProfileSave(
                   }
                 </dd>
               </div>
+
 <div>
   <dt>Telefon</dt>
 
@@ -834,26 +1050,26 @@ async function handleProfileSave(
 
                 <dd>
                   {isVerified
-                    ? "Dogrulandi"
-                    : "Dogrulanmadi"}
+                    ? "Doğrulandı"
+                    : "Doğrulanmadı"}
                 </dd>
               </div>
 
               <div>
                 <dt>
-                  Kayit Tarihi
+                  Kayıt Tarihi
                 </dt>
 
                 <dd>{creationDate}</dd>
               </div>
 
               <div>
-                <dt>Son Giris</dt>
+                <dt>Son Giriş</dt>
                 <dd>{lastLoginDate}</dd>
               </div>
 
               <div>
-                <dt>Giris Yontemi</dt>
+                <dt>Giriş Yöntemi</dt>
                 <dd>
                   {providers.length > 0
                     ? providers.map((providerId) => getProviderLabel(providerId)).join(", ")
@@ -873,7 +1089,7 @@ async function handleProfileSave(
                     }
                     disabled={copyingUid}
                   >
-                    {copyingUid ? "Kopyalaniyor" : "Kopyala"}
+                    {copyingUid ? "Kopyalanıyor" : "Kopyala"}
                   </button>
                 </dd>
               </div>
@@ -901,7 +1117,7 @@ async function handleProfileSave(
             </div>
 
             <p>
-              E-posta adresinizi kod ile dogrulayarak hesabinizin guvenligini artirin.
+              E-posta adresinizi kod ile doğrulayarak hesabınızın güvenliğini artırın.
             </p>
 
             {!isVerified && (
@@ -913,7 +1129,7 @@ async function handleProfileSave(
                   void handleVerificationSend()
                 }
               >
-                Dogrulama Kodu Gonder
+                Doğrulama Kodu Gönder
               </button>
             )}
 
@@ -921,7 +1137,7 @@ async function handleProfileSave(
               href="/iletisim"
               className="button button--outline-light button--block"
             >
-              Destek ile Iletisime Gec
+              Destek ile İletişime Geç
             </Link>
 
             <button
@@ -942,64 +1158,218 @@ async function handleProfileSave(
           </section>
         </div>
 
-        <section className="account-sell-requests">
+        {/* ── TEKLİFLERİM (TAB'lı) ────── */}
+        <section className="account-requests-section">
           <div className="section-heading section-heading--actions">
             <div>
-              <span className="eyebrow">EŞYA SATIŞI</span>
+              <span className="eyebrow">TALEPLERİM</span>
               <h2>Tekliflerim</h2>
-              <p>Gönderdiğiniz eşyaların değerlendirme sürecini ve mağazamızın teklifini takip edin.</p>
+              <p>Satış taleplerinizi ve hızlı tekliflerinizi tek yerden takip edin.</p>
             </div>
-            <span className="account-sell-requests__count">{sellRequests.length} talep</span>
+            <div className="account-requests-tabs">
+              <button
+                type="button"
+                className={activeTab === "sell" ? "is-active" : ""}
+                onClick={() => setActiveTab("sell")}
+              >
+                <Icon name="image" size={16} />
+                Eşya Satışı
+                {sellRequests.length > 0 && <em>{sellRequests.length}</em>}
+              </button>
+              <button
+                type="button"
+                className={activeTab === "quote" ? "is-active" : ""}
+                onClick={() => setActiveTab("quote")}
+              >
+                <Icon name="zap" size={16} />
+                Hızlı Teklifler
+                {quoteRequests.length > 0 && <em>{quoteRequests.length}</em>}
+              </button>
+            </div>
           </div>
 
-          {sellRequestsLoading ? (
-            <div className="account-sell-empty">Teklifleriniz yükleniyor...</div>
-          ) : sellRequests.length === 0 ? (
-            <div className="account-sell-empty">
-              <span><Icon name="image" size={26} /></span>
-              <div>
-                <strong>Henüz hesabınıza bağlı satış talebi yok.</strong>
-                <small>Giriş yaptıktan sonra göndereceğiniz eşya talepleri burada görünecek.</small>
-              </div>
-              <Link href="/" className="button button--dark button--compact">Eşya gönder</Link>
-            </div>
-          ) : (
-            <div className="account-sell-list">
-              {sellRequests.map((request) => (
-                <article className="account-sell-card" key={request.id}>
-                  <div className="account-sell-card__image">
-                    {request.images[0] ? <img src={request.images[0].url} alt={request.images[0].alt || request.category} /> : <Icon name="image" size={28} />}
+          {/* Eşya Satışı Tab */}
+          {activeTab === "sell" && (
+            <>
+              {sellRequestsLoading ? (
+                <div className="account-sell-empty">Satış talepleriniz yükleniyor...</div>
+              ) : sellRequests.length === 0 ? (
+                <div className="account-sell-empty">
+                  <span><Icon name="image" size={26} /></span>
+                  <div>
+                    <strong>Henüz hesabınıza bağlı satış talebi yok.</strong>
+                    <small>Giriş yaptıktan sonra göndereceğiniz eşya talepleri burada görünecek.</small>
                   </div>
-                  <div className="account-sell-card__body">
-                    <div className="account-sell-card__top">
-                      <div>
-                        <small>{request.category}</small>
-                        <h3>{request.brandModel || "Eşya değerlendirme talebi"}</h3>
+                  <Link href="/" className="button button--dark button--compact">Eşya gönder</Link>
+                </div>
+              ) : (
+                <div className="account-sell-list">
+                  {sellRequests.map((request) => (
+                    <article className="account-sell-card" key={request.id}>
+                      <div className="account-sell-card__image">
+                        {request.images[0] ? <img src={request.images[0].url} alt={request.images[0].alt || request.category} /> : <Icon name="image" size={28} />}
                       </div>
-                      <span data-status={request.status}>{SELL_STATUS_LABELS[request.status]}</span>
-                    </div>
-                    <p>{request.description}</p>
-                    <div className="account-sell-card__meta">
-                      <span><Icon name="clock" size={15} /> {formatDateLabel(request.createdAt)}</span>
-                      <span>{request.images.length} fotoğraf</span>
-                    </div>
-                    {request.status === "offered" && request.offeredPrice !== undefined && (
-                      <div className="account-sell-offer">
-                        <div><small>UĞUR BEY SPOT TEKLİFİ</small><strong>{formatCurrency(request.offeredPrice)}</strong></div>
-                        <a href="tel:+905520715689" className="button button--dark button--compact"><Icon name="phone" size={17} /> Teklif için ara</a>
+                      <div className="account-sell-card__body">
+                        <div className="account-sell-card__top">
+                          <div>
+                            <small>{request.category}</small>
+                            <h3>{request.brandModel || "Eşya değerlendirme talebi"}</h3>
+                          </div>
+                          <span data-status={request.status}>{SELL_STATUS_LABELS[request.status]}</span>
+                        </div>
+                        <p>{request.description}</p>
+                        <div className="account-sell-card__meta">
+                          <span><Icon name="clock" size={15} /> {formatDateLabel(request.createdAt)}</span>
+                          <span>{request.images.length} fotoğraf</span>
+                        </div>
+                        {request.status === "offered" && request.offeredPrice !== undefined && (
+                          <div className="account-sell-offer">
+                            <div><small>UĞUR BEY SPOT TEKLİFİ</small><strong>{formatCurrency(request.offeredPrice)}</strong></div>
+                            <a href="tel:+905520715689" className="button button--dark button--compact"><Icon name="phone" size={17} /> Teklif için ara</a>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Hızlı Teklifler Tab */}
+          {activeTab === "quote" && (
+            <>
+              {quoteRequestsLoading ? (
+                <div className="account-sell-empty">Hızlı teklifleriniz yükleniyor...</div>
+              ) : quoteRequests.length === 0 ? (
+                <div className="account-sell-empty">
+                  <span><Icon name="zap" size={26} /></span>
+                  <div>
+                    <strong>Henüz hızlı teklif talebiniz yok.</strong>
+                    <small>Ürün sayfalarından veya sepet üzerinden hızlı teklif gönderebilirsiniz.</small>
                   </div>
-                </article>
-              ))}
-            </div>
+                  <Link href="/urunler" className="button button--dark button--compact">Ürünleri incele</Link>
+                </div>
+              ) : (
+                <div className="account-sell-list">
+                  {quoteRequests.map((request) => (
+                    <article className="account-quote-card" key={request.id}>
+                      <div className="account-quote-card__icon">
+                        <Icon name="zap" size={24} />
+                      </div>
+                      <div className="account-sell-card__body">
+                        <div className="account-sell-card__top">
+                          <div>
+                            <small>
+                              {request.selectedProducts.length > 0
+                                ? `${request.selectedProducts.length} ürün seçildi`
+                                : "Genel teklif talebi"}
+                            </small>
+                            <h3>{request.answers.need || "Hızlı teklif talebi"}</h3>
+                          </div>
+                          <span data-status={request.status}>{QUOTE_STATUS_LABELS[request.status] || request.status}</span>
+                        </div>
+                        {request.selectedProducts.length > 0 && (
+                          <div className="account-quote-products">
+                            {request.selectedProducts.map((product) => (
+                              <Link
+                                key={product.productId}
+                                href={`/urunler/${product.slug}`}
+                                className="account-quote-product-chip"
+                              >
+                                {product.title}
+                                <small>{formatCurrency(product.price)}</small>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                        {request.answers.additionalNotes && (
+                          <p>{request.answers.additionalNotes}</p>
+                        )}
+                        <div className="account-sell-card__meta">
+                          <span><Icon name="clock" size={15} /> {formatDateLabel(request.createdAt)}</span>
+                          <span>Bütçe: {request.answers.budgetRange}</span>
+                        </div>
+                        {request.status === "offered" && request.offeredPrice !== undefined && (
+                          <div className="account-sell-offer">
+                            <div><small>UĞUR BEY SPOT TEKLİFİ</small><strong>{formatCurrency(request.offeredPrice)}</strong></div>
+                            <a href="tel:+905520715689" className="button button--dark button--compact"><Icon name="phone" size={17} /> Teklif için ara</a>
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </section>
 
+        {/* ── AKTİVİTE + FAVORİ KATEGORİLER GRID ────── */}
+        <div className="account-bottom-grid">
+          {/* Aktivite Zaman Çizelgesi */}
+          <section className="account-timeline-section">
+            <span className="eyebrow">AKTİVİTE</span>
+            <h2>Son Hareketler</h2>
+
+            {timelineItems.length === 0 ? (
+              <div className="account-timeline-empty">
+                <Icon name="activity" size={24} />
+                <span>Henüz aktivite bulunmuyor.</span>
+              </div>
+            ) : (
+              <div className="account-timeline">
+                {timelineItems.map((item) => (
+                  <div className="account-timeline__item" key={item.id} data-type={item.type}>
+                    <span className="account-timeline__dot">
+                      <Icon name={item.icon} size={14} />
+                    </span>
+                    <div className="account-timeline__content">
+                      <span>{item.label}</span>
+                      <small>{formatRelativeDate(item.date)}</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Favori Kategoriler */}
+          <section className="account-categories-section">
+            <span className="eyebrow">İLGİ ALANLARI</span>
+            <h2>Favori Kategorilerim</h2>
+
+            {favoriteCategories.length === 0 ? (
+              <div className="account-timeline-empty">
+                <Icon name="grid" size={24} />
+                <span>Henüz kategori verisi bulunmuyor.</span>
+              </div>
+            ) : (
+              <div className="account-fav-categories">
+                {favoriteCategories.map((cat) => (
+                  <div className="account-fav-cat" key={cat.name}>
+                    <div className="account-fav-cat__bar">
+                      <div
+                        className="account-fav-cat__fill"
+                        style={{ width: `${Math.min(100, (cat.count / (favoriteCategories[0]?.count || 1)) * 100)}%` }}
+                      />
+                    </div>
+                    <div className="account-fav-cat__label">
+                      <strong>{cat.name}</strong>
+                      <small>{cat.count} talep</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* ── HIZLI İŞLEMLER ────── */}
         <section className="account-actions">
           <div className="section-heading section-heading--actions">
             <div>
-              <span className="eyebrow">HIZLI ISLEMLER</span>
+              <span className="eyebrow">HIZLI İŞLEMLER</span>
               <h2>Hesap Merkezi</h2>
             </div>
           </div>
@@ -1008,8 +1378,8 @@ async function handleProfileSave(
             <Link href="/urunler" className="account-action-card">
               <Icon name="grid" size={20} />
               <div>
-                <strong>Urun Katalogu</strong>
-                <small>Guncel urunleri inceleyin.</small>
+                <strong>Ürün Kataloğu</strong>
+                <small>Güncel ürünleri inceleyin.</small>
               </div>
               <Icon name="arrow-right" size={17} />
             </Link>
@@ -1018,7 +1388,7 @@ async function handleProfileSave(
               <Icon name="shopping-bag" size={20} />
               <div>
                 <strong>Teklif Sepeti</strong>
-                <small>Secili urunlerle WhatsApp teklifi baslatin.</small>
+                <small>Seçili ürünlerle WhatsApp teklifi başlatın.</small>
               </div>
               <Icon name="arrow-right" size={17} />
             </Link>
@@ -1027,7 +1397,7 @@ async function handleProfileSave(
               <Icon name="message-circle" size={20} />
               <div>
                 <strong>Kurumsal Destek</strong>
-                <small>info@ugurbeyspot.com ve iletisim kanallari.</small>
+                <small>info@ugurbeyspot.com ve iletişim kanalları.</small>
               </div>
               <Icon name="arrow-right" size={17} />
             </Link>
@@ -1040,7 +1410,7 @@ async function handleProfileSave(
           className="auth-modal"
           role="dialog"
           aria-modal="true"
-          aria-label="Hesap dogrulama kodu"
+          aria-label="Hesap doğrulama kodu"
         >
           <div className="auth-modal__panel">
             <button
@@ -1055,7 +1425,7 @@ async function handleProfileSave(
               <Icon name="x" size={18} />
             </button>
 
-            <span className="eyebrow">HESAP DOGRULAMA</span>
+            <span className="eyebrow">HESAP DOĞRULAMA</span>
             <h2>Kodu girin</h2>
             <p>E-posta adresinize gelen 6 haneli kodu girin.</p>
 
@@ -1090,8 +1460,8 @@ async function handleProfileSave(
                 disabled={processing}
               >
                 {processing
-                  ? "Dogrulaniyor..."
-                  : "Kodu Dogrula"}
+                  ? "Doğrulanıyor..."
+                  : "Kodu Doğrula"}
                 <Icon name="arrow-right" size={18} />
               </button>
 
@@ -1104,8 +1474,8 @@ async function handleProfileSave(
                 disabled={processing || cooldownSeconds > 0}
               >
                 {cooldownSeconds > 0
-                  ? `Yeniden gonder (${cooldownSeconds}s)`
-                  : "Kodu Yeniden Gonder"}
+                  ? `Yeniden gönder (${cooldownSeconds}s)`
+                  : "Kodu Yeniden Gönder"}
               </button>
             </form>
           </div>

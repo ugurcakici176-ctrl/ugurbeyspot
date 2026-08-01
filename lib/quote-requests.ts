@@ -4,7 +4,9 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  query,
   updateDoc,
+  where,
 } from "firebase/firestore";
 
 import { getAttribution } from "@/lib/attribution";
@@ -13,7 +15,7 @@ import {
   CONTACT_LIMITS,
   QUICK_QUOTE_LIMITS,
 } from "@/lib/constants";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import type {
   QuoteRequest,
   QuoteRequestProductItem,
@@ -590,6 +592,37 @@ export async function updateQuickQuoteRequestByAdmin(
     ),
     payload,
   );
+}
+
+export async function getCustomerQuoteRequests(): Promise<
+  QuoteRequest[]
+> {
+  const user = auth.currentUser;
+
+  if (!user?.email) {
+    return [];
+  }
+
+  const snapshot = await getDocs(
+    query(
+      collection(
+        db,
+        COLLECTIONS.quoteRequests,
+      ),
+      where("email", "==", user.email),
+    ),
+  );
+
+  return snapshot.docs
+    .map((item) =>
+      mapQuoteRequest(
+        item.id,
+        item.data(),
+      ),
+    )
+    .sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt),
+    );
 }
 
 export async function deleteQuickQuoteRequest(
