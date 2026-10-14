@@ -14,14 +14,14 @@ import SiteChrome from "@/components/site/site-chrome";
 import EmptyState from "@/components/ui/empty-state";
 import Icon from "@/components/ui/icon";
 import { useCart } from "@/hooks/use-cart";
-import LoadingScreen from "@/components/ui/loading-screen";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { ROUTES } from "@/lib/constants";
+import { absoluteUrl } from "@/lib/site-url";
 import {
   getApprovedProductReviews,
   submitProductReview,
 } from "@/lib/product-reviews";
-import { getProductBySlug, getRelatedProducts } from "@/lib/products";
+import { getRelatedProducts } from "@/lib/products";
 import type { Product, ProductReview } from "@/lib/types";
 import {
   buildTelUrl,
@@ -31,11 +31,15 @@ import {
   getDiscountPercent,
 } from "@/lib/utils";
 
-export default function ProductDetailClient({ slug }: { slug: string }) {
+export default function ProductDetailClient({
+  initialProduct,
+}: {
+  initialProduct: Product;
+}) {
   const pathname = usePathname();
   const { settings } = useSiteSettings();
   const { addItem } = useCart();
-  const [product, setProduct] = useState<Product | null>(null);
+  const product: Product | null = initialProduct;
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewName, setReviewName] = useState("");
@@ -46,46 +50,27 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const [reviewMessage, setReviewMessage] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
 
-    void getProductBySlug(slug)
-      .then(async (data) => {
+    void Promise.all([
+      getRelatedProducts(initialProduct),
+      getApprovedProductReviews(initialProduct.id),
+    ])
+      .then(([related, approvedReviews]) => {
         if (!active) return;
-
-        setProduct(data);
-        setReviewMessage(null);
-        setReviewError(null);
-
-        if (data) {
-          const firstImage = [...data.images].sort(
-            (a, b) => a.sortOrder - b.sortOrder,
-          )[0];
-
-          setSelectedImageId(firstImage?.id || null);
-
-          const related = await getRelatedProducts(data);
-          const approvedReviews = await getApprovedProductReviews(data.id);
-
-          if (active) setRelatedProducts(related);
-          if (active) setReviews(approvedReviews);
-        } else if (active) {
-          setReviews([]);
-        }
+        setRelatedProducts(related);
+        setReviews(approvedReviews);
       })
       .catch((reason: unknown) => {
-        console.error("Product could not be loaded:", reason);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+        console.error("Product extras could not be loaded:", reason);
       });
 
     return () => {
       active = false;
     };
-  }, [slug]);
+  }, [initialProduct]);
 
   const orderedImages = useMemo(
     () =>
@@ -98,10 +83,6 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const selectedImage =
     orderedImages.find((image) => image.id === selectedImageId) ||
     orderedImages[0];
-
-  if (loading) {
-    return <LoadingScreen label="Ürün hazırlanıyor" />;
-  }
 
   if (!product) {
     return (
@@ -135,7 +116,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
 
   const productWhatsappMessage = [
     `Merhaba, ${product.title} urunu hakkinda bilgi almak istiyorum.`,
-    `Urun linki: ${ROUTES.product(product.slug)}`,
+    `Urun linki: ${absoluteUrl(ROUTES.product(product.slug))}`,
     `Fiyat: ${formatCurrency(product.price)}`,
   ].join("\n");
 
@@ -193,6 +174,9 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
     try {
       const approvedReviews = await getApprovedProductReviews(product.id);
       setReviews(approvedReviews);
+    } catch (reason: unknown) {
+      console.error("Yorumlar yenilenemedi:", reason);
+      setReviewError("Yorumlar şu an yenilenemedi.");
     } finally {
       setReviewLoading(false);
     }
@@ -264,7 +248,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
 
               <div className="product-detail__price">
                 <strong>{formatCurrency(product.price)}</strong>
-                {product.compareAtPrice &&
+                {product.compareAtPrice != null &&
                   product.compareAtPrice > product.price && (
                     <del>{formatCurrency(product.compareAtPrice)}</del>
                   )}

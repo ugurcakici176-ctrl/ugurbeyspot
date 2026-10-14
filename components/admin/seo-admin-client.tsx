@@ -2,6 +2,7 @@
 
 import { type FormEvent, useEffect, useState } from "react";
 
+import { KeywordsField } from "@/components/admin/admin-form-utils";
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
 import { DEFAULT_SITE_SETTINGS } from "@/lib/default-content";
@@ -28,9 +29,31 @@ export default function SeoAdminClient() {
   );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    void getSiteSettings().then(setSettings);
+    let active = true;
+
+    getSiteSettings()
+      .then((data) => {
+        if (active) setSettings(data);
+      })
+      .catch((reason: unknown) => {
+        console.error("SEO settings load error:", reason);
+        if (active) {
+          setLoadError(
+            "SEO ayarları yüklenemedi. Mevcut ayarların üzerine yazılmaması için kaydetme kapatıldı; sayfayı yenileyip tekrar deneyin.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   function updateSeo(
@@ -52,7 +75,9 @@ export default function SeoAdminClient() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (loading || loadError || saving) return;
     setSaving(true);
+    setMessage(null);
 
     try {
       await saveSiteSettings(settings);
@@ -76,73 +101,74 @@ export default function SeoAdminClient() {
         description="Sayfa başlıklarını, açıklamaları ve anahtar kelimeleri yönetin."
       />
 
-      <form className="admin-editor" onSubmit={handleSubmit}>
-        {message && (
-          <div className="admin-notice admin-notice--info">{message}</div>
-        )}
+      {loading ? (
+        <div className="admin-panel admin-empty">SEO ayarları yükleniyor...</div>
+      ) : loadError ? (
+        <div className="admin-notice admin-notice--error" role="alert">
+          {loadError}
+        </div>
+      ) : (
+        <form className="admin-editor" onSubmit={handleSubmit}>
+          {message && (
+            <div className="admin-notice admin-notice--info">{message}</div>
+          )}
 
-        <div className="admin-seo-grid">
-          {(Object.keys(PAGE_LABELS) as SeoKey[]).map((key) => (
-            <section className="admin-panel admin-form-section" key={key}>
-              <div className="admin-form-section__heading">
-                <div>
-                  <span>SAYFA SEO</span>
-                  <h2>{PAGE_LABELS[key]}</h2>
+          <div className="admin-seo-grid">
+            {(Object.keys(PAGE_LABELS) as SeoKey[]).map((key) => (
+              <section className="admin-panel admin-form-section" key={key}>
+                <div className="admin-form-section__heading">
+                  <div>
+                    <span>SAYFA SEO</span>
+                    <h2>{PAGE_LABELS[key]}</h2>
+                  </div>
                 </div>
-              </div>
 
-              <label className="admin-field">
-                <span>SEO Başlığı</span>
-                <input
-                  value={settings.seo[key].title}
-                  onChange={(event) =>
-                    updateSeo(key, "title", event.target.value)
-                  }
-                />
-              </label>
+                <label className="admin-field">
+                  <span>SEO Başlığı</span>
+                  <input
+                    value={settings.seo[key].title}
+                    onChange={(event) =>
+                      updateSeo(key, "title", event.target.value)
+                    }
+                  />
+                </label>
 
-              <label className="admin-field">
-                <span>Meta Açıklaması</span>
-                <textarea
-                  rows={4}
-                  value={settings.seo[key].description}
-                  onChange={(event) =>
-                    updateSeo(key, "description", event.target.value)
-                  }
-                />
-              </label>
+                <label className="admin-field">
+                  <span>Meta Açıklaması</span>
+                  <textarea
+                    rows={4}
+                    value={settings.seo[key].description}
+                    onChange={(event) =>
+                      updateSeo(key, "description", event.target.value)
+                    }
+                  />
+                </label>
 
-              <label className="admin-field">
-                <span>Anahtar Kelimeler</span>
-                <input
-                  value={settings.seo[key].keywords.join(", ")}
-                  onChange={(event) =>
-                    updateSeo(
-                      key,
-                      "keywords",
-                      event.target.value
-                        .split(",")
-                        .map((item) => item.trim())
-                        .filter(Boolean),
-                    )
-                  }
-                />
-              </label>
-            </section>
-          ))}
-        </div>
+                <label className="admin-field">
+                  <span>Anahtar Kelimeler</span>
+                  <KeywordsField
+                    value={settings.seo[key].keywords}
+                    onKeywordsChange={(keywords) =>
+                      updateSeo(key, "keywords", keywords)
+                    }
+                  />
+                </label>
+              </section>
+            ))}
+          </div>
 
-        <div className="admin-sticky-save">
-          <button
-            type="submit"
-            className="admin-primary-button admin-primary-button--large"
-            disabled={saving}
-          >
-            <Icon name="save" size={19} />
-            {saving ? "Kaydediliyor..." : "SEO Ayarlarını Kaydet"}
-          </button>
-        </div>
-      </form>
+          <div className="admin-sticky-save">
+            <button
+              type="submit"
+              className="admin-primary-button admin-primary-button--large"
+              disabled={saving || loading || Boolean(loadError)}
+            >
+              <Icon name="save" size={19} />
+              {saving ? "Kaydediliyor..." : "SEO Ayarlarını Kaydet"}
+            </button>
+          </div>
+        </form>
+      )}
     </>
   );
 }

@@ -2,6 +2,7 @@
 
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 
+import { useCanDeleteRecords } from "@/components/admin/admin-form-utils";
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
 import {
@@ -30,15 +31,31 @@ const EMPTY_FORM: CategoryFormValues = {
   },
 };
 
+function getErrorMessage(reason: unknown, fallback: string): string {
+  return reason instanceof Error && reason.message ? reason.message : fallback;
+}
+
 export default function CategoriesAdminClient() {
+  const canDelete = useCanDeleteRecords();
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CategoryFormValues>(EMPTY_FORM);
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadCategories = useCallback(async () => {
-    setCategories(await getCategories({ includePassive: true }));
+    setLoading(true);
+    try {
+      setCategories(await getCategories({ includePassive: true }));
+    } catch (reason: unknown) {
+      console.error("Categories load error:", reason);
+      setError(getErrorMessage(reason, "Kategoriler yüklenemedi."));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -55,6 +72,7 @@ export default function CategoriesAdminClient() {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setMessage(null);
+    setError(null);
   }
 
   function editCategory(category: Category) {
@@ -66,58 +84,79 @@ export default function CategoriesAdminClient() {
       image: category.image,
       status: category.status,
       sortOrder: category.sortOrder,
-      seo: category.seo,
+      seo: category.seo ?? { ...EMPTY_FORM.seo },
     });
     setMessage(null);
+    setError(null);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const slug = slugify(form.slug || form.name);
-    const available = await isCategorySlugAvailable(
-      slug,
-      editingId || undefined,
-    );
+    if (saving || uploading) return;
 
-    if (!available) {
-      setMessage("Bu kategori bağlantısı kullanımda.");
-      return;
+    setSaving(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const name = form.name.trim();
+      const slug = slugify(form.slug || name);
+
+      if (!name || !slug) {
+        throw new Error("Kategori adı ve bağlantısı zorunludur.");
+      }
+
+      const available = await isCategorySlugAvailable(
+        slug,
+        editingId || undefined,
+      );
+
+      if (!available) {
+        throw new Error("Bu kategori bağlantısı kullanımda.");
+      }
+
+      const normalizedForm: CategoryFormValues = {
+        ...form,
+        name,
+        slug,
+        seo: {
+          ...form.seo,
+          title:
+            form.seo.title.trim() ||
+            `${form.name} | Konya İkinci El ve Spot Ürünler`,
+          description:
+            form.seo.description.trim() ||
+            form.description.trim(),
+          keywords:
+            form.seo.keywords.length > 0
+              ? form.seo.keywords
+              : [
+                  `${form.name} Konya`,
+                  `ikinci el ${form.name.toLocaleLowerCase("tr-TR")}`,
+                  `spot ${form.name.toLocaleLowerCase("tr-TR")}`,
+                  "Uğur Bey Spot",
+                ],
+        },
+      };
+
+      if (editingId) {
+        await updateCategory(editingId, normalizedForm);
+        setForm(normalizedForm);
+        setMessage("Kategori güncellendi.");
+      } else {
+        await createCategory(normalizedForm);
+        resetForm();
+        setMessage("Kategori oluşturuldu.");
+      }
+
+      await loadCategories();
+    } catch (reason: unknown) {
+      console.error("Category save error:", reason);
+      setError(getErrorMessage(reason, "Kategori kaydedilemedi."));
+    } finally {
+      setSaving(false);
     }
-
-    const normalizedForm: CategoryFormValues = {
-      ...form,
-      slug,
-      seo: {
-        ...form.seo,
-        title:
-          form.seo.title.trim() ||
-          `${form.name} | Konya İkinci El ve Spot Ürünler`,
-        description:
-          form.seo.description.trim() ||
-          form.description.trim(),
-        keywords:
-          form.seo.keywords.length > 0
-            ? form.seo.keywords
-            : [
-                `${form.name} Konya`,
-                `ikinci el ${form.name.toLocaleLowerCase("tr-TR")}`,
-                `spot ${form.name.toLocaleLowerCase("tr-TR")}`,
-                "Uğur Bey Spot",
-              ],
-      },
-    };
-
-    if (editingId) {
-      await updateCategory(editingId, normalizedForm);
-      setMessage("Kategori güncellendi.");
-    } else {
-      await createCategory(normalizedForm);
-      resetForm();
-      setMessage("Kategori oluşturuldu.");
-    }
-
-    await loadCategories();
   }
 
   async function handleDelete(category: Category) {
@@ -129,10 +168,20 @@ export default function CategoriesAdminClient() {
       return;
     }
 
-    await deleteCategory(category.id);
-    await loadCategories();
+    setMessage(null);
+    setError(null);
 
-    if (editingId === category.id) resetForm();
+    try {
+      await deleteCategory(category.id);
+
+      if (editingId === category.id) resetForm();
+
+      setMessage("Kategori silindi.");
+      await loadCategories();
+    } catch (reason: unknown) {
+      console.error("Category delete error:", reason);
+      setError(getErrorMessage(reason, "Kategori silinemedi."));
+    }
   }
 
   return (
@@ -154,6 +203,12 @@ export default function CategoriesAdminClient() {
 
           {message && (
             <div className="admin-notice admin-notice--info">{message}</div>
+          )}
+
+          {error && (
+            <div className="admin-notice admin-notice--error" role="alert">
+              {error}
+            </div>
           )}
 
           <label className="admin-field">
@@ -242,7 +297,13 @@ export default function CategoriesAdminClient() {
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
-                  slug: slugify(event.target.value),
+                  slug: event.target.value,
+                }))
+              }
+              onBlur={() =>
+                setForm((current) => ({
+                  ...current,
+                  slug: slugify(current.slug),
                 }))
               }
             />
@@ -302,9 +363,13 @@ export default function CategoriesAdminClient() {
                 Vazgeç
               </button>
             )}
-            <button className="admin-primary-button" type="submit" disabled={uploading}>
+            <button
+              className="admin-primary-button"
+              type="submit"
+              disabled={uploading || saving}
+            >
               <Icon name="save" size={18} />
-              Kaydet
+              {saving ? "Kaydediliyor..." : "Kaydet"}
             </button>
           </div>
         </form>
@@ -318,6 +383,12 @@ export default function CategoriesAdminClient() {
           </div>
 
           <div className="admin-category-list">
+            {loading && categories.length === 0 && (
+              <div className="admin-empty">Kategoriler yükleniyor...</div>
+            )}
+            {!loading && categories.length === 0 && (
+              <div className="admin-empty">Henüz kategori bulunmuyor.</div>
+            )}
             {categories.map((category) => (
               <article key={category.id} className="admin-category-card">
                 <span className="admin-category-card__image">
@@ -338,12 +409,15 @@ export default function CategoriesAdminClient() {
                   <button type="button" onClick={() => editCategory(category)}>
                     <Icon name="edit" size={17} />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleDelete(category)}
-                  >
-                    <Icon name="trash" size={17} />
-                  </button>
+                  {canDelete && (
+                    <button
+                      type="button"
+                      aria-label="Kategoriyi sil"
+                      onClick={() => void handleDelete(category)}
+                    >
+                      <Icon name="trash" size={17} />
+                    </button>
+                  )}
                 </div>
               </article>
             ))}

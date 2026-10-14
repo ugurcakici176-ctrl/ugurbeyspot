@@ -1,10 +1,21 @@
 import type { Metadata } from "next";
+
+import { pageOpenGraph, pageTwitter } from "@/lib/seo";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import ProductDetailClient from "@/components/products/product-detail-client";
 import { SITE } from "@/lib/constants";
 import { getProductBySlug } from "@/lib/products";
 import { absoluteUrl, SITE_URL } from "@/lib/site-url";
+
+// generateMetadata ve sayfa aynı istekte tek sorgu paylaşır.
+// Pasif ürünler gizlidir; satılmış ürünler "satıldı" olarak gösterilir.
+const loadProduct = cache(async (slug: string) => {
+  const product = await getProductBySlug(slug, true);
+
+  return product && product.status !== "passive" ? product : null;
+});
 
 function toAbsoluteUrl(value?: string): string | undefined {
   if (!value) {
@@ -24,7 +35,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProductBySlug(slug, true);
+  const product = await loadProduct(slug);
 
   if (!product) {
     return {
@@ -39,7 +50,7 @@ export async function generateMetadata({
   const canonical = `/urunler/${product.slug}`;
   const imageUrl =
     product.seo.ogImageUrl ||
-    product.images.sort((a, b) => a.sortOrder - b.sortOrder)[0]?.url;
+    [...product.images].sort((a, b) => a.sortOrder - b.sortOrder)[0]?.url;
 
   const seoTitle = product.seo.title || product.title;
   const seoDescription = product.seo.description || product.shortDescription;
@@ -63,12 +74,10 @@ export async function generateMetadata({
         "max-video-preview": -1,
       },
     },
-    openGraph: {
-      type: "website",
+    openGraph: pageOpenGraph({
       url: canonical,
       title: seoTitle,
       description: seoDescription,
-      siteName: SITE.name,
       images: imageUrl
         ? [
             {
@@ -77,13 +86,12 @@ export async function generateMetadata({
             },
           ]
         : undefined,
-    },
-    twitter: {
-      card: "summary_large_image",
+    }),
+    twitter: pageTwitter({
       title: seoTitle,
       description: seoDescription,
       images: imageUrl ? [toAbsoluteUrl(imageUrl) || imageUrl] : undefined,
-    },
+    }),
   };
 }
 
@@ -94,7 +102,7 @@ export default async function ProductDetailPage({
 }) {
   const { slug } = await params;
 
-  const product = await getProductBySlug(slug, true);
+  const product = await loadProduct(slug);
 
   if (!product) {
     notFound();
@@ -183,7 +191,7 @@ export default async function ProductDetailPage({
           __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c"),
         }}
       />
-      <ProductDetailClient slug={slug} />
+      <ProductDetailClient initialProduct={product} />
     </>
   );
 }

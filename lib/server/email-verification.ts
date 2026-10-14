@@ -14,7 +14,7 @@ export const TRANSACTIONAL_MAIL_FROM = "Uğurbey Spot <info@ugurbeyspot.com>";
 export type VerificationPurpose = "register" | "password_reset";
 
 export function normalizeEmail(value: string): string {
-  return value.trim().toLocaleLowerCase("tr-TR");
+  return value.trim().toLowerCase();
 }
 
 export function isValidEmail(value: string): boolean {
@@ -127,4 +127,31 @@ export function buildPasswordResetEmailHtml(code: string): string {
 </body>
 </html>
 `.trim();
+}
+
+export const EMAIL_DAILY_SEND_LIMIT = 6;
+const DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Aynı adrese 24 saatte gönderilebilecek kod sayısını sınırlar; tekrar gönderim
+ * deneme sayacını sıfırladığı için kaba kuvvete karşı asıl sınır budur.
+ * Sınır aşıldıysa "DAILY_LIMIT" hatası fırlatır.
+ */
+export function nextDailySendWindow(
+  data: { sendWindowStartMs?: unknown; sendCount?: unknown } | undefined,
+  now = Date.now(),
+): { sendWindowStartMs: number; sendCount: number } {
+  const windowStart =
+    typeof data?.sendWindowStartMs === "number" ? data.sendWindowStartMs : 0;
+  const count = typeof data?.sendCount === "number" ? data.sendCount : 0;
+
+  if (now - windowStart >= DAILY_WINDOW_MS) {
+    return { sendWindowStartMs: now, sendCount: 1 };
+  }
+
+  if (count >= EMAIL_DAILY_SEND_LIMIT) {
+    throw new Error("DAILY_LIMIT");
+  }
+
+  return { sendWindowStartMs: windowStart, sendCount: count + 1 };
 }

@@ -8,7 +8,7 @@ import {
   getAdminDb,
 } from "@/lib/firebase-admin";
 import { TRANSACTIONAL_MAIL_FROM } from "@/lib/server/email-verification";
-import { isValidEmail } from "@/lib/utils";
+import { escapeHtml, isValidEmail } from "@/lib/utils";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,15 +23,6 @@ type ContactMessageRecord = {
   fullName?: string;
   subject?: string;
 };
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
 
 function getTokenFromHeader(value: string | null): string | null {
   if (!value) {

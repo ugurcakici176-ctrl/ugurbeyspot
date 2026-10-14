@@ -1,10 +1,10 @@
 "use client";
 
 export default function GlobalError({
-  reset,
+  unstable_retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  unstable_retry: () => void;
 }) {
   return (
     <html lang="tr">
@@ -22,7 +22,7 @@ export default function GlobalError({
 
           <button
             type="button"
-            onClick={reset}
+            onClick={() => unstable_retry()}
           >
             Tekrar Dene
           </button>

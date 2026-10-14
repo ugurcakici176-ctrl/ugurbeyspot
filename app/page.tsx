@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 
+import { pageOpenGraph, pageTwitter } from "@/lib/seo";
+
 import HomePageClient, {
   type HomeData,
 } from "@/components/home/home-page-client";
 import { getBanners } from "@/lib/banners";
 import { getCategories } from "@/lib/categories";
-import { DEFAULT_PAGE_SEO, SITE } from "@/lib/constants";
+import { DEFAULT_PAGE_SEO } from "@/lib/constants";
 import { getFeaturedProducts } from "@/lib/products";
 import { SITE_URL } from "@/lib/site-url";
 import { getHomepageContent } from "@/lib/site-content";
@@ -17,19 +19,15 @@ export const metadata: Metadata = {
   description: DEFAULT_PAGE_SEO.home.description,
   keywords: DEFAULT_PAGE_SEO.home.keywords,
   alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
+  openGraph: pageOpenGraph({
     url: "/",
     title: DEFAULT_PAGE_SEO.home.title,
     description: DEFAULT_PAGE_SEO.home.description,
-    siteName: SITE.name,
-    locale: SITE.locale,
-  },
-  twitter: {
-    card: "summary_large_image",
+  }),
+  twitter: pageTwitter({
     title: DEFAULT_PAGE_SEO.home.title,
     description: DEFAULT_PAGE_SEO.home.description,
-  },
+  }),
 };
 
 const faqItems = [

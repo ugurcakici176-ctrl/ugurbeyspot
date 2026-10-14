@@ -161,6 +161,17 @@ export default function RegisterPage() {
     setError(null);
     setSuccess(null);
 
+    // Kod gönderilmeden önce kayıtta da istenen kurallar kontrol edilir.
+    if (displayName.trim().length < 2) {
+      setError("Ad soyad en az 2 karakter olmalıdır.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Şifre en az 8 karakter olmalıdır.");
+      return;
+    }
+
     if (
       password !==
       passwordRepeat

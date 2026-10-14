@@ -1,20 +1,11 @@
-import type {
-  Metadata,
-} from "next";
+import { permanentRedirect } from "next/navigation";
 
-import GlobalSettingsAdminClient from "@/components/admin/global-settings-admin-client";
+import { ROUTES } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: "Genel Site Yönetimi",
-
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
-
+// "Genel Site Yönetimi" ekranı ile /admin/ayarlar aynı Firestore belgesini
+// (site_settings/global_control_center) yazıyor ve birbirlerinin
+// değişikliklerini geri alıyordu. Herkese açık sitenin kullandığı tüm alanlar
+// /admin/ayarlar ekranında yönetildiği için tek kaynak orasıdır.
 export default function AdminGlobalSettingsPage() {
-  return (
-    <GlobalSettingsAdminClient />
-  );
+  permanentRedirect(ROUTES.adminSettings);
 }

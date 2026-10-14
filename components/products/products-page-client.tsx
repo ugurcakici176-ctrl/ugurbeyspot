@@ -27,6 +27,7 @@ export default function ProductsPageClient({
 }) {
   const [products, setProducts] = useState<Product[]>(initialProducts || []);
   const [categories, setCategories] = useState<Category[]>(initialCategories || []);
+  // Kategori bağlantıları gerçek sayfalara gider (URL, başlık ve canonical doğru kalır).
   const [categoryId, setCategoryId] = useState(() =>
     initialCategorySlug
       ? initialCategories?.find((item) => item.slug === initialCategorySlug)?.id || ""
@@ -145,10 +146,6 @@ export default function ProductsPageClient({
             <Link
               href="/urunler"
               className={categoryId === "" ? "is-active" : ""}
-              onClick={(event) => {
-                event.preventDefault();
-                setCategoryId("");
-              }}
             >
               Tümü
             </Link>
@@ -158,10 +155,6 @@ export default function ProductsPageClient({
                 href={`/kategori/${category.slug}`}
                 key={category.id}
                 className={categoryId === category.id ? "is-active" : ""}
-                onClick={(event) => {
-                  event.preventDefault();
-                  setCategoryId(category.id);
-                }}
               >
                 {category.name}
               </Link>

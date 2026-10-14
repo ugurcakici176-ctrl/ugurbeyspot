@@ -57,7 +57,7 @@ export async function uploadBrandLogo(
   }
 
   const fileName =
-    safeFileName(file.name) ||
+    safeFileName(file.name).slice(-120) ||
     "site-logo";
 
   const storagePath =
@@ -74,7 +74,8 @@ export async function uploadBrandLogo(
     {
       contentType: file.type,
       customMetadata: {
-        originalName: file.name,
+        // storage.rules originalName için en fazla 200 karakter kabul eder.
+        originalName: file.name.slice(0, 200),
         assetType: "site-logo",
       },
     },

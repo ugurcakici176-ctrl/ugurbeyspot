@@ -50,13 +50,6 @@ export const metadata: Metadata = {
   publisher: SITE.name,
   category: "shopping",
   manifest: "/manifest.webmanifest",
-  alternates: {
-    canonical: "/",
-    languages: {
-      "tr-TR": "/",
-      "x-default": "/",
-    },
-  },
   formatDetection: {
     email: false,
     address: false,

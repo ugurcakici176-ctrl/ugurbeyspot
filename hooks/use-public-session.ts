@@ -9,6 +9,7 @@ import {
   getCustomerProfile,
 } from "@/lib/customer-profile";
 import {
+  fetchEmailVerifiedByCode,
   observePublicSession,
   type PublicSession,
 } from "@/lib/public-auth";
@@ -168,28 +169,14 @@ export function usePublicSession() {
 
     let active = true;
 
-    async function refreshVerificationStatus():
-      Promise<void> {
+    async function refreshVerificationStatus(
+      force = false,
+    ): Promise<void> {
       try {
-        const response = await fetch(
-          `/api/auth/verification-status?email=${encodeURIComponent(email)}`,
-          {
-            cache: "no-store",
-          },
-        );
-
-        const payload =
-          (await response
-            .json()
-            .catch(() => null)) as {
-            verified?: boolean;
-          } | null;
+        const verified = await fetchEmailVerifiedByCode(force);
 
         if (active) {
-          setVerifiedByCode(
-            response.ok &&
-              payload?.verified === true,
-          );
+          setVerifiedByCode(verified);
         }
       } catch {
         if (active) {
@@ -202,7 +189,7 @@ export function usePublicSession() {
 
     function handleVerificationChanged():
       void {
-      void refreshVerificationStatus();
+      void refreshVerificationStatus(true);
     }
 
     window.addEventListener(

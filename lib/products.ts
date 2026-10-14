@@ -10,13 +10,20 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
+import {
+  deleteObject,
+  listAll,
+  ref,
+  type StorageReference,
+} from "firebase/storage";
 
 import {
   COLLECTIONS,
   QUERY_LIMITS,
   SORT_OPTIONS,
+  STORAGE_PATHS,
 } from "@/lib/constants";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import type {
   Product,
   ProductFormValues,
@@ -219,8 +226,80 @@ export async function updateProduct(
   );
 }
 
+async function listStorageFilesRecursive(
+  folder: StorageReference,
+): Promise<StorageReference[]> {
+  const result = await listAll(folder);
+  const nested = await Promise.all(
+    result.prefixes.map((prefix) => listStorageFilesRecursive(prefix)),
+  );
+
+  return [...result.items, ...nested.flat()];
+}
+
+/**
+ * Ürünün products/{id}/ altındaki görsellerini en iyi çabayla siler.
+ * Kayıttaki görsel yolları her zaman denenir; klasör listeleme (storage
+ * kurallarına bağlı) başarısız olursa yalnızca bilinen dosyalar silinir.
+ */
+async function deleteProductStorageFiles(
+  id: string,
+  knownPaths: string[],
+): Promise<void> {
+  const paths = new Set(knownPaths.filter(Boolean));
+
+  try {
+    const files = await listStorageFilesRecursive(
+      ref(storage, STORAGE_PATHS.product(id)),
+    );
+
+    for (const file of files) {
+      paths.add(file.fullPath);
+    }
+  } catch (error) {
+    console.warn("Product storage folder could not be listed:", error);
+  }
+
+  const results = await Promise.allSettled(
+    [...paths].map((path) => deleteObject(ref(storage, path))),
+  );
+
+  const failed = results.filter(
+    (item) =>
+      item.status === "rejected" &&
+      !(
+        typeof item.reason === "object" &&
+        item.reason !== null &&
+        "code" in item.reason &&
+        item.reason.code === "storage/object-not-found"
+      ),
+  );
+
+  if (failed.length > 0) {
+    console.warn("Some product images could not be deleted:", failed);
+  }
+}
+
 export async function deleteProduct(id: string): Promise<void> {
-  await deleteDoc(doc(db, COLLECTIONS.products, id));
+  const productRef = doc(db, COLLECTIONS.products, id);
+  const snapshot = await getDoc(productRef);
+  const images = snapshot.exists()
+    ? (snapshot.data() as Partial<Product>).images
+    : undefined;
+  const knownPaths = Array.isArray(images)
+    ? images
+        .map((image) => image?.storagePath)
+        .filter(
+          (path): path is string =>
+            typeof path === "string" &&
+            path.startsWith(`${STORAGE_PATHS.product(id)}/`),
+        )
+    : [];
+
+  // Önce kayıt silinir (yetki yoksa burada hata verir ve dosyalara dokunulmaz).
+  await deleteDoc(productRef);
+
+  await deleteProductStorageFiles(id, knownPaths);
 }
 
 export async function getFeaturedProducts(

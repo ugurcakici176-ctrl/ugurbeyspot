@@ -5,8 +5,10 @@ import {
   type ReactNode,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { KeywordsField } from "@/components/admin/admin-form-utils";
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
 import {
@@ -316,6 +318,16 @@ export default function SettingsAdminClient() {
   ] = useState<string | null>(
     null,
   );
+  const [
+    loadError,
+    setLoadError,
+  ] = useState<string | null>(
+    null,
+  );
+  // Firestore'da kayıtlı (yayındaki) logo dosyasının yolu. Eski logo
+  // dosyası yalnızca yeni logo başarıyla KAYDEDİLDİKTEN sonra silinir.
+  const savedLogoPathRef =
+    useRef("");
   useEffect(() => {
     let active = true;
     async function loadSettings():
@@ -327,13 +339,21 @@ export default function SettingsAdminClient() {
           globalData,
         ] = await Promise.all([
           getSiteSettings(),
+          // Okuma hatasında varsayılanlara düşülmez; aksi halde Kaydet
+          // gerçek ayarların üzerine varsayılanları yazabilirdi.
           getGlobalSiteSettings(
             true,
+            {
+              throwOnError: true,
+            },
           ),
         ]);
         if (!active) {
           return;
         }
+        savedLogoPathRef.current =
+          globalData.branding
+            .logoStoragePath;
         setSettings(
           deepClone(siteData),
         );
@@ -348,10 +368,13 @@ export default function SettingsAdminClient() {
           reason,
         );
         if (active) {
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "Site ayarları yüklenemedi.",
+          setLoadError(
+            `Site ayarları yüklenemedi${
+              reason instanceof Error &&
+              reason.message
+                ? ` (${reason.message})`
+                : ""
+            }. Mevcut ayarların üzerine yazılmaması için kaydetme kapatıldı; sayfayı yenileyip tekrar deneyin.`,
           );
         }
       } finally {
@@ -439,10 +462,15 @@ export default function SettingsAdminClient() {
           },
         }),
       );
+      // Önceki logo bu oturumda yüklenmiş ve henüz kaydedilmemişse hiçbir
+      // yerde kullanılmıyordur; hemen silinebilir. Kayıtlı (yayındaki) logo
+      // ise ancak yeni ayarlar başarıyla kaydedildikten sonra silinir.
       if (
         previousPath &&
         previousPath !==
-          result.path
+          result.path &&
+        previousPath !==
+          savedLogoPathRef.current
       ) {
         await deleteBrandAsset(
           previousPath,
@@ -709,7 +737,8 @@ export default function SettingsAdminClient() {
     event.preventDefault();
     if (
       saving ||
-      uploadingLogo
+      uploadingLogo ||
+      loadError
     ) {
       return;
     }
@@ -982,6 +1011,22 @@ export default function SettingsAdminClient() {
           normalizedGlobal,
         ),
       ]);
+      const previousSavedLogoPath =
+        savedLogoPathRef.current;
+      const nextLogoPath =
+        normalizedGlobal.branding
+          .logoStoragePath;
+      savedLogoPathRef.current =
+        nextLogoPath;
+      if (
+        previousSavedLogoPath &&
+        previousSavedLogoPath !==
+          nextLogoPath
+      ) {
+        await deleteBrandAsset(
+          previousSavedLogoPath,
+        );
+      }
       setSettings(
         deepClone(
           normalizedSite,
@@ -1014,6 +1059,32 @@ export default function SettingsAdminClient() {
       <div className="admin-panel admin-empty">
         Gelişmiş site ayarları hazırlanıyor...
       </div>
+    );
+  }
+  if (loadError) {
+    return (
+      <>
+        <AdminPageHeading
+          eyebrow="SITE CONTROL CENTER"
+          title="Site Ayarları"
+          description="Ayarlar yüklenemediği için düzenleme geçici olarak kapalı."
+        />
+        <div
+          className="admin-notice admin-notice--error"
+          role="alert"
+        >
+          {loadError}
+        </div>
+        <button
+          type="button"
+          className="admin-secondary-button"
+          onClick={() =>
+            window.location.reload()
+          }
+        >
+          Sayfayı Yenile
+        </button>
+      </>
     );
   }
   return (
@@ -4179,7 +4250,8 @@ export default function SettingsAdminClient() {
                       SEO Anahtar Kelimeleri
                     </span>
 
-                    <textarea
+                    <KeywordsField
+                      multiline
                       rows={4}
                       placeholder="spot ürünler, ikinci el, mağaza..."
                       value={
@@ -4187,9 +4259,8 @@ export default function SettingsAdminClient() {
                           .seo
                           .defaultSeo
                           .keywords
-                          .join(", ")
                       }
-                      onChange={(event) =>
+                      onKeywordsChange={(keywords) =>
                         setSettings(
                           (current) => ({
                             ...current,
@@ -4202,16 +4273,7 @@ export default function SettingsAdminClient() {
                                   .seo
                                   .defaultSeo,
 
-                                keywords:
-                                  event
-                                    .target
-                                    .value
-                                    .split(",")
-                                    .map(
-                                      (item) =>
-                                        item.trim(),
-                                    )
-                                    .filter(Boolean),
+                                keywords,
                               },
                             },
                           }),
@@ -4352,7 +4414,8 @@ export default function SettingsAdminClient() {
             className="admin-primary-button admin-primary-button--large"
             disabled={
               saving ||
-              uploadingLogo
+              uploadingLogo ||
+              Boolean(loadError)
             }
           >
             <Icon

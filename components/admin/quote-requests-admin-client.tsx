@@ -7,6 +7,12 @@ import {
   useState,
 } from "react";
 
+import {
+  buildAdminWhatsappHref,
+  formatAdminPriceInput,
+  parseAdminPrice,
+  useCanDeleteRecords,
+} from "@/components/admin/admin-form-utils";
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
 
@@ -120,6 +126,9 @@ function getInitials(
 }
 
 export default function QuoteRequestsAdminClient() {
+  const canDelete =
+    useCanDeleteRecords();
+
   const [
     requests,
     setRequests,
@@ -274,9 +283,9 @@ export default function QuoteRequestsAdminClient() {
     setDraftStatus(selected.status);
 
     setOfferedPriceText(
-      typeof selected.offeredPrice === "number"
-        ? String(selected.offeredPrice)
-        : "",
+      formatAdminPriceInput(
+        selected.offeredPrice,
+      ),
     );
 
     setAdminNote(
@@ -417,33 +426,21 @@ export default function QuoteRequestsAdminClient() {
 
     await runAction(
       async () => {
-        let offeredPrice:
-          | number
-          | null = null;
+        const offeredPrice =
+          parseAdminPrice(
+            offeredPriceText,
+          );
 
-        const cleanPrice =
-          offeredPriceText
-            .trim()
-            .replace(/\./g, "")
-            .replace(",", ".");
-
-        if (cleanPrice) {
-          const parsedPrice =
-            Number(cleanPrice);
-
-          if (
-            !Number.isFinite(
-              parsedPrice,
-            ) ||
-            parsedPrice < 0
-          ) {
-            throw new Error(
-              "Geçerli bir teklif fiyatı girin.",
-            );
-          }
-
-          offeredPrice =
-            parsedPrice;
+        if (
+          offeredPrice !== null &&
+          (!Number.isFinite(
+            offeredPrice,
+          ) ||
+            offeredPrice < 0)
+        ) {
+          throw new Error(
+            "Geçerli bir teklif fiyatı girin.",
+          );
         }
 
         await updateQuickQuoteRequestByAdmin(
@@ -947,22 +944,24 @@ export default function QuoteRequestsAdminClient() {
                     Yenile
                   </button>
 
-                  <button
-                    type="button"
-                    className="admin-icon-danger"
-                    onClick={() =>
-                      void handleDelete()
-                    }
-                    disabled={
-                      runningAction
-                    }
-                    aria-label="Teklifi sil"
-                  >
-                    <Icon
-                      name="trash"
-                      size={18}
-                    />
-                  </button>
+                  {canDelete && (
+                    <button
+                      type="button"
+                      className="admin-icon-danger"
+                      onClick={() =>
+                        void handleDelete()
+                      }
+                      disabled={
+                        runningAction
+                      }
+                      aria-label="Teklifi sil"
+                    >
+                      <Icon
+                        name="trash"
+                        size={18}
+                      />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1044,22 +1043,28 @@ export default function QuoteRequestsAdminClient() {
                   Ara
                 </a>
 
-                <a
-                  className="admin-secondary-button"
-                  href={`https://wa.me/${selected.phone.replace(/\D/g, "")}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    textDecoration:
-                      "none",
-                  }}
-                >
-                  <Icon
-                    name="message-circle"
-                    size={17}
-                  />
-                  WhatsApp
-                </a>
+                {buildAdminWhatsappHref(
+                  selected.phone,
+                ) && (
+                  <a
+                    className="admin-secondary-button"
+                    href={buildAdminWhatsappHref(
+                      selected.phone,
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      textDecoration:
+                        "none",
+                    }}
+                  >
+                    <Icon
+                      name="message-circle"
+                      size={17}
+                    />
+                    WhatsApp
+                  </a>
+                )}
 
                 {selected.email && (
                   <a
@@ -1512,7 +1517,7 @@ export default function QuoteRequestsAdminClient() {
                             .value,
                         )
                       }
-                      placeholder="Örn. 27500"
+                      placeholder="Örn. 27.500"
                       disabled={
                         runningAction
                       }
@@ -1579,16 +1584,8 @@ export default function QuoteRequestsAdminClient() {
 
                       <strong>
                         {formatCurrency(
-                          Number(
-                            offeredPriceText
-                              .replace(
-                                /\./g,
-                                "",
-                              )
-                              .replace(
-                                ",",
-                                ".",
-                              ),
+                          parseAdminPrice(
+                            offeredPriceText,
                           ) || 0,
                         )}
                       </strong>
@@ -1606,12 +1603,9 @@ export default function QuoteRequestsAdminClient() {
                     );
 
                     setOfferedPriceText(
-                      typeof selected.offeredPrice ===
-                        "number"
-                        ? String(
-                            selected.offeredPrice,
-                          )
-                        : "",
+                      formatAdminPriceInput(
+                        selected.offeredPrice,
+                      ),
                     );
 
                     setAdminNote(

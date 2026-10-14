@@ -377,11 +377,13 @@ export function observeAdminSession(
           const admin =
             await readAdminRecord(user);
 
+          // Yönetici olmayan (ör. müşteri) oturumlar burada kapatılmaz;
+          // aynı Firebase Auth oturumu herkese açık sitede de kullanılıyor.
+          // Admin paneli için oturum yok sayılır, guard giriş ekranına yönlendirir.
           if (
             !admin ||
             admin.status !== "active"
           ) {
-            await signOut(auth);
             callback(null);
             return;
           }

@@ -237,40 +237,39 @@ function mergeSettings(
   return merged;
 }
 
-async function fetchGlobalSiteSettings():
+export interface GetGlobalSiteSettingsOptions {
+  /**
+   * Admin ekranları için: okuma hatasında varsayılanlara düşmek yerine
+   * hatayı fırlatır. Böylece "Kaydet" gerçek ayarların üzerine
+   * varsayılanları yazamaz. Herkese açık site bu seçeneği kullanmaz.
+   */
+  throwOnError?: boolean;
+}
+
+async function readGlobalSiteSettingsDocument():
   Promise<GlobalSiteSettings> {
-  const fallback = clone(
-    DEFAULT_GLOBAL_SITE_SETTINGS,
+  const snapshot = await getDoc(
+    doc(
+      db,
+      "site_settings",
+      "global_control_center",
+    ),
   );
 
-  try {
-    const snapshot = await getDoc(
-      doc(
-        db,
-        "site_settings",
-        "global_control_center",
-      ),
+  if (!snapshot.exists()) {
+    return clone(
+      DEFAULT_GLOBAL_SITE_SETTINGS,
     );
-
-    if (!snapshot.exists()) {
-      return fallback;
-    }
-
-    return mergeSettings(
-      snapshot.data() as Partial<GlobalSiteSettings>,
-    );
-  } catch (error) {
-    console.error(
-      "Global site settings could not be loaded:",
-      error,
-    );
-
-    return fallback;
   }
+
+  return mergeSettings(
+    snapshot.data() as Partial<GlobalSiteSettings>,
+  );
 }
 
 export async function getGlobalSiteSettings(
   forceRefresh = false,
+  options: GetGlobalSiteSettingsOptions = {},
 ): Promise<GlobalSiteSettings> {
   if (
     cachedSettings &&
@@ -283,23 +282,51 @@ export async function getGlobalSiteSettings(
     pendingRequest &&
     !forceRefresh
   ) {
-    return clone(
-      await pendingRequest,
-    );
+    try {
+      return clone(
+        await pendingRequest,
+      );
+    } catch (error) {
+      if (options.throwOnError) {
+        throw error;
+      }
+
+      return clone(
+        DEFAULT_GLOBAL_SITE_SETTINGS,
+      );
+    }
   }
 
-  pendingRequest =
-    fetchGlobalSiteSettings();
+  const request =
+    readGlobalSiteSettingsDocument();
+
+  pendingRequest = request;
 
   try {
-    cachedSettings =
-      await pendingRequest;
+    const settings = await request;
 
+    cachedSettings = settings;
+
+    return clone(settings);
+  } catch (error) {
+    if (options.throwOnError) {
+      throw error;
+    }
+
+    console.error(
+      "Global site settings could not be loaded:",
+      error,
+    );
+
+    // Hata durumunda varsayılanlar önbelleğe alınmaz; sonraki çağrı
+    // ayarları yeniden okumayı dener.
     return clone(
-      cachedSettings,
+      DEFAULT_GLOBAL_SITE_SETTINGS,
     );
   } finally {
-    pendingRequest = null;
+    if (pendingRequest === request) {
+      pendingRequest = null;
+    }
   }
 }
 

@@ -24,6 +24,7 @@ import type {
   MessageStatus,
 } from "@/lib/types";
 import {
+  escapeHtml,
   isValidEmail,
   stripUndefined,
 } from "@/lib/utils";
@@ -45,7 +46,6 @@ export interface CustomerChatMessageInput {
   customerPhone?: string;
   message: string;
   sourcePage?: string;
-  adminNotificationEmail?: string;
 }
 
 export interface AdminReplyResult {
@@ -390,6 +390,33 @@ function isCustomerActive(chat: ContactMessage): boolean {
   return Date.now() - toMillis(chat.lastCustomerSeenAt) <= ACTIVE_CUSTOMER_WINDOW_MS;
 }
 
+async function requestAdminChatNotification(chatId: string): Promise<boolean> {
+  try {
+    const token = await auth.currentUser?.getIdToken();
+
+    if (!token) {
+      return false;
+    }
+
+    const response = await fetch("/api/chat/notify-admin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ chatId }),
+    });
+    const payload = (await response.json().catch(() => null)) as
+      | { notified?: boolean }
+      | null;
+
+    return response.ok && payload?.notified === true;
+  } catch (error) {
+    console.error("Yonetici bildirimi gonderilemedi:", error);
+    return false;
+  }
+}
+
 export async function sendCustomerChatMessage(
   input: CustomerChatMessageInput,
 ): Promise<{ chatId: string; adminEmailed: boolean }> {
@@ -407,7 +434,6 @@ export async function sendCustomerChatMessage(
     throw new Error("Mesaj alanı çok uzun.");
   }
 
-  const now = new Date().toISOString();
   let chatId = input.chatId?.trim() || "";
   let existingChat: ContactMessage | null = null;
 
@@ -440,10 +466,7 @@ export async function sendCustomerChatMessage(
     chatId = chatRef.id;
   }
 
-  const shouldNotifyAdmin =
-    !existingChat?.adminNotified &&
-    Boolean(input.adminNotificationEmail?.trim()) &&
-    isValidEmail(input.adminNotificationEmail || "");
+  const shouldNotifyAdmin = !existingChat?.adminNotified;
 
   const batch = writeBatch(db);
   const messageRef = doc(
@@ -463,7 +486,7 @@ export async function sendCustomerChatMessage(
         customerUid: input.customerUid.trim(),
         customerOnline: true,
         lastCustomerSeenAt: serverTimestamp(),
-        adminNotified: shouldNotifyAdmin,
+        adminNotified: false,
         lastMessage: text,
         lastMessageAt: serverTimestamp(),
         lastSender: "customer" as const,
@@ -484,7 +507,6 @@ export async function sendCustomerChatMessage(
       lastMessageAt: serverTimestamp(),
       lastSender: "customer",
       updatedAt: serverTimestamp(),
-      ...(shouldNotifyAdmin ? { adminNotified: true } : {}),
     });
   }
 
@@ -495,26 +517,15 @@ export async function sendCustomerChatMessage(
     read: false,
   });
 
-  if (shouldNotifyAdmin) {
-    const mailRef = doc(collection(db, MAIL_COLLECTION));
-
-    batch.set(mailRef, {
-      to: [input.adminNotificationEmail?.trim()],
-      message: {
-        subject: "Uğurbey Spot | Yeni canlı sohbet mesajı",
-        html: `<p>Yeni bir canli sohbet mesaji alindi.</p><p><strong>${input.customerName}</strong></p><p>${text}</p>`,
-      },
-      createdAt: now,
-      source: "customer_chat_first_message",
-      chatId,
-    });
-  }
-
   await batch.commit();
+
+  const adminEmailed = shouldNotifyAdmin
+    ? await requestAdminChatNotification(chatId)
+    : false;
 
   return {
     chatId,
-    adminEmailed: shouldNotifyAdmin,
+    adminEmailed,
   };
 }
 
@@ -590,7 +601,7 @@ export async function replyToContactMessage(
       to: [customerEmail],
       message: {
         subject: "Uğurbey Spot | Mesajiniza yanit",
-        html: `<p>Merhaba ${name},</p><p>${normalizedReply}</p>`,
+        html: `<p>Merhaba ${escapeHtml(name)},</p><p style="white-space:pre-wrap">${escapeHtml(normalizedReply)}</p>`,
       },
       createdAt: new Date().toISOString(),
       source: "admin_chat_reply",
@@ -609,7 +620,26 @@ export async function replyToContactMessage(
 export async function deleteContactMessage(
   id: string,
 ): Promise<void> {
-  await deleteDoc(
-    doc(db, COLLECTIONS.contactMessages, id),
-  );
+  const chatRef = doc(db, COLLECTIONS.contactMessages, id);
+
+  // Önce sohbet geçmişi (alt koleksiyon) silinir; Firestore bunu otomatik yapmaz.
+  for (;;) {
+    const page = await getDocs(
+      query(collection(chatRef, CHAT_MESSAGES_SUBCOLLECTION), limit(400)),
+    );
+
+    if (page.empty) {
+      break;
+    }
+
+    const batch = writeBatch(db);
+    page.docs.forEach((item) => batch.delete(item.ref));
+    await batch.commit();
+
+    if (page.size < 400) {
+      break;
+    }
+  }
+
+  await deleteDoc(chatRef);
 }

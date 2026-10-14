@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDocs,
   query,
@@ -102,13 +103,34 @@ export async function getSellRequests(): Promise<SellRequest[]> {
   return snapshot.docs.map((item) => mapRequest(item.id, item.data())).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export async function updateSellRequest(id: string, status: SellRequestStatus, adminNote: string, offeredPrice?: number): Promise<void> {
-  await updateDoc(doc(db, COLLECTIONS.sellRequests, id), stripUndefined({
-    status, adminNote: adminNote.trim(), offeredPrice, updatedAt: new Date().toISOString(),
-  }));
+export async function updateSellRequest(id: string, status: SellRequestStatus, adminNote: string, offeredPrice: number | null): Promise<void> {
+  if (offeredPrice !== null && (!Number.isFinite(offeredPrice) || offeredPrice < 0)) {
+    throw new Error("Geçerli bir teklif fiyatı girin.");
+  }
+
+  await updateDoc(doc(db, COLLECTIONS.sellRequests, id), {
+    status,
+    adminNote: adminNote.trim(),
+    // Fiyat temizlendiğinde alan kaldırılır (kurallar offeredPrice'ın
+    // değişmesine/silinmesine izin verir).
+    offeredPrice: offeredPrice === null ? deleteField() : Number(offeredPrice.toFixed(2)),
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 export async function deleteSellRequest(request: SellRequest): Promise<void> {
-  await Promise.all(request.images.map((image) => deleteImageAsset(image)));
+  // Önce kayıt silinir; fotoğraflar sonra temizlenir. Böylece silme yetkisi
+  // olmayan bir kullanıcı (örn. editör) fotoğrafları silip kaydı bozuk
+  // bırakamaz.
   await deleteDoc(doc(db, COLLECTIONS.sellRequests, request.id));
+
+  const results = await Promise.allSettled(
+    request.images.map((image) => deleteImageAsset(image)),
+  );
+
+  const failed = results.filter((item) => item.status === "rejected");
+
+  if (failed.length > 0) {
+    console.warn("Some sell request photos could not be deleted:", failed);
+  }
 }

@@ -100,6 +100,9 @@ function cleanReferrer(
   }
 }
 
+const MAX_TOP_PATHS = 300;
+const OTHER_PATHS_LABEL = "/(diğer sayfalar)";
+
 function pathKey(path: string): string {
   return Buffer
     .from(path, "utf8")
@@ -263,7 +266,14 @@ export async function POST(
             : {};
 
         if (pageView) {
-          const key = pathKey(path);
+          // Günlük dokümanın sınırsız büyümesini engeller: yeni yollar
+          // MAX_TOP_PATHS dolunca tek bir "diğer" kovasında toplanır.
+          const ownKey = pathKey(path);
+          const key =
+            ownKey in topPaths ||
+            Object.keys(topPaths).length < MAX_TOP_PATHS
+              ? ownKey
+              : pathKey(OTHER_PATHS_LABEL);
 
           const currentCount =
             typeof topPaths[key] === "number"

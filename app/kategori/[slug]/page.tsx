@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+
+import { pageOpenGraph, pageTwitter } from "@/lib/seo";
 import { notFound } from "next/navigation";
 
 import ProductsPageClient from "@/components/products/products-page-client";
 import { getCategoryBySlug } from "@/lib/categories";
 import { getCategories } from "@/lib/categories";
-import { SITE } from "@/lib/constants";
 import { getProducts } from "@/lib/products";
 import { absoluteUrl, SITE_URL } from "@/lib/site-url";
 
@@ -61,20 +62,17 @@ export async function generateMetadata({
         "max-video-preview": -1,
       },
     },
-    openGraph: {
-      type: "website",
-      locale: SITE.locale,
+    openGraph: pageOpenGraph({
       url: canonical,
       title,
       description,
       images: image ? [{ url: image, alt: category.image?.alt || category.name }] : undefined,
-    },
-    twitter: {
-      card: "summary_large_image",
+    }),
+    twitter: pageTwitter({
       title,
       description,
       images: image ? [image] : undefined,
-    },
+    }),
   };
 }
 
@@ -139,6 +137,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         }}
       />
       <ProductsPageClient
+        key={category.slug}
         initialCategorySlug={category.slug}
         initialProducts={products}
         initialCategories={categories}

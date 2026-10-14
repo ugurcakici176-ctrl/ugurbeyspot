@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { pageOpenGraph, pageTwitter } from "@/lib/seo";
+
 import ProductsPageClient from "@/components/products/products-page-client";
 import { DEFAULT_PAGE_SEO } from "@/lib/constants";
 import { getCategories } from "@/lib/categories";
@@ -25,17 +27,15 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-  openGraph: {
-    type: "website",
+  openGraph: pageOpenGraph({
     url: "/urunler",
     title: DEFAULT_PAGE_SEO.products.title,
     description: DEFAULT_PAGE_SEO.products.description,
-  },
-  twitter: {
-    card: "summary_large_image",
+  }),
+  twitter: pageTwitter({
     title: DEFAULT_PAGE_SEO.products.title,
     description: DEFAULT_PAGE_SEO.products.description,
-  },
+  }),
 };
 
 async function getInitialProductData() {

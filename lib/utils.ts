@@ -252,3 +252,12 @@ export function joinUrl(baseUrl: string, path: string): string {
     baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`,
   ).toString();
 }
+
+export function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}

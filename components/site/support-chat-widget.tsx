@@ -63,7 +63,7 @@ function normalizeProfilePhone(value?: string | null): string {
 }
 
 export default function SupportChatWidget({ settings }: SupportChatWidgetProps) {
-  const { session, authenticated } = usePublicSession();
+  const { session, profile, authenticated } = usePublicSession();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
@@ -77,8 +77,10 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
     ? buildWhatsappUrl(settings.contact.whatsapp, "Merhaba, bilgi almak istiyorum.")
     : null;
 
-  const profileName = normalizeProfileName(session?.user.displayName || session?.user.email);
-  const profilePhone = normalizeProfilePhone(session?.user.phoneNumber);
+  const profileName = normalizeProfileName(
+    profile?.fullName || session?.user.displayName || session?.user.email,
+  );
+  const profilePhone = normalizeProfilePhone(profile?.phone || session?.user.phoneNumber);
   const directMode = authenticated;
 
   useEffect(() => {
@@ -207,7 +209,6 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
           customerPhone: profilePhone,
           message: form.message,
           sourcePage: pathname || "/",
-          adminNotificationEmail: settings.contact.email,
         });
 
         setChatId(result.chatId);

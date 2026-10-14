@@ -97,12 +97,13 @@ export async function POST(request: NextRequest) {
         return { ok: false as const };
       }
 
+      // Kod tek kullanımlıktır: doğrulanınca hash silinir, deneme sayacı korunur.
       transaction.set(
         verificationRef,
         {
+          codeHash: FieldValue.delete(),
           verified: true,
           verifiedAt: FieldValue.serverTimestamp(),
-          attempts: 0,
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true },
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
 
     const user = await auth.getUserByEmail(normalizedEmail);
     await auth.updateUser(user.uid, { password: newPassword });
+    await auth.revokeRefreshTokens(user.uid);
 
     return NextResponse.json({ ok: true });
   } catch {

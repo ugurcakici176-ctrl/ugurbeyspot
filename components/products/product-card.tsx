@@ -69,7 +69,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <div className="product-card__footer">
           <div className="product-price">
             <strong>{formatCurrency(product.price)}</strong>
-            {product.compareAtPrice &&
+            {product.compareAtPrice != null &&
               product.compareAtPrice > product.price && (
                 <del>{formatCurrency(product.compareAtPrice)}</del>
               )}

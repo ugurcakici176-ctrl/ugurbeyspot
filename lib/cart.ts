@@ -80,7 +80,14 @@ function writeCart(items: CartItem[]): void {
   }
 
   const normalized = sanitizeItems(items);
-  window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(normalized));
+
+  try {
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(normalized));
+  } catch {
+    // Gizli mod / kota dolu: sepet kaydedilemez ama tıklama hata vermemeli.
+    return;
+  }
+
   window.dispatchEvent(new CustomEvent(CART_CHANGE_EVENT));
 }
 

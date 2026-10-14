@@ -15,20 +15,23 @@ import {
   useRouter,
 } from "next/navigation";
 
+import SellItemModal from "@/components/site/sell-item-modal";
 import Icon from "@/components/ui/icon";
 import LoadingScreen from "@/components/ui/loading-screen";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 import {
   usePublicSession,
 } from "@/hooks/use-public-session";
 
 import {
+  fetchEmailVerifiedByCode,
   logoutPublicUser,
 } from "@/lib/public-auth";
 import { getCustomerSellRequests } from "@/lib/sell-requests";
 import { getCustomerQuoteRequests } from "@/lib/quote-requests";
 import type { QuoteRequest, SellRequest, SellRequestStatus } from "@/lib/types";
-import { formatCurrency } from "@/lib/utils";
+import { buildTelUrl, formatCurrency } from "@/lib/utils";
 
 const SELL_STATUS_LABELS: Record<SellRequestStatus, string> = {
   new: "Talebiniz Alındı",
@@ -131,6 +134,9 @@ export default function AccountPage() {
   authenticated,
   isAdmin,
 } = usePublicSession();
+  const { settings: siteSettings } = useSiteSettings();
+  const offerPhoneUrl = buildTelUrl(siteSettings.contact.phone);
+  const [sellOpen, setSellOpen] = useState(false);
 
   const [
     message,
@@ -276,7 +282,6 @@ useEffect(() => {
 
   useEffect(() => {
     if (!session?.user.email) {
-      setQuoteRequestsLoading(false);
       return;
     }
 
@@ -304,24 +309,11 @@ useEffect(() => {
 
     let active = true;
 
-    void fetch(
-      `/api/auth/verification-status?email=${encodeURIComponent(session.user.email)}`,
-    )
-      .then(async (response) => {
-        const payload =
-          (await response
-            .json()
-            .catch(() => null)) as {
-            verified?: boolean;
-          } | null;
-
-        if (!active) {
-          return;
+    void fetchEmailVerifiedByCode()
+      .then((verified) => {
+        if (active) {
+          setVerifiedByCode(verified);
         }
-
-        setVerifiedByCode(
-          payload?.verified === true,
-        );
       })
       .catch(() => {
         if (active) {
@@ -1200,7 +1192,7 @@ async function handleProfileSave(
                     <strong>Henüz hesabınıza bağlı satış talebi yok.</strong>
                     <small>Giriş yaptıktan sonra göndereceğiniz eşya talepleri burada görünecek.</small>
                   </div>
-                  <Link href="/" className="button button--dark button--compact">Eşya gönder</Link>
+                  <button type="button" className="button button--dark button--compact" onClick={() => setSellOpen(true)}>Eşya gönder</button>
                 </div>
               ) : (
                 <div className="account-sell-list">
@@ -1225,7 +1217,7 @@ async function handleProfileSave(
                         {request.status === "offered" && request.offeredPrice !== undefined && (
                           <div className="account-sell-offer">
                             <div><small>UĞUR BEY SPOT TEKLİFİ</small><strong>{formatCurrency(request.offeredPrice)}</strong></div>
-                            <a href="tel:+905520715689" className="button button--dark button--compact"><Icon name="phone" size={17} /> Teklif için ara</a>
+                            <a href={offerPhoneUrl} className="button button--dark button--compact"><Icon name="phone" size={17} /> Teklif için ara</a>
                           </div>
                         )}
                       </div>
@@ -1239,7 +1231,7 @@ async function handleProfileSave(
           {/* Hızlı Teklifler Tab */}
           {activeTab === "quote" && (
             <>
-              {quoteRequestsLoading ? (
+              {quoteRequestsLoading && session?.user.email ? (
                 <div className="account-sell-empty">Hızlı teklifleriniz yükleniyor...</div>
               ) : quoteRequests.length === 0 ? (
                 <div className="account-sell-empty">
@@ -1293,7 +1285,7 @@ async function handleProfileSave(
                         {request.status === "offered" && request.offeredPrice !== undefined && (
                           <div className="account-sell-offer">
                             <div><small>UĞUR BEY SPOT TEKLİFİ</small><strong>{formatCurrency(request.offeredPrice)}</strong></div>
-                            <a href="tel:+905520715689" className="button button--dark button--compact"><Icon name="phone" size={17} /> Teklif için ara</a>
+                            <a href={offerPhoneUrl} className="button button--dark button--compact"><Icon name="phone" size={17} /> Teklif için ara</a>
                           </div>
                         )}
                       </div>
@@ -1481,6 +1473,8 @@ async function handleProfileSave(
           </div>
         </div>
       )}
+
+      <SellItemModal open={sellOpen} onClose={() => setSellOpen(false)} />
     </main>
   );
 }

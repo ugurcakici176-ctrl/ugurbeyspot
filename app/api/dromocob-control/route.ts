@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import {
   createHmac,
   timingSafeEqual,
@@ -380,6 +381,10 @@ export async function POST(
       }
     );
   }
+
+  // Statik/ISR sayfalar ControlGate sonucunu önbellekte tutar;
+  // bakım/kapatma durumu değişince tüm site yeniden üretilir.
+  revalidatePath("/", "layout");
 
   return NextResponse.json(
     {

@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 
+import { useCanDeleteRecords } from "@/components/admin/admin-form-utils";
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
 import { PRODUCT_STATUS_LABELS, ROUTES } from "@/lib/constants";
@@ -15,15 +16,26 @@ import { deleteProduct, getProducts } from "@/lib/products";
 import type { Product } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
+function getErrorMessage(reason: unknown, fallback: string): string {
+  return reason instanceof Error && reason.message ? reason.message : fallback;
+}
+
 export default function ProductsAdminClient() {
+  const canDelete = useCanDeleteRecords();
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
       setProducts(await getProducts({ includePassive: true }));
+    } catch (reason: unknown) {
+      console.error("Products load error:", reason);
+      setError(getErrorMessage(reason, "Ürünler yüklenemedi."));
     } finally {
       setLoading(false);
     }
@@ -61,8 +73,20 @@ export default function ProductsAdminClient() {
       return;
     }
 
-    await deleteProduct(product.id);
-    await loadProducts();
+    setError(null);
+    setMessage(null);
+    setDeletingId(product.id);
+
+    try {
+      await deleteProduct(product.id);
+      setMessage(`"${product.title}" silindi.`);
+      await loadProducts();
+    } catch (reason: unknown) {
+      console.error("Product delete error:", reason);
+      setError(getErrorMessage(reason, "Ürün silinemedi."));
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -78,6 +102,18 @@ export default function ProductsAdminClient() {
           </Link>
         }
       />
+
+      {error && (
+        <div className="admin-notice admin-notice--error" role="alert">
+          {error}
+        </div>
+      )}
+
+      {message && (
+        <div className="admin-notice admin-notice--info" role="status">
+          {message}
+        </div>
+      )}
 
       <section className="admin-panel">
         <div className="admin-table-toolbar">
@@ -145,13 +181,16 @@ export default function ProductsAdminClient() {
                         <Icon name="edit" size={17} />
                       </Link>
 
-                      <button
-                        type="button"
-                        aria-label="Sil"
-                        onClick={() => void handleDelete(product)}
-                      >
-                        <Icon name="trash" size={17} />
-                      </button>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          aria-label="Sil"
+                          disabled={deletingId === product.id}
+                          onClick={() => void handleDelete(product)}
+                        >
+                          <Icon name="trash" size={17} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -159,6 +198,10 @@ export default function ProductsAdminClient() {
             </tbody>
           </table>
         </div>
+
+        {loading && products.length === 0 && (
+          <div className="admin-empty">Ürünler yükleniyor...</div>
+        )}
 
         {!loading && visibleProducts.length === 0 && (
           <div className="admin-empty">Henüz ürün bulunmuyor.</div>

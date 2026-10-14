@@ -2,11 +2,10 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDocs,
-  query,
   updateDoc,
-  where,
 } from "firebase/firestore";
 
 import { getAttribution } from "@/lib/attribution";
@@ -408,7 +407,7 @@ export async function submitQuickQuoteRequest(
   const payload = removeUndefinedDeep({
     fullName: input.fullName.trim(),
     phone: input.phone.trim(),
-    email: input.email?.trim() || undefined,
+    email: input.email?.trim().toLocaleLowerCase("en-US") || undefined,
 
     status: "new" as const,
 
@@ -568,7 +567,7 @@ export async function updateQuickQuoteRequestByAdmin(
 
   const now = new Date().toISOString();
 
-  const payload = removeUndefinedDeep({
+  const payload: Record<string, unknown> = removeUndefinedDeep({
     status: input.status,
 
     adminNote:
@@ -583,6 +582,18 @@ export async function updateQuickQuoteRequestByAdmin(
 
     updatedAt: now,
   });
+
+  // Temizlenen not/fiyat alanları Firestore'dan kaldırılır. deleteField()
+  // sentinel'i removeUndefinedDeep'ten SONRA eklenir (aksi halde nesne
+  // olarak kopyalanıp bozulur). Kurallar affectedKeys().hasOnly(...) ile
+  // bu alanların silinmesine izin verir.
+  if (!adminNote) {
+    payload.adminNote = deleteField();
+  }
+
+  if (offeredPrice === undefined) {
+    payload.offeredPrice = deleteField();
+  }
 
   await updateDoc(
     doc(
@@ -603,21 +614,25 @@ export async function getCustomerQuoteRequests(): Promise<
     return [];
   }
 
-  const snapshot = await getDocs(
-    query(
-      collection(
-        db,
-        COLLECTIONS.quoteRequests,
-      ),
-      where("email", "==", user.email),
-    ),
-  );
+  const token = await user.getIdToken();
+  const response = await fetch("/api/account/quote-requests", {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  const payload = (await response.json().catch(() => null)) as {
+    items?: { id: string; data: unknown }[];
+    error?: string;
+  } | null;
 
-  return snapshot.docs
+  if (!response.ok) {
+    throw new Error(payload?.error || "Teklifler yuklenemedi.");
+  }
+
+  return (payload?.items ?? [])
     .map((item) =>
       mapQuoteRequest(
         item.id,
-        item.data(),
+        item.data,
       ),
     )
     .sort((a, b) =>

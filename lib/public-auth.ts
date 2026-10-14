@@ -15,6 +15,55 @@ import {
 
 import { auth, db } from "@/lib/firebase";
 
+const VERIFICATION_CACHE_MS = 60_000;
+let verificationCache: {
+  uid: string;
+  at: number;
+  promise: Promise<boolean>;
+} | null = null;
+
+/**
+ * Giriş yapmış kullanıcının e-postası 6 haneli kodla doğrulanmış mı?
+ * Aynı sayfadaki birçok bileşen sorduğu için sonuç kısa süre paylaşılır.
+ */
+export function fetchEmailVerifiedByCode(force = false): Promise<boolean> {
+  const user = auth.currentUser;
+
+  if (!user) {
+    return Promise.resolve(false);
+  }
+
+  if (
+    !force &&
+    verificationCache?.uid === user.uid &&
+    Date.now() - verificationCache.at < VERIFICATION_CACHE_MS
+  ) {
+    return verificationCache.promise;
+  }
+
+  const promise = (async () => {
+    const token = await user.getIdToken();
+    const response = await fetch("/api/auth/verification-status", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    const payload = (await response.json().catch(() => null)) as {
+      verified?: boolean;
+    } | null;
+
+    return response.ok && payload?.verified === true;
+  })();
+
+  verificationCache = { uid: user.uid, at: Date.now(), promise };
+  promise.catch(() => {
+    if (verificationCache?.promise === promise) {
+      verificationCache = null;
+    }
+  });
+
+  return promise;
+}
+
 export interface PublicSession {
   user: User;
   isAdmin: boolean;
@@ -22,9 +71,10 @@ export interface PublicSession {
 }
 
 function normalizeEmail(value: string): string {
+  // E-postalar dil kuralından bağımsız küçültülür ("I" → "i", "ı" değil).
   return value
     .trim()
-    .toLocaleLowerCase("tr-TR");
+    .toLowerCase();
 }
 
 function getFirebaseErrorCode(

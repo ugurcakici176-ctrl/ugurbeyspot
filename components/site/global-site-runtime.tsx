@@ -7,6 +7,7 @@ import type {
   ReactNode,
 } from "react";
 
+import AttributionTracker from "@/components/AttributionTracker";
 import IntegrationManager from "@/components/site/integration-manager";
 import MaintenanceGate from "@/components/site/maintenance-gate";
 import CookieConsent from "@/components/legal/cookie-consent";
@@ -45,6 +46,8 @@ export default function GlobalSiteRuntime({
         <IntegrationManager
           settings={settings}
         />
+
+        <AttributionTracker />
 
         {children}
       </MaintenanceGate>

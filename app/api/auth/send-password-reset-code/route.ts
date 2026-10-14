@@ -17,6 +17,7 @@ import {
   EMAIL_CODE_TTL_MS,
   EMAIL_RESEND_LIMIT_MS,
   generateVerificationCode,
+  nextDailySendWindow,
   getEmailVerificationKey,
   isValidEmail,
   normalizeEmail,
@@ -86,9 +87,12 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      const sendWindow = nextDailySendWindow(existing.data());
+
       transaction.set(
         verificationRef,
         {
+          ...sendWindow,
           email: normalizedEmail,
           purpose: "password_reset",
           codeHash,
@@ -117,6 +121,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, cooldownSeconds: Math.ceil(EMAIL_RESEND_LIMIT_MS / 1000) });
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === "DAILY_LIMIT") {
+      return NextResponse.json(
+        { ok: false, error: "Bu adres icin bugun cok fazla kod istendi. Lutfen yarin tekrar deneyin." },
+        { status: 429 },
+      );
+    }
+
     if (
       error instanceof Error &&
       error.message === "RATE_LIMIT" &&

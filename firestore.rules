@@ -357,13 +357,29 @@ service cloud.firestore {
           "lastSender",
           "status",
           "updatedAt",
-          "adminNotified",
           "fullName",
           "phone",
           "email"
         ])
 
-      && request.resource.data.status in ["new", "read", "answered", "replied"]
+      && (
+        request.resource.data.status == resource.data.status
+        || request.resource.data.status == "new"
+      )
+
+      && request.resource.data.fullName is string
+      && request.resource.data.fullName.size() <= 120
+
+      && request.resource.data.phone is string
+      && request.resource.data.phone.size() <= 40
+
+      && (
+        !("email" in request.resource.data)
+        || (
+          request.resource.data.email is string
+          && request.resource.data.email.size() <= 160
+        )
+      )
 
       && (
         !("customerOnline" in request.resource.data)
@@ -635,6 +651,20 @@ service cloud.firestore {
       allow delete: if isManagerAdmin();
     }
 
+    // Satış talebi görselleri yalnızca bu projenin Storage'ındaki sell-requests/ yolunu gösterebilir.
+    function validSellImageAt(images, index) {
+      return images.size() <= index
+        || (
+          images[index] is map
+          && images[index].keys().hasAll(["id", "url", "storagePath", "alt", "sortOrder"])
+          && images[index].url is string
+          && images[index].url.size() <= 1000
+          && images[index].url.matches("https://firebasestorage[.]googleapis[.]com/v0/b/[^/]+/o/sell-requests%2F.*")
+          && images[index].storagePath is string
+          && images[index].storagePath.matches("sell-requests/.*")
+        );
+    }
+
     match /sell_requests/{requestId} {
       allow create: if request.resource.data.keys().hasAll([
         "fullName", "phone", "category", "condition", "description",
@@ -677,10 +707,12 @@ service cloud.firestore {
       && request.resource.data.images is list
       && request.resource.data.images.size() >= 1
       && request.resource.data.images.size() <= 6
-      && request.resource.data.images[0] is map
-      && request.resource.data.images[0].keys().hasAll([
-        "id", "url", "storagePath", "alt", "sortOrder"
-      ])
+      && validSellImageAt(request.resource.data.images, 0)
+      && validSellImageAt(request.resource.data.images, 1)
+      && validSellImageAt(request.resource.data.images, 2)
+      && validSellImageAt(request.resource.data.images, 3)
+      && validSellImageAt(request.resource.data.images, 4)
+      && validSellImageAt(request.resource.data.images, 5)
       && request.resource.data.status == "new";
       allow get, list: if isActiveAdmin() || (
         isSignedIn()
@@ -703,6 +735,20 @@ service cloud.firestore {
         "fullName", "phone", "status", "selectedProducts",
         "answers", "createdAt", "updatedAt"
       ])
+      && request.resource.data.keys().hasOnly([
+        "fullName", "phone", "email", "status", "selectedProducts",
+        "answers", "estimate", "sourcePage", "tracking", "createdAt", "updatedAt"
+      ])
+      && (
+        !("email" in request.resource.data)
+        || (request.resource.data.email is string && request.resource.data.email.size() <= 160)
+      )
+      && (
+        !("sourcePage" in request.resource.data)
+        || (request.resource.data.sourcePage is string && request.resource.data.sourcePage.size() <= 200)
+      )
+      && (!("tracking" in request.resource.data) || request.resource.data.tracking is map)
+      && (!("estimate" in request.resource.data) || request.resource.data.estimate is map)
       && request.resource.data.fullName is string
       && request.resource.data.fullName.size() >= 2
       && request.resource.data.fullName.size() <= 100
@@ -722,15 +768,9 @@ service cloud.firestore {
         || request.resource.data.updatedAt is timestamp
       );
 
-      // Admin tüm teklifleri okuyabilir.
-      // Giriş yapmış müşteri, kendi e-postasıyla eşleşen talepleri okuyabilir.
-      allow get, list: if isActiveAdmin()
-        || (
-          isSignedIn()
-          && resource.data.email is string
-          && request.auth.token.email is string
-          && resource.data.email == request.auth.token.email
-        );
+      // Sadece admin okur. Müşteri kendi tekliflerini /api/account/quote-requests
+      // üzerinden (doğrulanmış e-posta ile) görür.
+      allow get, list: if isActiveAdmin();
 
       // Sadece admin durum/not/fiyat güncelleyebilir.
       allow update: if isActiveAdmin()
@@ -756,6 +796,14 @@ service cloud.firestore {
       // Müşteri kendi profilini oluşturabilir/güncelleyebilir.
       allow create, update: if isSignedIn()
         && request.auth.uid == customerId
+        && request.resource.data.keys().hasOnly([
+          "uid", "fullName", "email", "phone", "district", "createdAt", "updatedAt"
+        ])
+        && (
+          !("email" in request.resource.data)
+          || request.resource.data.email == ""
+          || request.resource.data.email == request.auth.token.email
+        )
         && request.resource.data.uid is string
         && request.resource.data.uid == customerId
         && request.resource.data.fullName is string
@@ -800,17 +848,8 @@ service cloud.firestore {
     }
 
     match /mail/{mailId} {
-      allow create: if (
-        isActiveAdmin()
-        || (
-          isSignedIn()
-          && request.resource.data.source == "customer_chat_first_message"
-          && ("chatId" in request.resource.data)
-          && request.resource.data.chatId is string
-          && get(/databases/$(database)/documents/contact_messages/$(request.resource.data.chatId)).data.customerUid is string
-          && get(/databases/$(database)/documents/contact_messages/$(request.resource.data.chatId)).data.customerUid == request.auth.uid
-        )
-      )
+      // Müşteri bildirimleri sunucudan (Admin SDK) yazılır; istemcide sadece yönetici.
+      allow create: if isActiveAdmin()
       && request.resource.data.keys().hasAll(["to", "message"])
       && request.resource.data.keys().hasOnly([
         "to",

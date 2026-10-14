@@ -2,6 +2,7 @@
 
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 
+import { useCanDeleteRecords } from "@/components/admin/admin-form-utils";
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
 import {
@@ -34,6 +35,7 @@ const EMPTY_FORM: BannerFormState = {
 };
 
 export default function BannersAdminClient() {
+  const canDelete = useCanDeleteRecords();
   const [banners, setBanners] = useState<CampaignBanner[]>([]);
   const [editing, setEditing] = useState<CampaignBanner | null>(null);
   const [form, setForm] = useState<BannerFormState>(() => ({
@@ -381,15 +383,17 @@ export default function BannersAdminClient() {
                       <Icon name="edit" size={17} />
                     </button>
 
-                    <button
-                      type="button"
-                      aria-label={`${banner.title} bannerını sil`}
-                      onClick={() =>
-                        void handleDelete(banner)
-                      }
-                    >
-                      <Icon name="trash" size={17} />
-                    </button>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        aria-label={`${banner.title} bannerını sil`}
+                        onClick={() =>
+                          void handleDelete(banner)
+                        }
+                      >
+                        <Icon name="trash" size={17} />
+                      </button>
+                    )}
                   </div>
                 </article>
               ))}

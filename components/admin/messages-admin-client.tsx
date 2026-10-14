@@ -6,6 +6,10 @@ import {
   useState,
 } from "react";
 
+import {
+  buildAdminWhatsappHref,
+  useCanDeleteRecords,
+} from "@/components/admin/admin-form-utils";
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
 
@@ -122,6 +126,23 @@ function isCustomerActive(
 }
 
 export default function MessagesAdminClient() {
+  const canDelete =
+    useCanDeleteRecords();
+
+  const [
+    openedId,
+    setOpenedId,
+  ] = useState<string | null>(
+    null,
+  );
+
+  const [
+    replySyncedId,
+    setReplySyncedId,
+  ] = useState<string | null>(
+    null,
+  );
+
   const [
     messages,
     setMessages,
@@ -246,23 +267,33 @@ export default function MessagesAdminClient() {
       [messages, selectedId],
     );
 
-useEffect(() => {
-  const timeoutId = window.setTimeout(() => {
+  // Yanıt kutusu yalnızca seçili mesaj DEĞİŞTİĞİNDE kayıtlı yanıtla
+  // doldurulur. adminReply güncellendiğinde (ör. yanıt gönderildikten sonra)
+  // kutu tekrar doldurulmaz.
+  const currentSelectedId =
+    selected?.id ?? null;
+
+  if (
+    replySyncedId !==
+    currentSelectedId
+  ) {
+    setReplySyncedId(
+      currentSelectedId,
+    );
     setReplyText(
       selected?.adminReply ?? "",
     );
+  }
 
+  // Kullanıcı listeden bir mesajı açıkça seçtiğinde çağrılır.
+  function selectMessage(
+    messageId: string,
+  ): void {
+    setSelectedId(messageId);
+    setOpenedId(messageId);
     setActionError(null);
     setActionSuccess(null);
-  }, 0);
-
-  return () => {
-    window.clearTimeout(timeoutId);
-  };
-}, [
-  selected?.id,
-  selected?.adminReply,
-]);
+  }
 
 useEffect(() => {
   let unsubscribe: (() => void) | undefined;
@@ -301,9 +332,12 @@ useEffect(() => {
   };
 }, [selectedId]);
 
+  // Mesaj yalnızca yönetici onu listeden açıkça seçtiyse okundu
+  // işaretlenir; otomatik seçilen ilk mesaj "yeni" olarak kalır.
   useEffect(() => {
     if (
       !selected ||
+      selected.id !== openedId ||
       selected.status !== "new"
     ) {
       return;
@@ -332,7 +366,8 @@ useEffect(() => {
       );
     };
   }, [
-    selected
+    selected,
+    openedId,
   ]);
 
   const statistics =
@@ -825,7 +860,7 @@ useEffect(() => {
                         : ""
                     }
                     onClick={() =>
-                      setSelectedId(
+                      selectMessage(
                         message.id,
                       )
                     }
@@ -1001,22 +1036,24 @@ useEffect(() => {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  className="admin-icon-danger"
-                  onClick={() =>
-                    void handleDelete()
-                  }
-                  disabled={
-                    runningAction
-                  }
-                  aria-label="Mesajı sil"
-                >
-                  <Icon
-                    name="trash"
-                    size={18}
-                  />
-                </button>
+                {canDelete && (
+                  <button
+                    type="button"
+                    className="admin-icon-danger"
+                    onClick={() =>
+                      void handleDelete()
+                    }
+                    disabled={
+                      runningAction
+                    }
+                    aria-label="Mesajı sil"
+                  >
+                    <Icon
+                      name="trash"
+                      size={18}
+                    />
+                  </button>
+                )}
               </div>
 
               {actionError && (
@@ -1097,22 +1134,28 @@ useEffect(() => {
                   Ara
                 </a>
 
-                <a
-                  href={`https://wa.me/${selected.phone.replace(/\D/g, "")}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="admin-secondary-button"
-                  style={{
-                    textDecoration:
-                      "none",
-                  }}
-                >
-                  <Icon
-                    name="message-circle"
-                    size={17}
-                  />
-                  WhatsApp
-                </a>
+                {buildAdminWhatsappHref(
+                  selected.phone,
+                ) && (
+                  <a
+                    href={buildAdminWhatsappHref(
+                      selected.phone,
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="admin-secondary-button"
+                    style={{
+                      textDecoration:
+                        "none",
+                    }}
+                  >
+                    <Icon
+                      name="message-circle"
+                      size={17}
+                    />
+                    WhatsApp
+                  </a>
+                )}
 
                 {selected.email && (
                   <a

@@ -1,4 +1,5 @@
 import {
+  deleteField,
   doc,
   getDoc,
   setDoc,
@@ -157,8 +158,6 @@ export async function saveCustomerProfile(
     email:
       user.email?.trim() || "",
     phone,
-    district:
-      district || undefined,
     createdAt:
       existing?.createdAt || now,
     updatedAt: now,
@@ -170,7 +169,11 @@ export async function saveCustomerProfile(
       COLLECTIONS.customers,
       user.uid,
     ),
-    profile,
+    {
+      ...profile,
+      // Boş bırakılırsa eski değer silinir; undefined Firestore'da hata verir.
+      district: district || deleteField(),
+    },
     {
       merge: true,
     },

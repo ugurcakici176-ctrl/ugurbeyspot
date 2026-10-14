@@ -3,10 +3,10 @@
 import Icon from "@/components/ui/icon";
 
 export default function ErrorPage({
-  reset,
+  unstable_retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  unstable_retry: () => void;
 }) {
   return (
     <main className="error-page">
@@ -31,7 +31,7 @@ export default function ErrorPage({
         <button
           type="button"
           className="button button--dark"
-          onClick={reset}
+          onClick={() => unstable_retry()}
         >
           Tekrar Dene
           <Icon name="arrow-right" size={18} />

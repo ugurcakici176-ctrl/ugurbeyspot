@@ -3,11 +3,13 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { KeywordsField } from "@/components/admin/admin-form-utils";
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
 import { getCategories } from "@/lib/categories";
 import {
   DEFAULT_SEO,
+  PRODUCT_LIMITS,
   PRODUCT_STATUS_LABELS,
   ROUTES,
   STOCK_STATUS_LABELS,
@@ -19,10 +21,11 @@ import {
   isProductSlugAvailable,
   updateProduct,
 } from "@/lib/products";
-import { deleteImageAsset, uploadImages } from "@/lib/storage";
+import { deleteImageAsset, uploadImage } from "@/lib/storage";
 import type {
   Category,
   ImageAsset,
+  Product,
   ProductFormValues,
 } from "@/lib/types";
 import { createId, slugify } from "@/lib/utils";
@@ -48,6 +51,90 @@ const EMPTY_VALUES: ProductFormValues = {
     keywords: [],
   },
 };
+
+const FLASH_MESSAGE_KEY = "ugurbey:product-editor-flash";
+
+function writeFlashMessage(message: string): void {
+  try {
+    window.sessionStorage.setItem(FLASH_MESSAGE_KEY, message);
+  } catch {
+    // sessionStorage kullanılamıyorsa mesaj gösterilmeden devam edilir.
+  }
+}
+
+function readFlashMessage(): string | null {
+  try {
+    const message = window.sessionStorage.getItem(FLASH_MESSAGE_KEY);
+    window.sessionStorage.removeItem(FLASH_MESSAGE_KEY);
+    return message;
+  } catch {
+    return null;
+  }
+}
+
+function getErrorMessage(reason: unknown, fallback: string): string {
+  return reason instanceof Error && reason.message ? reason.message : fallback;
+}
+
+/** Eksik alanları (eski kayıtlar: seo/specifications yok vb.) varsayılanlarla doldurur. */
+function productToFormValues(product: Product): ProductFormValues {
+  const seo: Partial<ProductFormValues["seo"]> = product.seo ?? {};
+
+  return {
+    title: product.title ?? "",
+    slug: product.slug ?? "",
+    categoryId: product.categoryId ?? "",
+    shortDescription: product.shortDescription ?? "",
+    description: product.description ?? "",
+    price: typeof product.price === "number" ? product.price : 0,
+    compareAtPrice: product.compareAtPrice || null,
+    status: product.status ?? "active",
+    stockStatus: product.stockStatus ?? "in_stock",
+    featured: Boolean(product.featured),
+    isNew: Boolean(product.isNew),
+    images: Array.isArray(product.images) ? product.images : [],
+    specifications: Array.isArray(product.specifications)
+      ? product.specifications
+      : [],
+    seo: {
+      ...EMPTY_VALUES.seo,
+      ...seo,
+      title: typeof seo.title === "string" ? seo.title : "",
+      description: typeof seo.description === "string" ? seo.description : "",
+      keywords: Array.isArray(seo.keywords) ? seo.keywords : [],
+    },
+  };
+}
+
+/**
+ * Görselleri sırayla yükler. Bir yükleme başarısız olursa o ana kadar
+ * yüklenenleri ve hatayı döndürür (yüklenenler kaybolmasın diye).
+ */
+async function uploadProductImages(
+  files: File[],
+  productId: string,
+  alt: string,
+  startIndex: number,
+): Promise<{ uploaded: ImageAsset[]; error: unknown }> {
+  const uploaded: ImageAsset[] = [];
+
+  for (const [index, file] of files.entries()) {
+    try {
+      uploaded.push(
+        await uploadImage(
+          file,
+          STORAGE_PATHS.product(productId),
+          alt,
+          startIndex + index,
+        ),
+      );
+    } catch (error) {
+      return { uploaded, error };
+    }
+  }
+
+  return { uploaded, error: null };
+}
 
 function limitSeoText(value: string, maxLength: number): string {
   const normalized = value.replace(/\s+/g, " ").trim();
@@ -109,6 +196,10 @@ export default function ProductEditor({
   const [values, setValues] = useState<ProductFormValues>(EMPTY_VALUES);
   const [categories, setCategories] = useState<Category[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [pendingImageDeletes, setPendingImageDeletes] = useState<ImageAsset[]>(
+    [],
+  );
+  const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(Boolean(productId));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -177,23 +268,13 @@ export default function ProductEditor({
         setCategories(categoryData);
 
         if (product) {
-          setValues({
-            title: product.title,
-            slug: product.slug,
-            categoryId: product.categoryId,
-            shortDescription: product.shortDescription,
-            description: product.description,
-            price: product.price,
-            compareAtPrice: product.compareAtPrice || null,
-            status: product.status,
-            stockStatus: product.stockStatus,
-            featured: product.featured,
-            isNew: product.isNew,
-            images: product.images,
-            specifications: product.specifications,
-            seo: product.seo,
-          });
+          setValues(productToFormValues(product));
+        } else if (productId) {
+          setNotFound(true);
         }
+
+        const flash = readFlashMessage();
+        if (flash) setMessage(flash);
       })
       .catch((reason: unknown) => {
         console.error("Product editor load error:", reason);
@@ -218,10 +299,20 @@ export default function ProductEditor({
     }));
   }
 
-  async function removeImage(image: ImageAsset) {
-    if (!window.confirm("Bu görseli silmek istiyor musunuz?")) return;
+  function removeImage(image: ImageAsset) {
+    if (
+      !window.confirm(
+        "Bu görsel ürün kaydedildiğinde kalıcı olarak silinecek. Devam edilsin mi?",
+      )
+    ) {
+      return;
+    }
 
-    await deleteImageAsset(image);
+    // Dosya hemen silinmez; ürün başarıyla kaydedildikten sonra silinir.
+    // Böylece kayıt başarısız olursa ürün kırık bir görsele işaret etmez.
+    if (image.storagePath) {
+      setPendingImageDeletes((current) => [...current, image]);
+    }
 
     setValues((current) => ({
       ...current,
@@ -234,8 +325,53 @@ export default function ProductEditor({
     }));
   }
 
+  function handleFileSelection(files: FileList | null) {
+    const selected = Array.from(files || []);
+    if (selected.length === 0) return;
+
+    const available =
+      PRODUCT_LIMITS.maxImages - values.images.length - newFiles.length;
+
+    if (available <= 0) {
+      setMessage(
+        `Bir üründe en fazla ${PRODUCT_LIMITS.maxImages} görsel olabilir.`,
+      );
+      return;
+    }
+
+    const accepted = selected.slice(0, available);
+
+    setNewFiles((current) => [...current, ...accepted]);
+    setMessage(
+      accepted.length < selected.length
+        ? `En fazla ${PRODUCT_LIMITS.maxImages} görsel eklenebilir; ${selected.length - accepted.length} görsel eklenmedi.`
+        : null,
+    );
+  }
+
+  async function flushPendingImageDeletes(): Promise<number> {
+    if (pendingImageDeletes.length === 0) return 0;
+
+    const results = await Promise.allSettled(
+      pendingImageDeletes.map((image) => deleteImageAsset(image)),
+    );
+
+    setPendingImageDeletes([]);
+
+    const failedCount = results.filter(
+      (item) => item.status === "rejected",
+    ).length;
+
+    if (failedCount > 0) {
+      console.warn("Some removed product images could not be deleted:", results);
+    }
+
+    return failedCount;
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (saving) return;
     setSaving(true);
     setMessage(null);
 
@@ -294,24 +430,42 @@ export default function ProductEditor({
         categoryName: selectedCategory?.name,
       };
 
+      if (
+        payload.images.length + newFiles.length >
+        PRODUCT_LIMITS.maxImages
+      ) {
+        throw new Error(
+          `Bir üründe en fazla ${PRODUCT_LIMITS.maxImages} görsel olabilir.`,
+        );
+      }
+
       if (productId) {
-        let images = payload.images;
+        const existingImages = payload.images.map((image, index) => ({
+          ...image,
+          sortOrder: index,
+        }));
 
-        if (newFiles.length > 0) {
-          const uploaded = await uploadImages(
-            newFiles,
-            STORAGE_PATHS.product(productId),
-            payload.title,
+        const { uploaded, error: uploadError } =
+          newFiles.length > 0
+            ? await uploadProductImages(
+                newFiles,
+                productId,
+                payload.title,
+                existingImages.length,
+              )
+            : { uploaded: [], error: null };
+
+        if (uploadError) {
+          // Kısmen yüklenen dosyaları geri al; ürün kaydı değişmedi.
+          await Promise.allSettled(
+            uploaded.map((image) => deleteImageAsset(image)),
           );
-
-          images = [
-            ...images,
-            ...uploaded.map((image, index) => ({
-              ...image,
-              sortOrder: images.length + index,
-            })),
-          ];
+          throw new Error(
+            `Görseller yüklenemedi: ${getErrorMessage(uploadError, "bilinmeyen hata")}`,
+          );
         }
+
+        const images = [...existingImages, ...uploaded];
 
         await updateProduct(productId, {
           ...productPayload,
@@ -324,23 +478,49 @@ export default function ProductEditor({
           images,
         }));
         setNewFiles([]);
-        setMessage("Ürün başarıyla güncellendi.");
+
+        const failedDeletes = await flushPendingImageDeletes();
+
+        setMessage(
+          failedDeletes > 0
+            ? `Ürün güncellendi ancak ${failedDeletes} eski görsel depolamadan silinemedi.`
+            : "Ürün başarıyla güncellendi.",
+        );
       } else {
         const created = await createProduct({
           ...productPayload,
           images: [],
         });
 
+        let flash = "Ürün oluşturuldu.";
+
         if (newFiles.length > 0) {
-          const images = await uploadImages(
+          const { uploaded, error: uploadError } = await uploadProductImages(
             newFiles,
-            STORAGE_PATHS.product(created.id),
+            created.id,
             payload.title,
+            0,
           );
 
-          await updateProduct(created.id, { images });
+          try {
+            if (uploaded.length > 0) {
+              await updateProduct(created.id, { images: uploaded });
+            }
+          } catch (reason: unknown) {
+            console.error("Created product image update error:", reason);
+            flash = `Ürün oluşturuldu ancak görseller ürüne eklenemedi: ${getErrorMessage(reason, "bilinmeyen hata")}`;
+          }
+
+          if (uploadError) {
+            console.error("Created product image upload error:", uploadError);
+            flash = `Ürün oluşturuldu ancak ${newFiles.length - uploaded.length} görsel yüklenemedi: ${getErrorMessage(uploadError, "bilinmeyen hata")}. Görselleri bu ekrandan tekrar ekleyebilirsiniz.`;
+          }
         }
 
+        // Ürün artık mevcut; "yeni ürün" ekranında kalıp tekrar kaydetmek
+        // mükerrer ürün oluşturacağı için her durumda düzenleme ekranına geç.
+        setNewFiles([]);
+        writeFlashMessage(flash);
         router.replace(ROUTES.editProduct(created.id));
       }
     } catch (reason: unknown) {
@@ -356,6 +536,28 @@ export default function ProductEditor({
 
   if (loading) {
     return <div className="admin-empty">Ürün bilgileri yükleniyor...</div>;
+  }
+
+  if (notFound) {
+    return (
+      <>
+        <AdminPageHeading
+          eyebrow="ÜRÜN EDİTÖRÜ"
+          title="Ürün bulunamadı"
+          description="Bu ürün silinmiş veya bağlantı hatalı olabilir."
+        />
+        <div className="admin-panel admin-empty">
+          Ürün bulunamadı.{" "}
+          <button
+            type="button"
+            className="admin-secondary-button"
+            onClick={() => router.push(ROUTES.adminProducts)}
+          >
+            Ürün listesine dön
+          </button>
+        </div>
+      </>
+    );
   }
 
   return (
@@ -402,8 +604,12 @@ export default function ProductEditor({
                 <span>Slug / Bağlantı</span>
                 <input
                   value={values.slug}
-                  onChange={(event) =>
-                    updateField("slug", slugify(event.target.value))
+                  onChange={(event) => updateField("slug", event.target.value)}
+                  onBlur={() =>
+                    setValues((current) => ({
+                      ...current,
+                      slug: slugify(current.slug),
+                    }))
                   }
                 />
               </label>
@@ -473,20 +679,40 @@ export default function ProductEditor({
               <label className="admin-upload-zone">
                 <Icon name="upload" size={26} />
                 <strong>Görselleri Seçin</strong>
-                <span>JPG, PNG, WebP veya AVIF — en fazla 10 MB</span>
+                <span>
+                  JPG, PNG, WebP veya AVIF — en fazla 10 MB, ürün başına en
+                  fazla {PRODUCT_LIMITS.maxImages} görsel
+                </span>
                 <input
                   type="file"
                   multiple
                   accept="image/jpeg,image/png,image/webp,image/avif"
-                  onChange={(event) =>
-                    setNewFiles(Array.from(event.target.files || []))
-                  }
+                  disabled={saving}
+                  onChange={(event) => {
+                    handleFileSelection(event.target.files);
+                    event.target.value = "";
+                  }}
                 />
               </label>
 
               {newFiles.length > 0 && (
                 <p className="admin-upload-summary">
-                  {newFiles.length} yeni görsel kaydedildiğinde yüklenecek.
+                  {newFiles.length} yeni görsel kaydedildiğinde yüklenecek.{" "}
+                  <button
+                    type="button"
+                    className="admin-secondary-button"
+                    disabled={saving}
+                    onClick={() => setNewFiles([])}
+                  >
+                    Seçimi temizle
+                  </button>
+                </p>
+              )}
+
+              {pendingImageDeletes.length > 0 && (
+                <p className="admin-upload-summary">
+                  {pendingImageDeletes.length} görsel ürün kaydedildiğinde
+                  silinecek.
                 </p>
               )}
 
@@ -502,7 +728,9 @@ export default function ProductEditor({
                         />
                         <button
                           type="button"
-                          onClick={() => void removeImage(image)}
+                          aria-label="Görseli kaldır"
+                          disabled={saving}
+                          onClick={() => removeImage(image)}
                         >
                           <Icon name="trash" size={16} />
                         </button>
@@ -645,17 +873,16 @@ export default function ProductEditor({
 
               <label className="admin-field">
                 <span>Anahtar Kelimeler</span>
-                <input
-                  value={values.seo.keywords.join(", ")}
-                  onChange={(event) => {
+                <KeywordsField
+                  value={values.seo.keywords}
+                  placeholder="Virgülle ayırın: konya, ikinci el, spot"
+                  onKeywordsChange={(keywords) => {
                     seoKeywordsEdited.current = true;
                     setValues((current) => ({
                       ...current,
                       seo: {
                         ...current.seo,
-                        keywords: event.target.value
-                          .split(",")
-                          .map((item) => item.trim()),
+                        keywords,
                       },
                     }));
                   }}
