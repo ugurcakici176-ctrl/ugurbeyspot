@@ -9,6 +9,7 @@ import {
 } from "firebase-admin/firestore";
 
 import { getAdminDb } from "@/lib/firebase-admin";
+import { limitByIp } from "@/lib/server/rate-limit";
 import {
   buildVerificationEmailHtml,
   EMAIL_CODE_TTL_MS,
@@ -38,6 +39,13 @@ function getRemainingSeconds(lastSentAtMs: number): number {
 }
 
 export async function POST(request: NextRequest) {
+  // IP başına sınır: farklı adreslere toplu kod gönderimini / tahmin denemesini keser.
+  const limited = await limitByIp(request, "send-code", 10, 60 * 60 * 1000);
+
+  if (limited) {
+    return limited;
+  }
+
   let body: SendVerificationBody;
 
   try {

@@ -9,6 +9,7 @@ import {
   getAdminAuth,
   getAdminDb,
 } from "@/lib/firebase-admin";
+import { limitByIp } from "@/lib/server/rate-limit";
 import {
   EMAIL_VERIFY_MAX_ATTEMPTS,
   getEmailVerificationKey,
@@ -30,6 +31,13 @@ type ResetPasswordBody = {
 const GENERIC_ERROR = "Islem tamamlanamadi. Lutfen bilgileri kontrol edip tekrar deneyin.";
 
 export async function POST(request: NextRequest) {
+  // IP başına sınır: farklı adreslere toplu kod gönderimini / tahmin denemesini keser.
+  const limited = await limitByIp(request, "verify-code", 30, 60 * 60 * 1000);
+
+  if (limited) {
+    return limited;
+  }
+
   let body: ResetPasswordBody;
 
   try {

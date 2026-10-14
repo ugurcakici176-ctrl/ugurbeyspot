@@ -10,7 +10,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { COLLECTIONS, STORAGE_PATHS } from "@/lib/constants";
+import { COLLECTIONS } from "@/lib/constants";
 import { auth, db } from "@/lib/firebase";
 import { deleteImageAsset, uploadCustomerImages } from "@/lib/storage";
 import type { ImageAsset, SellRequest, SellRequestStatus } from "@/lib/types";
@@ -63,7 +63,7 @@ export async function submitSellRequest(
   const requestKey = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const images = await uploadCustomerImages(
     input.files,
-    `${STORAGE_PATHS.sellRequests}/${requestKey}`,
+    requestKey,
     `${input.category} satış talebi`,
     onProgress,
   );

@@ -17,6 +17,11 @@ import {
   type Firestore,
 } from "firebase-admin/firestore";
 
+import {
+  getStorage,
+  type Storage,
+} from "firebase-admin/storage";
+
 const ADMIN_APP_NAME = "ugurbey-server";
 
 function resolveProjectId(): string | undefined {
@@ -54,4 +59,8 @@ export function getAdminDb(): Firestore {
 
 export function getAdminAuth(): Auth {
   return getAuth(getOrCreateAdminApp());
+}
+
+export function getAdminStorage(): Storage {
+  return getStorage(getOrCreateAdminApp());
 }

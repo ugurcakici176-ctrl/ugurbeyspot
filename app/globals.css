@@ -3953,40 +3953,45 @@ button {
 }
 
 .hero-enter {
-  opacity: 0;
-  transform: translateY(28px);
-  transition:
-    opacity .8s cubic-bezier(.22, 1, .36, 1),
-    transform .8s cubic-bezier(.22, 1, .36, 1);
+  /* JS beklemeden (SSR HTML ile) oynayan giriş animasyonu; LCP içeriği gizli kalmaz.
+     "backwards" bittikten sonra elemanın kendi transform'una (parallax) dokunmaz. */
+  animation: hero-enter .8s cubic-bezier(.22, 1, .36, 1) backwards;
 }
 
-.home-experience.is-ready .hero-enter {
-  opacity: 1;
-  transform: translateY(0);
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-enter--one {
-  transition-delay: 80ms;
+  animation-delay: 80ms;
 }
 
 .hero-enter--two {
-  transition-delay: 150ms;
+  animation-delay: 150ms;
 }
 
 .hero-enter--three {
-  transition-delay: 230ms;
+  animation-delay: 230ms;
 }
 
 .hero-enter--four {
-  transition-delay: 310ms;
+  animation-delay: 310ms;
 }
 
 .hero-enter--five {
-  transition-delay: 390ms;
+  animation-delay: 390ms;
 }
 
 .hero-enter--visual {
-  transition-delay: 180ms;
+  animation-delay: 180ms;
 }
 
 .hero-showcase {

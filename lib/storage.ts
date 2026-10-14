@@ -197,9 +197,59 @@ export async function uploadImages(
   return uploaded;
 }
 
+function uploadCustomerImage(
+  file: File,
+  requestKey: string,
+  alt: string,
+  sortOrder: number,
+  onProgress: (transferred: number, total: number) => void,
+): Promise<ImageAsset> {
+  return getImageDimensions(file).then(
+    (dimensions) =>
+      new Promise<ImageAsset>((resolve, reject) => {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("requestKey", requestKey);
+        form.append("alt", alt);
+        form.append("sortOrder", String(sortOrder));
+        if (dimensions.width) form.append("width", String(dimensions.width));
+        if (dimensions.height) form.append("height", String(dimensions.height));
+
+        // fetch yükleme ilerlemesi vermediği için XHR kullanılır.
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/sell-requests/upload");
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) onProgress(event.loaded, event.total);
+        };
+        xhr.onerror = () => reject(new Error("Fotoğraf yüklenemedi. Bağlantınızı kontrol edin."));
+        xhr.onload = () => {
+          type UploadResponse = { image?: ImageAsset; error?: string };
+          let payload: UploadResponse | null;
+
+          try {
+            payload = JSON.parse(xhr.responseText) as UploadResponse;
+          } catch {
+            payload = null;
+          }
+
+          if (xhr.status >= 200 && xhr.status < 300 && payload?.image) {
+            resolve(payload.image);
+          } else {
+            reject(new Error(payload?.error || "Fotoğraf yüklenemedi."));
+          }
+        };
+        xhr.send(form);
+      }),
+  );
+}
+
+/**
+ * Ziyaretçi fotoğrafları sunucu üzerinden (/api/sell-requests/upload) yüklenir;
+ * Storage'a istemciden doğrudan yazma kapalıdır.
+ */
 export async function uploadCustomerImages(
   files: File[],
-  folder: string,
+  requestKey: string,
   alt: string,
   onProgress?: (percent: number) => void,
 ): Promise<ImageAsset[]> {
@@ -217,13 +267,15 @@ export async function uploadCustomerImages(
   );
   onProgress?.(15);
 
+  optimized.forEach(validateImageFile);
+
   const transferred = optimized.map(() => 0);
   const totals = optimized.map((file) => file.size);
   const uploaded = await Promise.all(
     optimized.map((file, index) =>
-      uploadImage(file, folder, alt, index, (item) => {
-        transferred[index] = item.transferredBytes;
-        totals[index] = item.totalBytes;
+      uploadCustomerImage(file, requestKey, alt, index, (sent, total) => {
+        transferred[index] = sent;
+        totals[index] = total;
         const totalBytes = totals.reduce((sum, size) => sum + size, 0);
         const sentBytes = transferred.reduce((sum, size) => sum + size, 0);
         onProgress?.(

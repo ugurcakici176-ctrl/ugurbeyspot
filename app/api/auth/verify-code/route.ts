@@ -6,6 +6,7 @@ import {
 import { FieldValue } from "firebase-admin/firestore";
 
 import { getAdminDb } from "@/lib/firebase-admin";
+import { limitByIp } from "@/lib/server/rate-limit";
 import {
   EMAIL_VERIFY_MAX_ATTEMPTS,
   getEmailVerificationKey,
@@ -26,6 +27,13 @@ type VerifyCodeBody = {
 const GENERIC_VERIFY_ERROR = "Kod dogrulanamadi. Lutfen tekrar deneyin.";
 
 export async function POST(request: NextRequest) {
+  // IP başına sınır: farklı adreslere toplu kod gönderimini / tahmin denemesini keser.
+  const limited = await limitByIp(request, "verify-code", 30, 60 * 60 * 1000);
+
+  if (limited) {
+    return limited;
+  }
+
   let body: VerifyCodeBody;
 
   try {

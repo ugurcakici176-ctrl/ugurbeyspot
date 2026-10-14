@@ -15,15 +15,22 @@ import {
 
 export default function LegalPageClient({
   pageKey,
+  initialPage,
 }: {
   pageKey: LegalPageKey;
+  initialPage?: LegalPageDocument;
 }) {
   const [page, setPage] =
     useState<LegalPageDocument | null>(
-      null,
+      initialPage ?? null,
     );
 
   useEffect(() => {
+    // Sunucuda (ISR) gelen metin varsa tekrar çekilmez.
+    if (initialPage) {
+      return;
+    }
+
     let active = true;
 
     void getLegalPage(pageKey)
@@ -44,7 +51,7 @@ export default function LegalPageClient({
     return () => {
       active = false;
     };
-  }, [pageKey]);
+  }, [initialPage, pageKey]);
 
   if (!page) {
     return (

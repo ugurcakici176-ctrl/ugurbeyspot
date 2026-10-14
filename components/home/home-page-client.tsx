@@ -87,9 +87,12 @@ export default function HomePageClient({
   const [sellOpen, setSellOpen] = useState(false);
   useEffect(() => {
     if (initialData) {
-      window.requestAnimationFrame(
+      // Sunucu verisi (ISR) zaten var; istemcide ikinci kez çekilmez.
+      const frame = window.requestAnimationFrame(
         () => setPageReady(true),
       );
+
+      return () => window.cancelAnimationFrame(frame);
     }
 
     let active = true;
