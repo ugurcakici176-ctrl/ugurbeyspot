@@ -29,9 +29,9 @@ const businessEmail =
   process.env.NEXT_PUBLIC_BUSINESS_EMAIL?.trim() || "info@ugurbeyspot.com";
 const streetAddress =
   process.env.NEXT_PUBLIC_BUSINESS_STREET_ADDRESS?.trim() ||
-  "Fetih Mahallesi, Fetih Caddesi No: 147/A";
+  "Erenler Mahallesi, Keçeciler Caddesi No: 249";
 const postalCode =
-  process.env.NEXT_PUBLIC_BUSINESS_POSTAL_CODE?.trim() || "42030";
+  process.env.NEXT_PUBLIC_BUSINESS_POSTAL_CODE?.trim() || "42050";
 const district =
   process.env.NEXT_PUBLIC_BUSINESS_DISTRICT?.trim() || "Karatay";
 const mapsUrl =

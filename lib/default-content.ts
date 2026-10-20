@@ -326,7 +326,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     phone: "0552 071 56 89",
     whatsapp: "905520715689",
     email: "info@ugurbeyspot.com",
-    address: "Fetih Mahallesi, Fetih Caddesi No: 147/A",
+    address: "Erenler Mahallesi, Keçeciler Caddesi No: 249",
     city: "Konya",
     district: "Karatay",
     googleMapsUrl:
