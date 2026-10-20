@@ -6,9 +6,17 @@
  * NEXT_PUBLIC_GOOGLE_ADS_QUICK_QUOTE_LABEL=XXXXXXXXXXXX
  * NEXT_PUBLIC_GOOGLE_ADS_CONTACT_LABEL=XXXXXXXXXXXX
  * NEXT_PUBLIC_GOOGLE_ADS_SELL_REQUEST_LABEL=XXXXXXXXXXXX
+ * NEXT_PUBLIC_GOOGLE_ADS_PHONE_LABEL=XXXXXXXXXXXX      (telefon tıklaması)
+ * NEXT_PUBLIC_GOOGLE_ADS_WHATSAPP_LABEL=XXXXXXXXXXXX   (WhatsApp tıklaması)
+ *
+ * Etiket boşsa yalnızca GA4 olayı gönderilir (GA4 key event olarak Ads'e
+ * aktarılabilir). Ads etiketi layout'ta GOOGLE_ADS_ID ile yüklenir.
  *
  * Conversion events must only be fired AFTER Firestore confirms success.
  */
+
+import { readCookieConsent } from "@/lib/cookie-consent";
+import { normalizeTurkeyPhone } from "@/lib/utils";
 
 export type LeadFormName =
   | "quick_quote"
@@ -21,6 +29,11 @@ export interface LeadConversionInput {
   value?: number;
   currency?: "TRY";
   sourcePage?: string;
+  /** Gelişmiş dönüşümler: gtag değerleri tarayıcıda hash'leyerek gönderir. */
+  userData?: {
+    email?: string;
+    phone?: string;
+  };
 }
 
 declare global {
@@ -31,6 +44,11 @@ declare global {
 }
 
 const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim();
+
+const CLICK_LABELS = {
+  phone: process.env.NEXT_PUBLIC_GOOGLE_ADS_PHONE_LABEL?.trim(),
+  whatsapp: process.env.NEXT_PUBLIC_GOOGLE_ADS_WHATSAPP_LABEL?.trim(),
+};
 
 const LABELS: Record<LeadFormName, string | undefined> = {
   quick_quote:
@@ -43,6 +61,32 @@ const LABELS: Record<LeadFormName, string | undefined> = {
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
+}
+
+function setEnhancedConversionData(
+  gtag: (...args: unknown[]) => void,
+  userData: LeadConversionInput["userData"],
+): void {
+  // Kişisel veri yalnızca pazarlama çerezine izin verildiyse paylaşılır.
+  if (!userData || readCookieConsent()?.marketing !== true) {
+    return;
+  }
+
+  const email = userData.email?.trim().toLowerCase();
+  const phoneDigits = userData.phone ? normalizeTurkeyPhone(userData.phone) : "";
+  const data: Record<string, string> = {};
+
+  if (email && email.includes("@")) {
+    data.email = email;
+  }
+
+  if (/^90\d{10}$/.test(phoneDigits)) {
+    data.phone_number = `+${phoneDigits}`;
+  }
+
+  if (Object.keys(data).length > 0) {
+    gtag("set", "user_data", data);
+  }
 }
 
 function getGtag(): ((...args: unknown[]) => void) | null {
@@ -72,12 +116,15 @@ export function trackLeadConversion({
   value = 1,
   currency = "TRY",
   sourcePage,
+  userData,
 }: LeadConversionInput): void {
   const gtag = getGtag();
 
   if (!gtag || !transactionId) {
     return;
   }
+
+  setEnhancedConversionData(gtag, userData);
 
   // GA4 lead event
   gtag("event", "generate_lead", {
@@ -103,9 +150,9 @@ export function trackLeadConversion({
   // Google Ads conversion
   const label = LABELS[formName];
 
- if (!ADS_ID || !label) {
-  return;
-}
+  if (!ADS_ID || !label) {
+    return;
+  }
 
   gtag("event", "conversion", {
     send_to: `${ADS_ID}/${label}`,
@@ -115,11 +162,27 @@ export function trackLeadConversion({
   });
 }
 
+function trackClickConversion(kind: keyof typeof CLICK_LABELS): void {
+  const gtag = getGtag();
+  const label = CLICK_LABELS[kind];
+
+  if (!gtag || !ADS_ID || !label) {
+    return;
+  }
+
+  gtag("event", "conversion", {
+    send_to: `${ADS_ID}/${label}`,
+    value: 1,
+    currency: "TRY",
+  });
+}
+
 export function trackPhoneClick(phone?: string): void {
   trackGa4Event("phone_click", {
     phone: phone || undefined,
     page_location: isBrowser() ? window.location.href : undefined,
   });
+  trackClickConversion("phone");
 }
 
 export function trackWhatsAppClick(target?: string): void {
@@ -127,4 +190,5 @@ export function trackWhatsAppClick(target?: string): void {
     target: target || undefined,
     page_location: isBrowser() ? window.location.href : undefined,
   });
+  trackClickConversion("whatsapp");
 }

@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import Icon from "@/components/ui/icon";
+import { trackLeadConversion } from "@/lib/analytics";
 import { usePublicSession } from "@/hooks/use-public-session";
 import {
   findLatestCustomerChat,
@@ -201,6 +202,7 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
 
     try {
       if (directMode && session?.user.uid && session.user.email) {
+        const isNewConversation = !chatId;
         const result = await sendCustomerChatMessage({
           chatId: chatId || undefined,
           customerUid: session.user.uid,
@@ -212,14 +214,31 @@ export default function SupportChatWidget({ settings }: SupportChatWidgetProps) 
         });
 
         setChatId(result.chatId);
+
+        // Ads aynı transaction_id'yi bir kez sayar; yeni sohbet = bir iletişim dönüşümü.
+        if (isNewConversation) {
+          trackLeadConversion({
+            formName: "contact",
+            transactionId: result.chatId,
+            sourcePage: pathname || "/",
+            userData: { email: session.user.email, phone: profilePhone },
+          });
+        }
       } else {
-        await submitContactMessage({
+        const messageId = await submitContactMessage({
           fullName: form.fullName,
           phone: form.phone,
           email: undefined,
           subject: "Web chat paneli",
           message: form.message,
           sourcePage: pathname || "/",
+        });
+
+        trackLeadConversion({
+          formName: "contact",
+          transactionId: messageId,
+          sourcePage: pathname || "/",
+          userData: { phone: form.phone },
         });
       }
 

@@ -7,6 +7,7 @@ import GlobalSiteRuntime from "@/components/site/global-site-runtime";
 import { BRAND_ASSETS } from "@/lib/branding";
 import { DEFAULT_SEO, SITE } from "@/lib/constants";
 import {
+  GOOGLE_ADS_ID,
   GOOGLE_ANALYTICS_ID,
   GOOGLE_TAG_MANAGER_ID,
 } from "@/lib/google-analytics";
@@ -205,7 +206,7 @@ export default function RootLayout({
           }}
         />
 
-        {(hasGtm || hasDirectGa) && (
+        {(hasGtm || hasDirectGa || GOOGLE_ADS_ID) && (
           <Script id="google-consent-defaults" strategy="beforeInteractive">
             {`
               window.dataLayer = window.dataLayer || [];
@@ -237,6 +238,27 @@ export default function RootLayout({
               })(window,document,'script','dataLayer','${GOOGLE_TAG_MANAGER_ID}');
             `}
           </Script>
+        )}
+
+        {GOOGLE_ADS_ID && (
+          <>
+            {/* Google Ads etiketi: dönüşümler (send_to AW-…) ancak bu yüklüyse
+                Ads'e ulaşır. Onay modu varsayılanları yukarıda "denied". */}
+            <Script
+              id="google-ads-library"
+              src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-ads-config" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                window.gtag = window.gtag || function(){dataLayer.push(arguments);};
+                gtag('js', new Date());
+                gtag('set', 'url_passthrough', true);
+                gtag('config', '${GOOGLE_ADS_ID}', { allow_enhanced_conversions: true });
+              `}
+            </Script>
+          </>
         )}
 
         {hasDirectGa && (

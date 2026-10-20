@@ -441,6 +441,10 @@ export default function QuickQuoteModal({
         currency: "TRY",
         sourcePage:
           currentSourcePage,
+        userData: {
+          email: resolvedEmail,
+          phone: resolvedPhone,
+        },
       });
 
       resetRequestFields();

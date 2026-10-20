@@ -8,6 +8,7 @@ import type {
 } from "react";
 
 import AttributionTracker from "@/components/AttributionTracker";
+import ContactClickTracker from "@/components/site/contact-click-tracker";
 import IntegrationManager from "@/components/site/integration-manager";
 import MaintenanceGate from "@/components/site/maintenance-gate";
 import CookieConsent from "@/components/legal/cookie-consent";
@@ -48,6 +49,7 @@ export default function GlobalSiteRuntime({
         />
 
         <AttributionTracker />
+        <ContactClickTracker />
 
         {children}
       </MaintenanceGate>

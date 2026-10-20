@@ -5,6 +5,7 @@ import { type FormEvent, useState } from "react";
 import SiteChrome from "@/components/site/site-chrome";
 import Icon from "@/components/ui/icon";
 import { useSiteSettings } from "@/hooks/use-site-settings";
+import { trackLeadConversion } from "@/lib/analytics";
 import { submitContactMessage } from "@/lib/messages";
 import { buildTelUrl, buildWhatsappUrl } from "@/lib/utils";
 
@@ -47,9 +48,16 @@ export default function ContactPageClient() {
     setError(null);
 
     try {
-      await submitContactMessage({
+      const messageId = await submitContactMessage({
         ...form,
         sourcePage: "/iletisim",
+      });
+
+      trackLeadConversion({
+        formName: "contact",
+        transactionId: messageId,
+        sourcePage: "/iletisim",
+        userData: { email: form.email, phone: form.phone },
       });
 
       setForm(INITIAL_FORM);

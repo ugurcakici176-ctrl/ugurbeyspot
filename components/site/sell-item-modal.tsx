@@ -301,6 +301,10 @@ export default function SellItemModal({
             : 1,
         currency: "TRY",
         sourcePage: `${window.location.pathname}${window.location.search}`,
+        userData: {
+          email: session?.user.email || undefined,
+          phone,
+        },
       });
 
       setProgress("success");
