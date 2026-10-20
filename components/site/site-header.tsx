@@ -244,7 +244,7 @@ export default function SiteHeader({
 
       setMobileOpen(false);
       setAccountOpen(false);
-      setQuoteOpen(false);
+      // Teklif penceresi Esc'yi kendisi yönetir (gönderim sürerken kapanmaz).
     }
 
     document.addEventListener(

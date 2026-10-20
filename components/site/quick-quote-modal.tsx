@@ -316,6 +316,24 @@ export default function QuickQuoteModal({
       );
     }, [sourcePage]);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent): void {
+      if (event.key === "Escape" && !submitting) {
+        setErrorMessage(null);
+        setSuccessMessage(null);
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, submitting, onClose]);
+
   function handleClose(): void {
     if (submitting) {
       return;

@@ -14,10 +14,24 @@ type CategoryPageProps = {
 };
 
 function categoryDescription(name: string, description?: string): string {
-  return (
-    description?.trim() ||
-    `Konya'da ikinci el ${name.toLocaleLowerCase("tr-TR")} seçeneklerini inceleyin. Güncel stok, fiyat ve hızlı bilgi için Uğur Bey Spot ile iletişime geçin.`
-  );
+  const lowerName = name.toLocaleLowerCase("tr-TR");
+  const generic = `Konya'da ikinci el ${lowerName} seçeneklerini inceleyin. Güncel stok, fiyat ve hızlı bilgi için Uğur Bey Spot ile iletişime geçin.`;
+  const custom = description?.trim();
+
+  if (!custom) {
+    return generic;
+  }
+
+  // Admin'de girilen kısa açıklamalar (50-70 karakter) arama sonucunda zayıf
+  // kalır; yerel ifade eklenerek ~150 karaktere tamamlanır.
+  if (custom.length >= 110) {
+    return custom;
+  }
+
+  const sentence = /[.!?]$/.test(custom) ? custom : `${custom}.`;
+  const extended = `${sentence} Konya'da güncel stok ve fiyat bilgisi için Uğur Bey Spot ile iletişime geçin.`;
+
+  return extended.length <= 170 ? extended : sentence;
 }
 
 export async function generateMetadata({
