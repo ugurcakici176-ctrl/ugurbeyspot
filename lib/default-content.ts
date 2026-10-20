@@ -319,14 +319,18 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     primaryCtaHref: "/iletisim",
     showAuthButtons: true,
   },
+  // Firestore'dan ayar gelene kadar (ve sunucuda üretilen HTML'de) gösterilen
+  // gerçek işletme bilgileri. Google Ads telefon öğesi doğrulaması ve yerel SEO
+  // için numaranın ilk HTML'de bulunması gerekir.
   contact: {
-    phone: "",
-    whatsapp: "",
-    email: "",
-    address: "",
-    city: "",
-    district: "",
-    googleMapsUrl: "",
+    phone: "0552 071 56 89",
+    whatsapp: "905520715689",
+    email: "info@ugurbeyspot.com",
+    address: "Fetih Mahallesi, Fetih Caddesi No: 147/A",
+    city: "Konya",
+    district: "Karatay",
+    googleMapsUrl:
+      "https://www.google.com/maps/search/?api=1&query=U%C4%9Furbey%20Spot",
     socialLinks: [],
     workingHours: [],
     updatedAt: EMPTY_UPDATED_AT,
