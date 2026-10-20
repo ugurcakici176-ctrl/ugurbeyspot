@@ -46,8 +46,10 @@ declare global {
 const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim();
 
 const CLICK_LABELS = {
-  phone: process.env.NEXT_PUBLIC_GOOGLE_ADS_PHONE_LABEL?.trim(),
   // Etiketler gizli değildir; env yoksa Ads'te oluşturulan işlemler kullanılır.
+  phone:
+    process.env.NEXT_PUBLIC_GOOGLE_ADS_PHONE_LABEL?.trim() ||
+    "LZG9CObHu6MdEPuxwqxE",
   whatsapp:
     process.env.NEXT_PUBLIC_GOOGLE_ADS_WHATSAPP_LABEL?.trim() ||
     "CodpCOjYtKMdEPuxwqxE",
