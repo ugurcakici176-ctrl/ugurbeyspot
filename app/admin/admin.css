@@ -3133,3 +3133,51 @@ span {
     transition: none;
   }
 }
+
+/* Ürün adı toplu düzeltme paneli */
+.admin-title-fixes {
+  margin-bottom: 18px;
+}
+
+.admin-title-fixes h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.admin-title-fixes p {
+  margin: 0 0 14px;
+  opacity: .72;
+  font-size: 14px;
+}
+
+.admin-title-fixes ul {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-title-fixes label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.admin-title-fixes input {
+  margin-top: 2px;
+  flex: none;
+}
+
+.admin-title-fixes del {
+  opacity: .6;
+}
+
+.admin-title-fixes__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

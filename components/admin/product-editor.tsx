@@ -22,6 +22,7 @@ import {
   updateProduct,
 } from "@/lib/products";
 import { deleteImageAsset, uploadImage } from "@/lib/storage";
+import { normalizeProductTitle, replaceTitleInSeo } from "@/lib/product-name";
 import type {
   Category,
   ImageAsset,
@@ -208,6 +209,7 @@ export default function ProductEditor({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const seoTitleEdited = useRef(Boolean(productId));
+  const [titleAutoFixed, setTitleAutoFixed] = useState<string | null>(null);
   const seoDescriptionEdited = useRef(Boolean(productId));
   const seoKeywordsEdited = useRef(Boolean(productId));
 
@@ -600,8 +602,34 @@ export default function ProductEditor({
                       slug: productId ? current.slug : slugify(title),
                     }));
                   }}
+                  onBlur={() => {
+                    const fixed = normalizeProductTitle(values.title);
+                    if (fixed === values.title) return;
+                    setTitleAutoFixed(`"${values.title.trim()}" → "${fixed}"`);
+                    setValues((current) => {
+                      const next = withAutomaticSeo(current, {
+                        title: fixed,
+                        slug: productId ? current.slug : slugify(fixed),
+                      });
+                      // Kayıtlı üründe SEO başlığı otomatik üretilmez; eski adı içeriyorsa güncellenir.
+                      return productId
+                        ? {
+                            ...next,
+                            seo: {
+                              ...next.seo,
+                              title: replaceTitleInSeo(next.seo.title, current.title, fixed),
+                            },
+                          }
+                        : next;
+                    });
+                  }}
                   placeholder="Örn. Samsung 55 İnç Smart TV"
                 />
+                {titleAutoFixed && (
+                  <small className="admin-field-hint">
+                    Yazım otomatik düzeltildi: {titleAutoFixed}
+                  </small>
+                )}
               </label>
 
               <label className="admin-field">

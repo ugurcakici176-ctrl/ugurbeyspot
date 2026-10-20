@@ -12,7 +12,11 @@ import { useCanDeleteRecords } from "@/components/admin/admin-form-utils";
 import AdminPageHeading from "@/components/admin/admin-page-heading";
 import Icon from "@/components/ui/icon";
 import { PRODUCT_STATUS_LABELS, ROUTES } from "@/lib/constants";
-import { deleteProduct, getProducts } from "@/lib/products";
+import {
+  findProductTitleFixes,
+  replaceTitleInSeo,
+} from "@/lib/product-name";
+import { deleteProduct, getProducts, updateProduct } from "@/lib/products";
 import type { Product } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -28,6 +32,9 @@ export default function ProductsAdminClient() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [fixPanelOpen, setFixPanelOpen] = useState(false);
+  const [skippedFixIds, setSkippedFixIds] = useState<Set<string>>(new Set());
+  const [applyingFixes, setApplyingFixes] = useState(false);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -64,6 +71,54 @@ export default function ProductsAdminClient() {
     );
   }, [products, search]);
 
+  const titleFixes = useMemo(() => findProductTitleFixes(products), [products]);
+
+  async function applyTitleFixes() {
+    const selected = titleFixes.filter((fix) => !skippedFixIds.has(fix.id));
+
+    if (selected.length === 0) return;
+
+    setError(null);
+    setMessage(null);
+    setApplyingFixes(true);
+
+    let done = 0;
+
+    try {
+      for (const fix of selected) {
+        const product = products.find((item) => item.id === fix.id);
+        if (!product) continue;
+
+        // Bağlantı (slug) değişmez: Google'daki adresler bozulmasın.
+        await updateProduct(product.id, {
+          title: fix.to,
+          seo: {
+            ...product.seo,
+            title: replaceTitleInSeo(product.seo.title, fix.from, fix.to),
+          },
+          images: product.images.map((image) => ({
+            ...image,
+            alt: replaceTitleInSeo(image.alt, fix.from, fix.to),
+          })),
+        });
+        done += 1;
+      }
+
+      setMessage(`${done} ürünün adı düzeltildi.`);
+      setFixPanelOpen(false);
+      setSkippedFixIds(new Set());
+      await loadProducts();
+    } catch (reason: unknown) {
+      console.error("Product title fix error:", reason);
+      setError(
+        `${done} ürün düzeltildi, sonrası kaydedilemedi: ${getErrorMessage(reason, "bilinmeyen hata")}`,
+      );
+      await loadProducts();
+    } finally {
+      setApplyingFixes(false);
+    }
+  }
+
   async function handleDelete(product: Product) {
     if (
       !window.confirm(
@@ -96,10 +151,22 @@ export default function ProductsAdminClient() {
         title="Ürün Yönetimi"
         description="Ürünleri ekleyin, düzenleyin, öne çıkarın veya yayından kaldırın."
         actions={
-          <Link href={ROUTES.adminNewProduct} className="admin-primary-button">
-            <Icon name="plus" size={18} />
-            Yeni Ürün
-          </Link>
+          <>
+            {titleFixes.length > 0 && (
+              <button
+                type="button"
+                className="admin-secondary-button"
+                onClick={() => setFixPanelOpen((open) => !open)}
+              >
+                <Icon name="edit" size={18} />
+                İsimleri düzelt ({titleFixes.length})
+              </button>
+            )}
+            <Link href={ROUTES.adminNewProduct} className="admin-primary-button">
+              <Icon name="plus" size={18} />
+              Yeni Ürün
+            </Link>
+          </>
         }
       />
 
@@ -113,6 +180,59 @@ export default function ProductsAdminClient() {
         <div className="admin-notice admin-notice--info" role="status">
           {message}
         </div>
+      )}
+
+      {fixPanelOpen && titleFixes.length > 0 && (
+        <section className="admin-panel admin-title-fixes">
+          <h2>Ürün adı düzeltmeleri</h2>
+          <p>
+            Yazım hataları ve büyük harf düzeni otomatik bulundu. Uygulamak
+            istemediğiniz satırın işaretini kaldırın. Ürün bağlantıları değişmez.
+          </p>
+          <ul>
+            {titleFixes.map((fix) => (
+              <li key={fix.id}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={!skippedFixIds.has(fix.id)}
+                    onChange={(event) =>
+                      setSkippedFixIds((current) => {
+                        const next = new Set(current);
+                        if (event.target.checked) next.delete(fix.id);
+                        else next.add(fix.id);
+                        return next;
+                      })
+                    }
+                  />
+                  <span>
+                    <del>{fix.from}</del> → <strong>{fix.to}</strong>
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          <div className="admin-title-fixes__actions">
+            <button
+              type="button"
+              className="admin-primary-button"
+              disabled={applyingFixes || skippedFixIds.size >= titleFixes.length}
+              onClick={() => void applyTitleFixes()}
+            >
+              {applyingFixes
+                ? "Kaydediliyor..."
+                : `Seçilenleri uygula (${titleFixes.length - skippedFixIds.size})`}
+            </button>
+            <button
+              type="button"
+              className="admin-secondary-button"
+              disabled={applyingFixes}
+              onClick={() => setFixPanelOpen(false)}
+            >
+              Vazgeç
+            </button>
+          </div>
+        </section>
       )}
 
       <section className="admin-panel">
