@@ -178,7 +178,11 @@ function createProductSeo(
 
   return {
     ...DEFAULT_SEO,
-    title: limitSeoText(titleParts.join(" | "), 60),
+    // Kategori eklenince sığmıyorsa ürün adı kesilmez, kategori bırakılır.
+    title:
+      titleParts.join(" | ").length <= 58
+        ? titleParts.join(" | ")
+        : limitSeoText(cleanTitle, 58),
     description: limitSeoText(
       `${descriptionSource} Konya Uğur Bey Spot'ta güncel fiyat ve detayları keşfedin.`,
       155,

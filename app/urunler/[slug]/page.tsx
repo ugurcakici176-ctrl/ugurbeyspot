@@ -17,6 +17,29 @@ const loadProduct = cache(async (slug: string) => {
   return product && product.status !== "passive" ? product : null;
 });
 
+function capitalizeTr(value: string): string {
+  return value.charAt(0).toLocaleUpperCase("tr-TR") + value.slice(1);
+}
+
+// Başlık "%s | Uğur Bey Spot" şablonuyla ~75 karakteri geçmesin. Eski kayıtlarda
+// "…" ile kesilmiş SEO başlıkları yerine ürün adından temiz başlık üretilir.
+function buildProductSeoTitle(
+  seoTitle: string | undefined,
+  productTitle: string,
+  categoryName: string | undefined,
+): string {
+  const custom = seoTitle?.trim();
+
+  if (custom && !custom.endsWith("…")) {
+    return capitalizeTr(custom);
+  }
+
+  const name = capitalizeTr(productTitle.trim());
+  const withCategory = categoryName ? `${name} | Konya ${categoryName}` : `${name} | Konya`;
+
+  return withCategory.length <= 58 ? withCategory : name;
+}
+
 function toAbsoluteUrl(value?: string): string | undefined {
   if (!value) {
     return undefined;
@@ -52,7 +75,11 @@ export async function generateMetadata({
     product.seo.ogImageUrl ||
     [...product.images].sort((a, b) => a.sortOrder - b.sortOrder)[0]?.url;
 
-  const seoTitle = product.seo.title || product.title;
+  const seoTitle = buildProductSeoTitle(
+    product.seo.title,
+    product.title,
+    product.categoryName,
+  );
   const seoDescription = product.seo.description || product.shortDescription;
   const noIndex = Boolean(product.seo.noIndex) || product.status !== "active";
 

@@ -21,18 +21,34 @@ function absoluteUrl(pathOrUrl: string): string {
   return new URL(pathOrUrl, SITE_URL).toString();
 }
 
-const businessPhone = process.env.NEXT_PUBLIC_BUSINESS_PHONE?.trim();
-const businessEmail = process.env.NEXT_PUBLIC_BUSINESS_EMAIL?.trim();
-const streetAddress = process.env.NEXT_PUBLIC_BUSINESS_STREET_ADDRESS?.trim();
-const postalCode = process.env.NEXT_PUBLIC_BUSINESS_POSTAL_CODE?.trim();
-const district = process.env.NEXT_PUBLIC_BUSINESS_DISTRICT?.trim();
-const mapsUrl = process.env.NEXT_PUBLIC_BUSINESS_MAPS_URL?.trim();
-const latitude = Number(process.env.NEXT_PUBLIC_BUSINESS_LATITUDE);
-const longitude = Number(process.env.NEXT_PUBLIC_BUSINESS_LONGITUDE);
-const openingHours = process.env.NEXT_PUBLIC_BUSINESS_OPENING_HOURS?.trim();
+// İşletme bilgileri herkese açıktır; App Hosting'de env tanımlı değilse bu
+// değerler kullanılır (Google'ın yerel işletme şeması için gerekli alanlar).
+const businessPhone =
+  process.env.NEXT_PUBLIC_BUSINESS_PHONE?.trim() || "+905520715689";
+const businessEmail =
+  process.env.NEXT_PUBLIC_BUSINESS_EMAIL?.trim() || "info@ugurbeyspot.com";
+const streetAddress =
+  process.env.NEXT_PUBLIC_BUSINESS_STREET_ADDRESS?.trim() ||
+  "Fetih Mahallesi, Fetih Caddesi No: 147/A";
+const postalCode =
+  process.env.NEXT_PUBLIC_BUSINESS_POSTAL_CODE?.trim() || "42030";
+const district =
+  process.env.NEXT_PUBLIC_BUSINESS_DISTRICT?.trim() || "Karatay";
+const mapsUrl =
+  process.env.NEXT_PUBLIC_BUSINESS_MAPS_URL?.trim() ||
+  "https://www.google.com/maps/search/?api=1&query=U%C4%9Furbey%20Spot";
+// Konum: iletişim sayfasındaki Google Haritalar gömmesindeki işletme noktası.
+const latitude = Number(
+  process.env.NEXT_PUBLIC_BUSINESS_LATITUDE?.trim() || "37.875538",
+);
+const longitude = Number(
+  process.env.NEXT_PUBLIC_BUSINESS_LONGITUDE?.trim() || "32.525627",
+);
+const openingHours =
+  process.env.NEXT_PUBLIC_BUSINESS_OPENING_HOURS?.trim() || "Mo-Sa 08:00-19:00";
 
 const socialProfiles = [
-  process.env.NEXT_PUBLIC_INSTAGRAM_URL,
+  process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://www.instagram.com/ugurbey_spot/",
   process.env.NEXT_PUBLIC_FACEBOOK_URL,
   process.env.NEXT_PUBLIC_YOUTUBE_URL,
 ].filter((value): value is string => Boolean(value?.trim()));

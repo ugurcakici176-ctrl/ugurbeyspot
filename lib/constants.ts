@@ -183,7 +183,7 @@ export const DEFAULT_PAGE_SEO = {
   },
 
   products: {
-    title: "Konya Spot Ürünler – İkinci El Mobilya, Beyaz Eşya, Elektronik",
+    title: "Konya Spot Ürünler – İkinci El Mobilya ve Beyaz Eşya",
     description:
       "Konya'da satışa sunulan ikinci el mobilya, beyaz eşya, elektronik ve spot ürünleri inceleyin. Güncel fiyat ve stok bilgisi için Uğur Bey Spot'a ulaşın.",
     keywords: [
