@@ -660,3 +660,19 @@
     transition: none;
   }
 }
+
+/* Sunucu sayfalarındaki pencere açan butonlar (<button>) bağlantılarla aynı görünür. */
+button.primaryButton,
+button.secondaryButton,
+button.lightButton,
+button.outlineButton {
+  border-width: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.secondaryButton,
+button.outlineButton {
+  border-width: 1px;
+  border-style: solid;
+}

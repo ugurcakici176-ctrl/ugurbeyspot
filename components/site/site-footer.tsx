@@ -77,6 +77,10 @@ export default function SiteFooter({
       href: ROUTES.konyaSpot,
     },
     {
+      label: "Eşyanı Sat",
+      href: ROUTES.sellItems,
+    },
+    {
       label: "Hakkımızda",
       href: ROUTES.about,
     },

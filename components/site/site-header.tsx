@@ -47,6 +47,10 @@ const NAVIGATION = [
     href: ROUTES.konyaSpot,
   },
   {
+    label: "Eşyanı Sat",
+    href: ROUTES.sellItems,
+  },
+  {
     key: "about",
     href: ROUTES.about,
   },

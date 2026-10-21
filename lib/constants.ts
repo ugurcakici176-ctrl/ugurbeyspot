@@ -35,6 +35,7 @@ export const DOCUMENTS = {
 export const ROUTES = {
   home: "/",
   konyaSpot: "/konya-spot",
+  sellItems: "/esyani-sat",
   about: "/hakkimizda",
   products: "/urunler",
   contact: "/iletisim",

@@ -107,6 +107,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.95,
     },
     {
+      url: absoluteUrl("/esyani-sat"),
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
       url: absoluteUrl("/urunler"),
       changeFrequency: "daily",
       priority: 0.9,
