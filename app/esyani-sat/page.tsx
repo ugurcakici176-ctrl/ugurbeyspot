@@ -213,7 +213,7 @@ export default function SellItemsPage() {
                     <strong>Ara →</strong>
                   </a>
                   <Link href="/iletisim">
-                    <span>Mağaza adresi</span>
+                    <span>Mağaza</span>
                     <strong>Yol tarifi →</strong>
                   </Link>
                 </div>

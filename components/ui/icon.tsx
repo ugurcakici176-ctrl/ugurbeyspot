@@ -52,6 +52,27 @@ function icon(name: string): ReactNode {
       return <><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m3 17 5-5 4 4 2-2 7 6" /></>;
     case "plus": return <path d="M12 5v14M5 12h14" />;
     case "check": return <path d="m5 12 4 4 10-10" />;
+    case "fridge":
+      return <><rect x="6" y="2.5" width="12" height="19" rx="2" /><path d="M6 10h12M9 6v1.5M9 13v2.5" /></>;
+    case "washer":
+      return <><rect x="4" y="2.5" width="16" height="19" rx="2" /><circle cx="12" cy="13" r="4.5" /><path d="M7.5 6h.01M10.5 6h3" /></>;
+    case "sofa":
+      return <><path d="M5 11V8a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3" /><path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 1 1 4 0v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M6 19v1.5M18 19v1.5" /></>;
+    case "bed":
+      return <><path d="M3 18V6M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5" /><circle cx="7" cy="11" r="2" /></>;
+    case "tv":
+      return <><rect x="2.5" y="5" width="19" height="13" rx="2" /><path d="m8 2 4 3 4-3M8 21h8" /></>;
+    case "plug":
+      return <><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5" /></>;
+    case "dots":
+      return <><circle cx="5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="19" cy="12" r="1.2" /></>;
+    case "camera":
+      return <><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13.5" r="3.5" /></>;
+    case "arrow-left": return <path d="M19 12H5m5 5-5-5 5-5" />;
+    case "star":
+      return <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z" />;
+    case "lock":
+      return <><rect x="4.5" y="10.5" width="15" height="10.5" rx="2" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></>;
     case "edit":
       return <><path d="M4 20h4l11-11-4-4L4 16v4Z" /><path d="m13.5 6.5 4 4" /></>;
     case "trash":

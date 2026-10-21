@@ -16,6 +16,7 @@ import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
 import "./legal.css";
 import "./control-center-runtime.css";
+import "./header-premium.css";
 
 function absoluteUrl(pathOrUrl: string): string {
   return new URL(pathOrUrl, SITE_URL).toString();

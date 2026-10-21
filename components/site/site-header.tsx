@@ -4,7 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   type CSSProperties,
+  useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -139,8 +141,19 @@ export default function SiteHeader({
   const [accountOpen, setAccountOpen] =
     useState(false);
 
-  const [loggingOut, setLoggingOut] =
+    const [loggingOut, setLoggingOut] =
     useState(false);
+
+  /* Kaydırınca header yüzen kapsüle dönüşür. */
+  const [scrolled, setScrolled] = useState(false);
+
+  /* Menüde fareyi takip eden kayan vurgu. */
+  const navRef = useRef<HTMLElement | null>(null);
+  const [indicator, setIndicator] = useState<{
+    x: number;
+    width: number;
+    visible: boolean;
+  }>({ x: 0, width: 0, visible: false });
 
   const navigation =
     useMemo<NavigationItem[]>(
@@ -291,6 +304,64 @@ export default function SiteHeader({
     };
   }, [mobileOpen]);
 
+    useEffect(() => {
+    let frame = 0;
+
+    function update(): void {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 12);
+      });
+    }
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", update);
+    };
+  }, []);
+
+  const moveIndicatorTo = useCallback(
+    (element: HTMLElement | null) => {
+      const nav = navRef.current;
+
+      if (!nav || !element) {
+        setIndicator((current) => ({ ...current, visible: false }));
+        return;
+      }
+
+      const navBox = nav.getBoundingClientRect();
+      const box = element.getBoundingClientRect();
+
+      setIndicator({
+        x: box.left - navBox.left,
+        width: box.width,
+        visible: true,
+      });
+    },
+    [],
+  );
+
+  const resetIndicator = useCallback(() => {
+    moveIndicatorTo(
+      navRef.current?.querySelector<HTMLElement>("a.is-active") ?? null,
+    );
+  }, [moveIndicatorTo]);
+
+  useLayoutEffect(() => {
+    resetIndicator();
+
+    window.addEventListener("resize", resetIndicator);
+    // Yazı tipi yüklenince genişlikler değişir.
+    void document.fonts?.ready.then(resetIndicator);
+
+    return () => {
+      window.removeEventListener("resize", resetIndicator);
+    };
+  }, [pathname, navigation, resetIndicator]);
+
   function closeNavigation(): void {
     setMobileOpen(false);
     setAccountOpen(false);
@@ -393,8 +464,8 @@ export default function SiteHeader({
           </div>
         )}
 
-      <header
-        className="site-header"
+            <header
+        className={`site-header${scrolled ? " is-scrolled" : ""}${mobileOpen ? " is-menu-open" : ""}`}
         style={headerStyle}
       >
         <div className="site-container site-header__inner">
@@ -422,10 +493,21 @@ export default function SiteHeader({
             </span>
           </Link>
 
-          <nav
+                    <nav
+            ref={navRef}
             className="site-nav"
             aria-label="Ana menü"
+            onMouseLeave={resetIndicator}
           >
+            <span
+              className="site-nav__indicator"
+              aria-hidden="true"
+              data-visible={indicator.visible ? "true" : undefined}
+              style={{
+                width: indicator.width,
+                transform: `translateX(${indicator.x}px)`,
+              }}
+            />
             {navigation.map((item) => {
               const active =
                 isActiveRoute(
@@ -448,9 +530,16 @@ export default function SiteHeader({
                       ? "page"
                       : undefined
                   }
-                  onClick={
+                                    onClick={
                     closeNavigation
                   }
+                  onMouseEnter={(event) =>
+                    moveIndicatorTo(event.currentTarget)
+                  }
+                  onFocus={(event) =>
+                    moveIndicatorTo(event.currentTarget)
+                  }
+                  onBlur={resetIndicator}
                 >
                   {item.label}
                 </Link>
@@ -505,34 +594,20 @@ export default function SiteHeader({
               settings.header
                 .showAuthButtons &&
               !authenticated && (
-                <>
-                  <Link
-                    href="/giris"
-                    prefetch={false}
-                    className="header-auth-link desktop-only"
-                    onClick={
-                      closeNavigation
-                    }
-                  >
-                    Giriş Yap
-                  </Link>
-
-                  <Link
-                    href="/kayit"
-                    prefetch={false}
-                    className="button button--dark button--compact desktop-only"
-                    onClick={
-                      closeNavigation
-                    }
-                  >
-                    Kayıt Ol
-
-                    <Icon
-                      name="arrow-right"
-                      size={16}
-                    />
-                  </Link>
-                </>
+                <Link
+                  href="/giris"
+                  prefetch={false}
+                  className="header-login-button desktop-only"
+                  onClick={
+                    closeNavigation
+                  }
+                >
+                  <Icon
+                    name="users"
+                    size={16}
+                  />
+                  Giriş Yap
+                </Link>
               )}
 
             {!loading &&
@@ -587,11 +662,14 @@ export default function SiteHeader({
                         {userName}
                       </span>
 
-                      <span
+                                            <span
                         className="header-account__chevron"
                         aria-hidden="true"
                       >
-                        ↓
+                        <Icon
+                          name="chevron-down"
+                          size={15}
+                        />
                       </span>
                     </button>
 
@@ -728,16 +806,20 @@ export default function SiteHeader({
                 setAccountOpen(false);
               }}
             >
-              {mobileOpen ? (
-                <span aria-hidden="true">
-                  ×
-                </span>
-              ) : (
+                            <span
+                className="menu-toggle__icon"
+                data-open={mobileOpen ? "true" : undefined}
+                aria-hidden="true"
+              >
                 <Icon
                   name="menu"
                   size={21}
                 />
-              )}
+                <Icon
+                  name="x"
+                  size={21}
+                />
+              </span>
             </button>
           </div>
         </div>
@@ -760,6 +842,7 @@ export default function SiteHeader({
                   key={item.href}
                   href={item.href}
                   prefetch={false}
+                                    style={{ "--i": index } as CSSProperties}
                   aria-current={
                     isActiveRoute(
                       pathname,
@@ -772,11 +855,7 @@ export default function SiteHeader({
                     closeNavigation
                   }
                 >
-                  <span aria-hidden="true">
-                    {String(
-                      index + 1,
-                    ).padStart(2, "0")}
-                  </span>
+                  
 
                   {item.label}
 
